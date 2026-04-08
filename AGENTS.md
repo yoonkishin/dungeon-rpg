@@ -98,6 +98,31 @@
 - `tune: reduce enemy chase range`
 - `experiment: simplify minimap rendering`
 
+### 부팅/초기화 안전 규칙
+
+이 프로젝트는 번들러 없이 `<script>` 로 직접 로드되므로,
+**초기화 순서 하나만 틀려도 검은 화면 + 기본 HTML만 남는 부팅 실패**가 날 수 있다.
+
+앞으로 아래를 규칙으로 고정한다.
+
+1. `maps = { town: buildTown(), field: buildField(), dungeon: buildDungeon() }` 보다 먼저,
+   `buildDungeon()` / `buildTown()` / 저장 복원 로직이 참조할 전역 상태를 선언한다.
+   - 예: `currentDungeonId`, `currentMap`, 주요 저장 상태
+2. `data.js`, `maps.js`, `save.js`, `main.js`, `ui-panels.js`를 건드릴 때는
+   **부팅 경로가 깨지지 않는지 먼저 의심**한다.
+3. 새 기능을 넣을 때 기존 save/localStorage와 충돌 가능성을 함께 본다.
+4. 프로토타입이라도 "문법 체크 통과"만으로 끝내지 않는다.
+   - 최소한 **초기 부팅**, **메뉴 열기**, **패널 열기**, **세이브 복원**까지 한 번 생각한다.
+5. 검은 화면이 뜨면 렌더링부터 의심하지 말고,
+   **초기화 순서 / 전역 상태 선언 시점 / 저장 데이터 복원 시점**을 먼저 본다.
+
+이번에 실제로 터진 사례:
+- `currentDungeonId`가 선언되기 전에 `buildDungeon()`이 호출될 수 있는 구조 때문에
+  부팅 단계에서 런타임이 죽을 수 있었음.
+- 해결: `currentDungeonId` 선언을 map build 이전으로 이동.
+
+이 규칙은 앞으로 같은 류의 실수를 막기 위한 프로젝트 고정 메모로 본다.
+
 ---
 
 ## 6. 파일/구조 원칙
