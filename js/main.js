@@ -266,6 +266,15 @@ function update(dt) {
     e.frameTimer += dt;
     if (e.frameTimer > 300) { e.frameTimer = 0; e.frame = 1 - e.frame; }
 
+    if (e.hitStun > 0) {
+      e.hitStun -= dt;
+      const pos = resolveCollision(e, e.x + e.knockbackVx, e.y + e.knockbackVy);
+      e.x = pos.x; e.y = pos.y;
+      e.knockbackVx *= 0.86;
+      e.knockbackVy *= 0.86;
+      return;
+    }
+
     if (e.state === 'wander') {
       e.wanderTimer -= dt;
       if (e.wanderTimer <= 0) {
@@ -280,58 +289,29 @@ function update(dt) {
       e.x = pos.x; e.y = pos.y;
       if (d < e.aggroRange) e.state = 'chase';
     } else if (e.state === 'chase') {
-      if (d > e.aggroRange * 1.5) { e.state = 'wander'; return; }
-      if (d > e.attackRange) {
+      if (d > e.aggroRange * 1.35) {
+        e.state = 'wander';
+        e.attackWindup = 0;
+        return;
+      }
+      if (d > e.attackRange + 8) {
+        e.attackWindup = 0;
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        const ex2 = e.x + Math.cos(angle) * e.speed * 1.4;
-        const ey2 = e.y + Math.sin(angle) * e.speed * 1.4;
+        const ex2 = e.x + Math.cos(angle) * e.speed * 1.55;
+        const ey2 = e.y + Math.sin(angle) * e.speed * 1.55;
         const pos = resolveCollision(e, ex2, ey2);
         e.x = pos.x; e.y = pos.y;
       } else {
-        if (e.attackTimer <= 0 && player.invincible <= 0) {
-          e.attackTimer = e.attackCooldown;
-          const dmg = Math.max(1, e.atk - playerDef() - Math.floor(Math.random() * 4));
-          player.hp -= dmg;
-          player.invincible = 600;
-          triggerShake(12);
-          addParticles(player.x, player.y, '#e74c3c', 6);
-          addDamageNumber(player.x, player.y, dmg, 'received');
-          AudioSystem.sfx.playerHit();
-          if (player.hp <= 0) {
-            player.hp = 0;
-            player.dead = true;
-            AudioSystem.sfx.death();
-            AudioSystem.stopBgm();
-            document.getElementById('death-screen').style.display = 'flex';
-          }
-          updateHUD();
-        } else if (currentMap === 'dungeon' && e.attackTimer <= 0 && activeCompanions.length > 0) {
-          // Enemy attacks companion if player is invincible
-          let targetComp = null;
-          let compDist = e.attackRange;
-          activeCompanions.forEach(cId => {
-            const cs = companionStates[cId];
-            if (!cs) return;
-            const cd = Math.sqrt((e.x - cs.x)**2 + (e.y - cs.y)**2);
-            if (cd < compDist) { targetComp = cId; compDist = cd; }
-          });
-          if (targetComp !== null) {
-            const cs = companionStates[targetComp];
+        if (e.attackWindup > 0) {
+          e.attackWindup -= dt;
+          if (d > e.attackRange + 18) {
+            e.attackWindup = 0;
+          } else if (e.attackWindup <= 0) {
             e.attackTimer = e.attackCooldown;
-            const dmg = Math.max(1, e.atk - 2);
-            cs.hp -= dmg;
-            cs.flashTimer = 12;
-            addDamageNumber(cs.x, cs.y, dmg, 'received');
-            addParticles(cs.x, cs.y, '#e74c3c', 4);
-            if (cs.hp <= 0) {
-              cs.hp = 0;
-              deadCompanions.push(targetComp);
-              activeCompanions = activeCompanions.filter(id => id !== targetComp);
-              const cInfo = DUNGEON_INFO[targetComp];
-              showToast((cInfo ? cInfo.companionName : '동료') + ' 쓰러짐!');
-              addParticles(cs.x, cs.y, '#e74c3c', 15);
-            }
+            performEnemyAttack(e);
           }
+        } else if (e.attackTimer <= 0) {
+          e.attackWindup = e.isBoss ? 420 : 240;
         }
       }
     }

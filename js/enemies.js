@@ -86,6 +86,10 @@ function spawnDungeonEnemies() {
       dead: false,
       frame: 0,
       frameTimer: 0,
+      hitStun: 0,
+      knockbackVx: 0,
+      knockbackVy: 0,
+      attackWindup: 0,
       typeIdx: Math.min(difficulty, ENEMY_TYPES.length - 1),
       isBoss: true,
     };
@@ -117,6 +121,10 @@ function createEnemy(tx, ty, t, typeIdx) {
     dead: false,
     frame: 0,
     frameTimer: 0,
+    hitStun: 0,
+    knockbackVx: 0,
+    knockbackVy: 0,
+    attackWindup: 0,
     typeIdx: typeIdx,
     isBoss: false,
   };

@@ -224,6 +224,15 @@ function drawEnemy(e) {
   // HP bar (below name, above enemy)
   drawHpBar(sx, sy - e.h/2 - 8, e.hp, e.maxHp, e.isBoss ? 48 : 32, '#e74c3c');
 
+  if (e.attackWindup > 0) {
+    const windupPct = Math.min(1, e.attackWindup / (e.isBoss ? 420 : 240));
+    ctx.strokeStyle = e.isBoss ? 'rgba(241,196,15,0.9)' : 'rgba(231,76,60,0.85)';
+    ctx.lineWidth = e.isBoss ? 3 : 2;
+    ctx.beginPath();
+    ctx.arc(sx, sy, e.attackRange * (1.05 - windupPct * 0.18), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   // Boss crown
   if (e.isBoss) {
     ctx.fillStyle = '#f1c40f';
