@@ -34,6 +34,7 @@ const COMPANION_SYNERGIES = {
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentMap = 'town';
+let currentDungeonId = -1;
 let maps = {
   town: buildTown(),
   field: buildField(),
@@ -82,7 +83,6 @@ const player = {
 
 // ─── Dungeon & Companion State ────────────────────────────────────────────────
 let dungeonsCleared = [];
-let currentDungeonId = -1;
 let companions = [];
 let activeCompanions = [];  // array of companion IDs, max 2
 let deadCompanions = [];    // IDs of dead companions
