@@ -12,12 +12,21 @@ try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e) {}
 
 // ─── Fullscreen on tap ──────────────────────────────────────────────────────
 const fsBtn = document.getElementById('fullscreen-btn');
-function goFullscreen(e) {
-  if (e) e.preventDefault();
+let firstInteractionBooted = false;
+function bootstrapInteraction() {
+  if (firstInteractionBooted) return;
+  firstInteractionBooted = true;
   AudioSystem.init();
   AudioSystem.ensureCtx();
   AudioSystem.startBgm(currentMap === 'dungeon' ? 'dungeon' : currentMap);
+}
+function dismissStartHint() {
   fsBtn.style.display = 'none';
+}
+function goFullscreen(e) {
+  if (e) e.preventDefault();
+  bootstrapInteraction();
+  dismissStartHint();
   const el = document.documentElement;
   const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (rfs) {
@@ -31,6 +40,11 @@ function goFullscreen(e) {
 }
 fsBtn.addEventListener('touchstart', goFullscreen, { passive: false });
 fsBtn.addEventListener('click', goFullscreen);
+window.addEventListener('touchstart', bootstrapInteraction, { passive: true, once: true });
+window.addEventListener('click', bootstrapInteraction, { once: true });
+setTimeout(() => {
+  if (!firstInteractionBooted) dismissStartHint();
+}, 1200);
 
 // ─── Canvas Setup ─────────────────────────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
@@ -357,6 +371,7 @@ if (loaded) {
 spawnEnemies();
 updateHUD();
 renderSkillSlots();
+bootstrapInteraction();
 
 if (currentMap === 'town') { showAreaLabel('마을'); AudioSystem.startBgm('town'); }
 else if (currentMap === 'field') { showAreaLabel('필드'); AudioSystem.startBgm('field'); }
