@@ -362,6 +362,7 @@ function update(dt) {
   });
   damageNumbers = damageNumbers.filter(dn => dn.timer > 0);
 
+  if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
   updateHUD();
 }
 

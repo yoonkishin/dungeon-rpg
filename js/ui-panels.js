@@ -178,18 +178,31 @@ function renderCompanionPanel() {
     content.innerHTML = '<div style="color:#888;padding:20px;text-align:center;">아직 동료가 없습니다. 던전을 클리어하여 동료를 얻으세요!</div>';
     return;
   }
-  content.innerHTML = '';
-
-  const countDiv = document.createElement('div');
-  countDiv.style.cssText = 'color:#f1c40f;font-size:12px;margin-bottom:10px;text-align:center;';
-  countDiv.textContent = '활성 동료: ' + activeCompanions.length + '/2' + (deadCompanions.length > 0 ? ' | 사망: ' + deadCompanions.length + '명' : '') + ' | 용병 슬롯: 잠김';
-  content.appendChild(countDiv);
 
   const synergy = getActiveCompanionSynergy();
-  const synergyDiv = document.createElement('div');
-  synergyDiv.style.cssText = 'color:#9ad0ff;font-size:10px;margin-bottom:10px;text-align:center;';
-  synergyDiv.textContent = synergy ? ('시너지: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 조합에 따라 추가 보너스가 생긴다';
-  content.appendChild(synergyDiv);
+  content.innerHTML =
+    '<div class="companion-summary-grid">' +
+      '<div class="companion-summary-card">' +
+        '<div class="summary-label">활성 동료</div>' +
+        '<div class="summary-value">' + activeCompanions.length + '/2</div>' +
+      '</div>' +
+      '<div class="companion-summary-card">' +
+        '<div class="summary-label">수집</div>' +
+        '<div class="summary-value">' + companions.length + '/9</div>' +
+      '</div>' +
+      '<div class="companion-summary-card">' +
+        '<div class="summary-label">사망</div>' +
+        '<div class="summary-value ' + (deadCompanions.length > 0 ? 'warn' : '') + '">' + deadCompanions.length + '명</div>' +
+      '</div>' +
+      '<div class="companion-summary-card mercenary">' +
+        '<div class="summary-label">용병 슬롯</div>' +
+        '<div class="summary-value lock">잠김</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="companion-synergy-banner">' + (synergy ? ('시너지: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 조합에 따라 추가 보너스가 생긴다') + '</div>' +
+    '<div class="companion-grid" id="companion-grid"></div>';
+
+  const grid = document.getElementById('companion-grid');
 
   companions.forEach(cId => {
     const info = DUNGEON_INFO[cId];
@@ -201,14 +214,11 @@ function renderCompanionPanel() {
     const currentHp = companionStates[cId] ? companionStates[cId].hp : maxHp;
     const aiMode = getCompanionAIMode(cId, companionStates[cId]);
     const aiMeta = COMPANION_AI_MODES[aiMode] || COMPANION_AI_MODES.aggressive;
-    const div = document.createElement('div');
-    div.className = 'companion-item' + (isActive ? ' active-companion' : '');
-    if (isDead) div.style.opacity = '0.5';
 
     let btnLabel, btnColor, btnAction;
     if (isDead) {
       if (currentMap === 'town') {
-        btnLabel = '부활 (' + getReviveCost(cId) + 'G)';
+        btnLabel = '부활';
         btnColor = '#27ae60';
         btnAction = 'revive';
       } else {
@@ -226,26 +236,39 @@ function renderCompanionPanel() {
       btnAction = activeCompanions.length >= 2 ? 'none' : 'activate';
     }
 
-    const hpBarHtml = isDead
-      ? '<div style="color:#e74c3c;font-size:10px;">사망</div>'
-      : '<div style="height:4px;background:rgba(0,0,0,0.4);border-radius:2px;width:100%;overflow:hidden;"><div style="height:100%;width:' + (currentHp / maxHp * 100) + '%;background:#2ecc71;border-radius:2px;"></div></div>';
+    const card = document.createElement('div');
+    card.className = 'companion-card' + (isActive ? ' active' : '') + (isDead ? ' dead' : '');
 
-    div.innerHTML =
-      '<div style="display:flex;align-items:flex-start;gap:10px;width:100%;">' +
-        '<div class="comp-icon" style="background:' + info.companionColor + ';flex-shrink:0;">★</div>' +
-        '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">' +
-          '<span class="comp-name">' + info.companionName + '</span>' +
-          '<span style="color:#aaa;font-size:10px;">' + profile.roleLabel + ' · ' + profile.skillName + '</span>' +
-          '<span style="color:#aaa;font-size:10px;">ATK:' + getCompanionAtk(cId) + ' HP:' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
-          hpBarHtml +
-          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px;">' +
-            '<button class="comp-ai-btn" style="background:' + aiMeta.color + ';border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;">AI: ' + aiMeta.label + '</button>' +
-            '<button class="comp-btn" style="background:' + btnColor + ';border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>' +
+    const hpPct = Math.max(0, Math.min(100, currentHp / maxHp * 100));
+    const statusText = isDead
+      ? '사망'
+      : isActive
+        ? '출전 중'
+        : '대기';
+
+    card.innerHTML =
+      '<div class="companion-card-top">' +
+        '<div class="companion-card-icon" style="background:' + info.companionColor + ';">★</div>' +
+        '<div class="companion-card-main">' +
+          '<div class="companion-card-name-row">' +
+            '<div class="companion-card-name">' + info.companionName + '</div>' +
+            '<div class="companion-status-badge ' + (isDead ? 'dead' : isActive ? 'active' : '') + '">' + statusText + '</div>' +
           '</div>' +
+          '<div class="companion-card-role">' + profile.roleLabel + ' · ' + profile.skillName + '</div>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<div class="companion-card-stats">' +
+        '<span>ATK ' + getCompanionAtk(cId) + '</span>' +
+        '<span>HP ' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
+      '</div>' +
+      '<div class="companion-hp-bar"><div class="companion-hp-fill" style="width:' + hpPct + '%;"></div></div>' +
+      '<div class="companion-card-actions">' +
+        '<button class="comp-ai-btn companion-mini-btn" style="background:' + aiMeta.color + ';">AI: ' + aiMeta.label + '</button>' +
+        '<button class="comp-btn companion-mini-btn" style="background:' + btnColor + ';"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>' +
+      '</div>' +
+      (btnAction === 'revive' ? '<div class="companion-cost-note">부활 비용: ' + getReviveCost(cId) + 'G</div>' : '');
 
-    const aiBtn = div.querySelector('.comp-ai-btn');
+    const aiBtn = card.querySelector('.comp-ai-btn');
     if (aiBtn) {
       aiBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -259,8 +282,10 @@ function renderCompanionPanel() {
     }
 
     if (btnAction !== 'none') {
-      function handleCompBtn(e) {
-        e.preventDefault(); e.stopPropagation();
+      const actionBtn = card.querySelector('.comp-btn');
+      actionBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (btnAction === 'activate') {
           if (activeCompanions.length < 2) {
             activeCompanions.push(cId);
@@ -283,10 +308,10 @@ function renderCompanionPanel() {
         }
         renderCompanionPanel();
         autoSave();
-      }
-      div.querySelector('.comp-btn').addEventListener('click', handleCompBtn);
+      });
     }
-    content.appendChild(div);
+
+    grid.appendChild(card);
   });
 }
 
@@ -421,42 +446,29 @@ function renderSkillPanel() {
       buff: '#3498db',
       aoe: '#8e44ad',
     };
-    const badgeColor = badgeColors[skill.type] || '#888';
 
-    const div = document.createElement('div');
-    div.className = 'skill-card';
-    div.innerHTML = `
-      <div class="skill-icon-circle" style="background:${skill.iconBg || badgeColor};">
-        <span style="font-size:24px;">${skill.icon}</span>
-      </div>
+    const card = document.createElement('div');
+    card.className = 'skill-card';
+    card.innerHTML = `
+      <div class="skill-icon-circle" style="background:${skill.iconBg || '#444'}22;border:1px solid ${skill.iconBg || '#666'}55;">${skill.icon}</div>
       <div class="skill-info">
-        <div class="skill-name">${skill.name}</div>
+        <div class="skill-name">${skill.name} <span class="skill-type-badge" style="background:${badgeColors[skill.type] || '#555'}22;color:${badgeColors[skill.type] || '#ccc'};border:1px solid ${badgeColors[skill.type] || '#666'}44;">${skill.typeLabel || skill.type}</span></div>
         <div class="skill-desc">${skill.desc}</div>
-        <div class="skill-stats">
-          <span class="skill-stat mp">💧 MP ${skill.mpCost}</span>
-          <span class="skill-stat cd">⏱ ${(skill.cooldown/1000).toFixed(0)}초</span>
-          <span class="skill-type-badge" style="background:${badgeColor}33;color:${badgeColor};border:1px solid ${badgeColor}66;">${skill.typeLabel || skill.type}</span>
-          ${skill.range > 0 ? '<span class="skill-stat" style="color:#ddd;">📏 ' + skill.range + '</span>' : ''}
-        </div>
-        <div class="skill-slot-info" style="color:${slotLabel ? '#f1c40f' : '#666'};">${slotLabel ? '⚡ ' + slotLabel : '미등록'}</div>
+        ${slotLabel ? `<div class="skill-slot-info">${slotLabel}</div>` : ''}
+      </div>
+      <div class="skill-stats">
+        <div class="skill-stat mp">💧 ${skill.mpCost}</div>
+        <div class="skill-stat cd">⏱ ${(skill.cooldown/1000).toFixed(1)}s</div>
       </div>
     `;
-    content.appendChild(div);
+    content.appendChild(card);
   });
 }
 
-// ─── Quest / Village Panel UI ───────────────────────────────────────────
+// ─── Quest Panel UI ──────────────────────────────────────────────────────
 const questPanel = document.getElementById('quest-panel');
-const villagePanel = document.getElementById('village-panel');
 document.getElementById('quest-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeQuestPanel(); }, { passive: false });
 document.getElementById('quest-panel-close').addEventListener('click', closeQuestPanel);
-document.getElementById('village-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeVillagePanel(); }, { passive: false });
-document.getElementById('village-panel-close').addEventListener('click', closeVillagePanel);
-
-function getReviveCost(cId) {
-  const base = 50 + cId * 25;
-  return Math.max(10, Math.floor(base * (1 - getVillageReviveDiscount())));
-}
 
 function openQuestPanel() {
   questPanelOpen = true;
@@ -467,6 +479,109 @@ function closeQuestPanel() {
   questPanelOpen = false;
   hidePanel(questPanel);
 }
+function renderQuestPanel() {
+  const content = document.getElementById('quest-panel-content');
+  const nextDungeon = DUNGEON_INFO.find((_, idx) => !dungeonsCleared.includes(idx));
+  const currentQuest = getCurrentMainQuest();
+  const currentMainStatus = getMainQuestStatus(currentQuest);
+  const totalSubquests = SUBQUESTS.length;
+  const acceptedCount = acceptedSubquests.length;
+  const completedCount = completedSubquests.length;
+  const availableSubquests = getAvailableSubquests();
+  const acceptedDetails = getAcceptedSubquestsDetailed();
+
+  let html = '';
+
+  html += '<div class="quest-section-title">메인 진행</div>';
+  html += '<div class="quest-card primary">';
+  html += '<div class="quest-row"><span class="quest-label">현재 목표</span><span class="quest-value">' + (currentQuest ? currentQuest.title : '모든 메인 퀘스트 완료') + '</span></div>';
+  if (currentQuest) {
+    html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestOfferNpcId(currentQuest)) + '</span></div>';
+    html += '<div class="quest-row"><span class="quest-label">보고 / 보상 수령 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span></div>';
+    html += '<div class="quest-row"><span class="quest-label">상태</span><span class="quest-value">' + currentMainStatus.label + '</span></div>';
+    html += '<div class="quest-row"><span class="quest-label">설명</span><span class="quest-value">' + currentQuest.description + '</span></div>';
+    if (currentQuest.reward) {
+      html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + buildQuestRewardText(currentQuest) + '</span></div>';
+    }
+    html += '<div class="quest-desc">';
+    html += currentMainStatus.ready
+      ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
+      : ('다음 행동: ' + (currentQuest.hint || currentQuest.description));
+    html += '</div>';
+  } else {
+    html += '<div class="quest-row"><span class="quest-label">진행도</span><span class="quest-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
+    html += '<div class="quest-desc">메인 루프를 전부 완료했습니다. 동료 조합과 장비를 계속 시험해볼 수 있습니다.</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="quest-section-title">던전 진행</div>';
+  html += '<div class="quest-dungeon-list">';
+  DUNGEON_INFO.forEach((info, idx) => {
+    const cleared = dungeonsCleared.includes(idx);
+    const isNext = nextDungeon && nextDungeon.id === idx;
+    html += '<div class="quest-dungeon-item ' + (cleared ? 'done' : '') + ' ' + (isNext ? 'next' : '') + '">';
+    html += '<div class="quest-dungeon-head">';
+    html += '<div><div class="quest-dungeon-name">' + info.name + '</div><div class="quest-dungeon-meta">추천 Lv ' + info.recommendedLevel + ' · 지역 ' + info.zone + '</div></div>';
+    html += '<div class="quest-chip ' + (cleared ? 'done' : isNext ? 'active' : '') + '">' + (cleared ? '완료' : isNext ? '다음 목표' : '미완료') + '</div>';
+    html += '</div>';
+    html += '<div class="quest-dungeon-boss">보스: ' + info.bossName + ' · 패턴: ' + info.bossSkillName + '</div>';
+    html += '<div class="quest-dungeon-reward">동료 보상: ' + info.companionName + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="quest-section-title">진행 중인 서브 퀘스트</div>';
+  html += '<div class="quest-card">';
+  html += '<div class="quest-row"><span class="quest-label">수락 중</span><span class="quest-value">' + acceptedCount + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">완료</span><span class="quest-value">' + completedCount + '/' + totalSubquests + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">현재 수락 가능</span><span class="quest-value">' + availableSubquests.length + '</span></div>';
+  html += '</div>';
+
+  if (acceptedDetails.length > 0) {
+    acceptedDetails.forEach(detail => {
+      html += '<div class="quest-card">';
+      html += '<div class="quest-row"><span class="quest-label">퀘스트</span><span class="quest-value">' + detail.quest.title + '</span></div>';
+      html += '<div style="margin-bottom:4px;">' +
+        '<span class="quest-chip ' + (detail.readyToTurnIn ? 'done' : 'active') + '">' + detail.statusLabel + '</span>' +
+        '<span class="quest-chip">진행도 ' + detail.progressText + '</span>' +
+      '</div>';
+      html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + detail.offerNpcName + '</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">보고 / 보상 수령 NPC</span><span class="quest-value">' + detail.turnInNpcName + '</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + (detail.rewardText || '없음') + '</span></div>';
+      html += '<div class="quest-desc">' + detail.quest.description + '</div>';
+      html += '<div class="quest-desc" style="margin-top:4px;color:' + (detail.readyToTurnIn ? '#f1c40f' : '#9aa3b2') + ';">' +
+        (detail.readyToTurnIn
+          ? ('목표 달성 완료. ' + detail.turnInNpcName + '에게 돌아가 보상을 수령하세요.')
+          : ('아직 진행 중입니다. 완료 후 ' + detail.turnInNpcName + '에게 보고하세요.')) +
+        '</div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="quest-card"><div class="quest-desc">현재 진행 중인 서브 퀘스트가 없습니다.</div></div>';
+  }
+
+  if (availableSubquests.length > 0) {
+    html += '<div class="quest-section-title">수락 가능한 서브 퀘스트</div>';
+    availableSubquests.forEach(quest => {
+      html += '<div class="quest-card">';
+      html += '<div class="quest-row"><span class="quest-label">퀘스트</span><span class="quest-value">' + quest.title + '</span></div>';
+      html += '<div style="margin-bottom:4px;"><span class="quest-chip active">수락 가능</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestOfferNpcId(quest)) + '</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">보상 수령 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(quest)) + '</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">예상 보상</span><span class="quest-value">' + (buildQuestRewardText(quest) || '없음') + '</span></div>';
+      html += '<div class="quest-desc">' + quest.description + '</div>';
+      html += '</div>';
+    });
+  }
+
+  content.innerHTML = html;
+}
+
+// ─── Village Panel UI ────────────────────────────────────────────────────
+const villagePanel = document.getElementById('village-panel');
+document.getElementById('village-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeVillagePanel(); }, { passive: false });
+document.getElementById('village-panel-close').addEventListener('click', closeVillagePanel);
+
 function openVillagePanel() {
   villagePanelOpen = true;
   showPanel(villagePanel);
@@ -478,637 +593,40 @@ function closeVillagePanel() {
 }
 function renderVillagePanel() {
   const content = document.getElementById('village-panel-content');
-  const totalLevels = Object.values(villageUpgrades).reduce((sum, lv) => sum + lv, 0);
-  const cards = Object.values(TOWN_UPGRADES).map(upg => {
-    const lv = getVillageUpgradeLevel(upg.id);
-    const maxed = lv >= upg.maxLevel;
-    const cost = getVillageUpgradeCost(upg.id);
-    const canBuy = !maxed && player.gold >= cost;
-    return `
-      <div class="quest-card ${canBuy ? 'primary' : ''}">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-          <div style="color:#fff;font-size:12px;font-weight:bold;">${upg.icon} ${upg.name}</div>
-          <div class="quest-chip ${maxed ? 'done' : 'active'}">Lv.${lv}/${upg.maxLevel}</div>
-        </div>
-        <div class="quest-desc">${upg.bonusText}</div>
-        <div class="quest-desc" style="margin-top:4px;color:#9aa3b2;">다음 투자 비용: ${maxed ? 'MAX' : '💰 ' + cost}</div>
-        <button class="comp-btn village-upgrade-btn" data-upgrade="${upg.id}" style="margin-top:8px;background:${maxed ? '#555' : (canBuy ? '#27ae60' : '#666')};" ${maxed ? 'disabled' : ''}>${maxed ? '완료' : (canBuy ? '투자' : '골드 부족')}</button>
-      </div>
-    `;
-  }).join('');
+  const upgrades = getVillageUpgradeDefinitions();
+  const tierLabel = getVillageTierLabel();
+  const completionPct = Math.min(100, Math.round((dungeonsCleared.length / DUNGEON_INFO.length) * 100));
+  const totalUpgradeLevel = villageUpgrades.forge + villageUpgrades.guard + villageUpgrades.trade + villageUpgrades.alchemy;
 
-  content.innerHTML = `
-    <div class="quest-card primary">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <div style="color:#fff;font-size:12px;font-weight:bold;">마을 성장 단계</div>
-        <div class="quest-chip active">총 투자 Lv.${totalLevels}</div>
-      </div>
-      <div class="quest-desc">던전에서 번 골드를 마을에 투자하면 영구 보너스가 쌓인다. 이 효과는 저장되며 다음 원정에도 유지된다.</div>
-      <div style="margin-top:6px;">
-        <span class="quest-chip done">공격 +${getVillageAttackBonus()}</span>
-        <span class="quest-chip done">방어 +${getVillageDefenseBonus()}</span>
-        <span class="quest-chip done">골드 x${getVillageGoldMultiplier().toFixed(2)}</span>
-        <span class="quest-chip done">포션 x${getVillagePotionMultiplier().toFixed(2)}</span>
-      </div>
-    </div>
+  let html = '';
+  html += '<div class="quest-section-title">마을 상태</div>';
+  html += '<div class="quest-card primary">';
+  html += '<div class="quest-row"><span class="quest-label">현재 단계</span><span class="quest-value">' + tierLabel + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">던전 확보율</span><span class="quest-value">' + dungeonsCleared.length + '/' + DUNGEON_INFO.length + ' (' + completionPct + '%)</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">총 업그레이드</span><span class="quest-value">Lv 합계 ' + totalUpgradeLevel + '</span></div>';
+  html += '<div class="quest-desc">던전을 돌파할수록 마을이 성장하고, 각 시설 강화는 전투와 경제 보너스로 이어집니다.</div>';
+  html += '</div>';
 
-    <div class="quest-section-title">발전 선택지</div>
-    ${cards}
-  `;
-
-  content.querySelectorAll('.village-upgrade-btn').forEach(btn => {
-    if (btn.disabled) return;
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const id = btn.getAttribute('data-upgrade');
-      const upg = TOWN_UPGRADES[id];
-      if (!upg) return;
-      const cost = getVillageUpgradeCost(id);
-      if (player.gold < cost) {
-        showToast('골드가 부족합니다!');
-        return;
-      }
-      player.gold -= cost;
-      villageUpgrades[id] = getVillageUpgradeLevel(id) + 1;
-      AudioSystem.sfx.buy();
-      showToast(upg.name + ' 강화!');
-      updateHUD();
-      autoSave();
-      renderVillagePanel();
+  html += '<div class="quest-section-title">시설 업그레이드</div>';
+  upgrades.forEach(upgrade => {
+    const currentLevel = villageUpgrades[upgrade.key] || 0;
+    html += '<div class="village-upgrade-card">';
+    html += '<div class="village-upgrade-top">';
+    html += '<div><div class="village-upgrade-name">' + upgrade.icon + ' ' + upgrade.name + '</div><div class="village-upgrade-meta">현재 레벨 ' + currentLevel + ' / ' + upgrade.maxLevel + '</div></div>';
+    html += '<div class="quest-chip ' + (currentLevel >= upgrade.maxLevel ? 'done' : 'active') + '">' + (currentLevel >= upgrade.maxLevel ? '완료' : '진행 가능') + '</div>';
+    html += '</div>';
+    html += '<div class="quest-desc">' + upgrade.description + '</div>';
+    html += '<div class="village-benefit-list">';
+    upgrade.levels.forEach((levelInfo, idx) => {
+      const reached = currentLevel > idx;
+      html += '<div class="village-benefit-item ' + (reached ? 'reached' : '') + '">';
+      html += '<span class="village-benefit-label">Lv ' + (idx + 1) + '</span>';
+      html += '<span class="village-benefit-value">' + levelInfo.bonus + '</span>';
+      html += '</div>';
     });
-  });
-}
-function renderQuestPanel() {
-  const content = document.getElementById('quest-panel-content');
-  const nextDungeon = DUNGEON_INFO.find(info => !dungeonsCleared.includes(info.id)) || null;
-  const nextTier = getNextTier();
-  const activeQuest = typeof getMainQuest === 'function' ? getMainQuest() : null;
-  const activeSubquestList = SUBQUESTS.filter(q => acceptedSubquests.includes(q.id) && !completedSubquests.includes(q.id));
-  const activeNames = activeCompanions.map(id => DUNGEON_INFO[id] && DUNGEON_INFO[id].companionName).filter(Boolean);
-  const completionPct = Math.floor((dungeonsCleared.length / DUNGEON_INFO.length) * 100);
-
-  const mainObjectiveTitle = activeQuest ? `[메인] ${activeQuest.title}` : (nextDungeon ? `다음 던전: ${nextDungeon.name}` : '모든 던전 정복 완료');
-  const mainObjectiveDesc = activeQuest
-    ? activeQuest.description
-    : (nextDungeon
-      ? `${nextDungeon.zone} 지역의 ${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 권장 레벨은 ${nextDungeon.recommendedLevel} 이상.`
-      : '9개 던전을 모두 클리어했어. 이제는 빌드와 전투감을 더 다듬는 실험을 해볼 타이밍이다.');
-
-  const tierText = nextTier
-    ? `${nextTier.name}까지 Lv.${nextTier.reqLevel} 필요 (${Math.max(0, nextTier.reqLevel - player.level)} 남음)`
-    : '최고 티어 도달';
-
-  const companionGoal = activeCompanions.length >= 2
-    ? `편성 완료 (${activeCompanions.length}/2)`
-    : `${2 - activeCompanions.length}명 더 편성 가능`;
-
-  const activeQuestStatus = activeQuest
-    ? (activeQuest.objectiveType === 'clearDungeon'
-      ? (dungeonsCleared.includes(activeQuest.objectiveTarget) ? '조건 달성 · 보고 필요' : '던전 진행 중')
-      : '대화 필요')
-    : '모든 메인 퀘스트 완료';
-
-  const completedQuestHtml = (completedMainQuests || []).length > 0
-    ? completedMainQuests.map(id => {
-        const quest = MAIN_QUESTS.find(q => q.id === id);
-        return quest ? `<div class="quest-desc">✅ ${quest.title}</div>` : '';
-      }).join('')
-    : '<div class="quest-desc">아직 완료한 메인 퀘스트가 없다.</div>';
-
-  const subquestHtml = activeSubquestList.length > 0
-    ? activeSubquestList.map(q => `<div class="quest-desc">📝 ${q.title} <span style="color:#f1c40f;">(${buildSubquestProgressText(q)})</span></div>`).join('')
-    : '<div class="quest-desc">진행 중인 서브퀘스트가 없다. 경비병이나 현자, 촌장과 대화해보자.</div>';
-
-  const dungeonRoadmapHtml = DUNGEON_INFO.map(info => {
-    const cleared = dungeonsCleared.includes(info.id);
-    const isNext = nextDungeon && nextDungeon.id === info.id;
-    const statusClass = cleared ? 'done' : (isNext ? 'next' : '');
-    const statusChip = cleared
-      ? '<span class="quest-chip done">클리어</span>'
-      : (isNext ? '<span class="quest-chip active">다음 목표</span>' : '<span class="quest-chip warn">대기</span>');
-    const levelGap = Math.max(0, info.recommendedLevel - player.level);
-    const levelText = levelGap === 0 ? '입장 적정' : `권장까지 ${levelGap} Lv 남음`;
-    return `
-      <div class="quest-dungeon-item ${statusClass}">
-        <div class="quest-dungeon-head">
-          <div>
-            <div class="quest-dungeon-name">${info.id + 1}. ${info.name}</div>
-            <div class="quest-dungeon-meta">${info.zone} · 권장 Lv.${info.recommendedLevel}</div>
-          </div>
-          <div>${statusChip}</div>
-        </div>
-        <div class="quest-dungeon-boss">보스: <span style="color:${info.bossColor};font-weight:bold;">${info.bossName}</span> · ATK ${info.bossAtk} · HP ${info.bossHp}</div>
-        <div class="quest-dungeon-reward">보상 동료: <span style="color:${info.companionColor};font-weight:bold;">${info.companionName}</span></div>
-        ${!cleared ? '<div class="quest-dungeon-meta">현재 상태: ' + levelText + '</div>' : ''}
-      </div>
-    `;
-  }).join('');
-
-  content.innerHTML = `
-    <div class="quest-card primary">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <div style="color:#fff;font-size:12px;font-weight:bold;">${mainObjectiveTitle}</div>
-        <div class="quest-chip active">${activeQuest ? '진행 중' : '완료'}</div>
-      </div>
-      <div class="quest-desc">${mainObjectiveDesc}</div>
-      <div style="margin-top:6px;">
-        <span class="quest-chip ${activeQuest ? 'warn' : 'done'}">${activeQuestStatus}</span>
-        <span class="quest-chip ${currentMap === 'town' ? 'warn' : 'active'}">현재 위치: ${currentMap === 'town' ? '마을' : currentMap === 'field' ? '필드' : '던전'}</span>
-        ${nextDungeon ? '<span class="quest-chip ' + (player.level >= nextDungeon.recommendedLevel ? 'done' : 'warn') + '">권장 Lv.' + nextDungeon.recommendedLevel + '</span>' : ''}
-      </div>
-    </div>
-
-    <div class="quest-section-title">메인 퀘스트 로그</div>
-    <div class="quest-card">
-      ${completedQuestHtml}
-      ${activeQuest ? '<div class="quest-desc" style="margin-top:6px;color:#f1c40f;">▶ 현재 목표: ' + activeQuest.description + '</div>' : ''}
-    </div>
-
-    <div class="quest-section-title">서브퀘스트</div>
-    <div class="quest-card">
-      ${subquestHtml}
-      <div class="quest-desc" style="margin-top:6px;color:#9aa3b2;">NPC 요청은 수락 후 조건을 달성하고 다시 말을 걸어야 완료된다.</div>
-    </div>
-
-    <div class="quest-section-title">탐험 진행도</div>
-    <div class="quest-card">
-      <div class="quest-row">
-        <span class="quest-label">던전 클리어</span>
-        <span class="quest-value">${dungeonsCleared.length}/${DUNGEON_INFO.length} (${completionPct}%)</span>
-      </div>
-      <div class="quest-row">
-        <span class="quest-label">획득 동료</span>
-        <span class="quest-value">${companions.length}/${DUNGEON_INFO.length}</span>
-      </div>
-      <div class="quest-row">
-        <span class="quest-label">활성 동료</span>
-        <span class="quest-value">${companionGoal}</span>
-      </div>
-      <div class="quest-row">
-        <span class="quest-label">다음 티어</span>
-        <span class="quest-value">${tierText}</span>
-      </div>
-    </div>
-
-    <div class="quest-section-title">현재 파티 메모</div>
-    <div class="quest-card">
-      <div class="quest-desc">${activeNames.length > 0 ? '활성 동료: ' + activeNames.join(', ') : '아직 활성 동료가 없어. 던전을 클리어하고 동료 패널에서 최대 2명까지 편성해봐.'}</div>
-      ${deadCompanions.length > 0 ? '<div class="quest-desc" style="color:#e74c3c;">쓰러진 동료 ' + deadCompanions.length + '명 있음. 마을 신전에서 부활 가능.</div>' : ''}
-      <div style="margin-top:4px;">
-        <span class="quest-chip ${player.gold >= 100 ? 'done' : 'warn'}">골드 ${player.gold}</span>
-        <span class="quest-chip ${nextDungeon && player.level >= nextDungeon.recommendedLevel ? 'done' : 'warn'}">Lv.${player.level}</span>
-      </div>
-    </div>
-
-    <div class="quest-section-title">던전 로드맵</div>
-    <div class="quest-dungeon-list">
-      ${dungeonRoadmapHtml}
-    </div>
-
-    <div class="quest-section-title">추천 다음 행동</div>
-    <div class="quest-card">
-      <div class="quest-desc">1. 촌장/현자 등 퀘스트 NPC와 대화</div>
-      <div class="quest-desc">2. 마을에서 장비/포션 점검</div>
-      <div class="quest-desc">3. 필드에서 포탈 탐색 후 던전 공략</div>
-      <div class="quest-desc">4. 클리어 후 다시 보고하여 보상 획득</div>
-    </div>
-  `;
-}
-
-
-// ─── Inventory UI ────────────────────────────────────────────────────────────
-const invPanel = document.getElementById('inventory-panel');
-let invOpen = false;
-let shopOpen = false;
-
-invPanel.querySelector('.inv-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeInventory(); }, { passive: false });
-invPanel.querySelector('.inv-close').addEventListener('click', closeInventory);
-
-function openInventory() {
-  if (shopOpen) return;
-  invOpen = true;
-  showPanel(invPanel);
-  renderInventory();
-}
-
-function toggleInventory() {
-  if (shopOpen) return;
-  if (invOpen) {
-    closeInventory();
-  } else {
-    invOpen = true;
-    showPanel(invPanel);
-    renderInventory();
-  }
-}
-
-function closeInventory() {
-  invOpen = false;
-  hidePanel(invPanel);
-}
-
-function renderInventory() {
-  // Update equipment slots on silhouette
-  const slotMap = {
-    helmet: 'eq-helmet', weapon: 'eq-weapon', armor: 'eq-armor',
-    shield: 'eq-shield', boots: 'eq-boots', accessory1: 'eq-acc1',
-    accessory2: 'eq-acc2', event: 'eq-event'
-  };
-  const defaultIcons = {
-    helmet: '⛑️', weapon: '🗡️', armor: '🧥', shield: '🛡️',
-    boots: '👢', accessory1: '💍', accessory2: '💍', event: '🍀'
-  };
-
-  Object.keys(slotMap).forEach(key => {
-    const el = document.getElementById(slotMap[key]);
-    const eqId = equipped[key];
-    if (eqId && ITEMS[eqId]) {
-      el.textContent = ITEMS[eqId].icon;
-      el.classList.add('equipped');
-    } else {
-      el.textContent = defaultIcons[key];
-      el.classList.remove('equipped');
-    }
+    html += '</div>';
+    html += '</div>';
   });
 
-  // Setup click handlers for equipment slots (to unequip)
-  Object.keys(slotMap).forEach(key => {
-    const el = document.getElementById(slotMap[key]);
-    el.onclick = null;
-    const eqId = equipped[key];
-    if (eqId && ITEMS[eqId]) {
-      el.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        showItemPopup(eqId, -1, key);
-      };
-    }
-  });
-
-  // Render bag grid (icons only)
-  const bagGrid = document.getElementById('bag-grid');
-  bagGrid.innerHTML = '';
-  document.getElementById('bag-count').textContent = inventory.length;
-
-  if (inventory.length === 0) {
-    bagGrid.innerHTML = '<div style="color:#666;font-size:9px;grid-column:1/-1;text-align:center;padding:10px;">아이템 없음</div>';
-    return;
-  }
-
-  function isItemEquipped(itemId) {
-    const allSlots = EQUIP_SLOTS;
-    return allSlots.some(s => equipped[s] === itemId);
-  }
-
-  inventory.forEach((itemId, idx) => {
-    const item = ITEMS[itemId];
-    if (!item) return;
-    const isEq = isItemEquipped(itemId);
-    const cell = document.createElement('div');
-    cell.className = 'bag-cell' + (isEq ? ' equipped-mark' : '') + (item.type === 'potion' ? ' potion-cell' : '');
-    cell.textContent = item.icon;
-
-    function handleCellClick(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      showItemPopup(itemId, idx, null);
-    }
-    cell.addEventListener('click', handleCellClick);
-    bagGrid.appendChild(cell);
-  });
+  content.innerHTML = html;
 }
-
-function showItemPopup(itemId, invIdx, equippedSlotKey) {
-  const item = ITEMS[itemId];
-  if (!item) return;
-  const popup = document.getElementById('item-popup');
-  const content = document.getElementById('popup-content');
-
-  const isEquipped = equippedSlotKey !== null;
-  const isPotion = item.type === 'potion';
-
-  // Type labels
-  const typeLabels = { weapon:'무기', armor:'갑옷', helmet:'투구', boots:'장화', shield:'방패', accessory:'장신구', event:'이벤트', potion:'소비' };
-  const typeLabel = typeLabels[item.type] || item.type;
-
-  // Build stat list for an item
-  function getStatLines(it) {
-    const lines = [];
-    if (it.atk > 0) lines.push({ label: '공격력', val: '+' + it.atk });
-    if (it.def > 0) lines.push({ label: '방어력', val: '+' + it.def });
-    if (it.speedBonus) lines.push({ label: '속도', val: '+' + it.speedBonus });
-    if (it.critBonus) lines.push({ label: '크리티컬', val: '+' + it.critBonus + '%' });
-    if (it.goldBonus) lines.push({ label: '골드보너스', val: '+' + it.goldBonus + '%' });
-    if (it.heal) lines.push({ label: 'HP회복', val: '+' + it.heal });
-    return lines;
-  }
-
-  // Find what's currently equipped in the same slot type
-  function findEquipSlotForType(itemType) {
-    if (itemType === 'weapon') return 'weapon';
-    if (itemType === 'armor') return 'armor';
-    if (itemType === 'helmet') return 'helmet';
-    if (itemType === 'boots') return 'boots';
-    if (itemType === 'shield') return 'shield';
-    if (itemType === 'event') return 'event';
-    if (itemType === 'accessory') return equipped.accessory1 ? 'accessory1' : 'accessory2';
-    return null;
-  }
-
-  let compareHtml = '';
-  if (!isPotion && !isEquipped) {
-    const targetSlot = findEquipSlotForType(item.type);
-    const currentEqId = targetSlot ? equipped[targetSlot] : null;
-    const currentItem = currentEqId ? ITEMS[currentEqId] : null;
-
-    if (currentItem) {
-      const newStats = getStatLines(item);
-      const curStats = getStatLines(currentItem);
-
-      // Collect all stat keys
-      const allLabels = [...new Set([...newStats.map(s=>s.label), ...curStats.map(s=>s.label)])];
-
-      function getNumVal(stats, label) {
-        const s = stats.find(x => x.label === label);
-        if (!s) return 0;
-        return parseFloat(s.val.replace(/[^0-9.]/g, '')) || 0;
-      }
-
-      let curRows = '';
-      let newRows = '';
-      allLabels.forEach(label => {
-        const cv = getNumVal(curStats, label);
-        const nv = getNumVal(newStats, label);
-        const cls = nv > cv ? 'better' : nv < cv ? 'worse' : 'same';
-        curRows += '<div class="popup-stat-row"><span class="label">' + label + '</span><span class="val">' + (cv > 0 ? '+' + cv : '0') + '</span></div>';
-        newRows += '<div class="popup-stat-row"><span class="label">' + label + '</span><span class="val ' + cls + '">' + (nv > 0 ? '+' + nv : '0') + (nv > cv ? ' ▲' : nv < cv ? ' ▼' : '') + '</span></div>';
-      });
-
-      compareHtml = '<div class="popup-compare">' +
-        '<div class="popup-stat-box current"><div class="popup-stat-title">현재: ' + currentItem.icon + ' ' + currentItem.name + '</div>' + curRows + '</div>' +
-        '<div class="popup-stat-box new-item"><div class="popup-stat-title">선택: ' + item.icon + ' ' + item.name + '</div>' + newRows + '</div>' +
-        '</div>';
-    } else {
-      // No current equipment, just show new item stats
-      const newStats = getStatLines(item);
-      let rows = '';
-      newStats.forEach(s => {
-        rows += '<div class="popup-stat-row"><span class="label">' + s.label + '</span><span class="val better">' + s.val + '</span></div>';
-      });
-      compareHtml = '<div class="popup-stat-box new-item" style="margin-bottom:8px;"><div class="popup-stat-title">스탯</div>' + rows + '</div>';
-    }
-  } else if (isPotion) {
-    compareHtml = '<div class="popup-stat-box" style="margin-bottom:8px;border-color:rgba(231,76,60,0.3);"><div class="popup-stat-title">효과</div>' +
-      '<div class="popup-stat-row"><span class="label">HP 회복</span><span class="val better">+' + item.heal + '</span></div>' +
-      '</div>';
-  } else if (isEquipped) {
-    // Viewing equipped item
-    const stats = getStatLines(item);
-    let rows = '';
-    stats.forEach(s => {
-      rows += '<div class="popup-stat-row"><span class="label">' + s.label + '</span><span class="val">' + s.val + '</span></div>';
-    });
-    compareHtml = '<div class="popup-stat-box" style="margin-bottom:8px;border-color:rgba(241,196,15,0.3);"><div class="popup-stat-title">장착 중</div>' + rows + '</div>';
-  }
-
-  // Buttons
-  let btnsHtml = '';
-  if (isEquipped) {
-    btnsHtml = '<button class="popup-btn unequip" id="popup-action">해제</button><button class="popup-btn close" id="popup-close-btn">닫기</button>';
-  } else if (isPotion) {
-    btnsHtml = '<button class="popup-btn use" id="popup-action">사용</button><button class="popup-btn close" id="popup-close-btn">닫기</button>';
-  } else {
-    btnsHtml = '<button class="popup-btn equip" id="popup-action">장착</button><button class="popup-btn close" id="popup-close-btn">닫기</button>';
-  }
-
-  content.innerHTML =
-    '<div class="popup-item-header">' +
-      '<div class="popup-icon">' + item.icon + '</div>' +
-      '<div><div class="popup-name">' + item.name + '</div><div class="popup-type">' + typeLabel + (item.price > 0 ? ' · ' + item.price + 'G' : '') + '</div></div>' +
-    '</div>' +
-    compareHtml +
-    '<div class="popup-btns">' + btnsHtml + '</div>';
-
-  popup.style.display = 'flex';
-
-  // Action button handler
-  document.getElementById('popup-action').onclick = (e) => {
-    e.preventDefault();
-    if (isEquipped && equippedSlotKey) {
-      unequipItem(equippedSlotKey);
-      AudioSystem.sfx.buttonClick();
-    } else if (isPotion) {
-      const healAmt = Math.min(item.heal, player.maxHp - player.hp);
-      player.hp = Math.min(player.hp + item.heal, player.maxHp);
-      inventory.splice(invIdx, 1);
-      addParticles(player.x, player.y, '#e74c3c', 10);
-      if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
-      AudioSystem.sfx.heal();
-      updateHUD();
-    } else {
-      equipItem(itemId);
-      AudioSystem.sfx.buttonClick();
-    }
-    popup.style.display = 'none';
-    renderInventory();
-    autoSave();
-  };
-
-  // Close button and backdrop
-  document.getElementById('popup-close-btn').onclick = (e) => {
-    e.preventDefault();
-    popup.style.display = 'none';
-  };
-  popup.onclick = (e) => {
-    if (e.target === popup) popup.style.display = 'none';
-  };
-}
-
-function equipItem(itemId) {
-  const item = ITEMS[itemId];
-  if (!item) return;
-  let slot = null;
-  if (item.type === 'weapon') slot = 'weapon';
-  else if (item.type === 'armor') slot = 'armor';
-  else if (item.type === 'helmet') slot = 'helmet';
-  else if (item.type === 'boots') slot = 'boots';
-  else if (item.type === 'shield') slot = 'shield';
-  else if (item.type === 'event') slot = 'event';
-  else if (item.type === 'accessory') {
-    if (!equipped.accessory1) slot = 'accessory1';
-    else if (!equipped.accessory2) slot = 'accessory2';
-    else slot = 'accessory1';
-  }
-  if (slot) equipped[slot] = itemId;
-}
-
-function unequipItem(slot) {
-  equipped[slot] = null;
-}
-
-// ─── Shop UI ─────────────────────────────────────────────────────────────────
-const shopPanel = document.getElementById('shop-panel');
-const shopItemsList = document.getElementById('shop-items-list');
-const shopSellList = document.getElementById('shop-sell-list');
-let shopTab = 'buy';
-
-document.getElementById('shop-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeShop(); }, { passive: false });
-document.getElementById('shop-close').addEventListener('click', closeShop);
-
-// Shop tabs
-document.getElementById('shop-tab-buy').addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('buy'); }, { passive: false });
-document.getElementById('shop-tab-buy').addEventListener('click', () => switchShopTab('buy'));
-document.getElementById('shop-tab-sell').addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('sell'); }, { passive: false });
-document.getElementById('shop-tab-sell').addEventListener('click', () => switchShopTab('sell'));
-
-function switchShopTab(tab) {
-  shopTab = tab;
-  document.getElementById('shop-tab-buy').classList.toggle('active', tab === 'buy');
-  document.getElementById('shop-tab-sell').classList.toggle('active', tab === 'sell');
-  document.getElementById('shop-buy-section').style.display = tab === 'buy' ? 'block' : 'none';
-  document.getElementById('shop-sell-section').style.display = tab === 'sell' ? 'block' : 'none';
-  if (tab === 'sell') renderShopSell();
-  else renderShop();
-}
-
-let currentShopNpc = null;
-
-function openShop(npc) {
-  if (invOpen) return;
-  currentShopNpc = npc;
-  shopOpen = true;
-  shopTab = 'buy';
-  showPanel(shopPanel);
-  shopPanel.querySelector('.inv-header h2').textContent = '🏪 ' + npc.name;
-  document.getElementById('shop-tab-buy').classList.add('active');
-  document.getElementById('shop-tab-sell').classList.remove('active');
-  document.getElementById('shop-buy-section').style.display = 'block';
-  document.getElementById('shop-sell-section').style.display = 'none';
-  renderShop();
-}
-
-function closeShop() {
-  shopOpen = false;
-  currentShopNpc = null;
-  hidePanel(shopPanel);
-}
-
-function buildStatText(item) {
-  let statText = '';
-  if (item.type === 'potion') {
-    statText = '회복: ' + item.heal + ' HP';
-  } else if (item.atk > 0 && item.def > 0) {
-    statText = '공격 +' + item.atk + ' / 방어 +' + item.def;
-  } else if (item.type === 'weapon') {
-    statText = '공격력 +' + item.atk;
-  } else if (item.def > 0) {
-    statText = '방어력 +' + item.def;
-  }
-  if (item.speedBonus) statText += (statText ? ' / ' : '') + '속도 +' + item.speedBonus;
-  if (item.critBonus) statText += (statText ? ' / ' : '') + '크리 +' + item.critBonus + '%';
-  if (item.goldBonus) statText += (statText ? ' / ' : '') + '골드 +' + item.goldBonus + '%';
-  return statText;
-}
-
-function renderShop() {
-  document.getElementById('shop-gold').textContent = player.gold;
-  shopItemsList.innerHTML = '';
-  if (!currentShopNpc) return;
-
-  currentShopNpc.shopItems.forEach(itemId => {
-    const item = ITEMS[itemId];
-    if (!item) return;
-    const owned = inventory.filter(i => i === itemId).length;
-    const canAfford = player.gold >= item.price;
-    const div = document.createElement('div');
-    div.className = 'shop-item';
-    const statText = buildStatText(item);
-    div.innerHTML = `
-      <div class="icon">${item.icon}</div>
-      <div class="name">${item.name}</div>
-      <div class="stat">${statText}</div>
-      <div class="price">💰 ${item.price} 골드</div>
-      <button class="btn" ${canAfford ? '' : 'disabled'}>${canAfford ? '구매' : '골드 부족'}</button>
-      ${owned > 0 ? '<div class="owned">보유: ' + owned + '개</div>' : ''}
-    `;
-    if (canAfford) {
-      div.querySelector('.btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        buyItem(itemId);
-      });
-    }
-    shopItemsList.appendChild(div);
-  });
-}
-
-function renderShopSell() {
-  document.getElementById('shop-gold').textContent = player.gold;
-  shopSellList.innerHTML = '';
-
-  if (inventory.length === 0) {
-    shopSellList.innerHTML = '<div style="color:#888;padding:20px;text-align:center;grid-column:1/-1;">판매할 아이템이 없습니다</div>';
-    return;
-  }
-
-  inventory.forEach((itemId, idx) => {
-    const item = ITEMS[itemId];
-    if (!item) return;
-    const allSlots = EQUIP_SLOTS;
-    const isEquipped = allSlots.some(s => equipped[s] === itemId);
-    const sellPrice = Math.max(1, Math.floor(item.price * 0.5));
-
-    const div = document.createElement('div');
-    div.className = 'shop-item';
-    const statText = buildStatText(item);
-
-    const btnLabel = isEquipped ? '장착중' : '판매';
-    div.innerHTML = `
-      <div class="icon">${item.icon}</div>
-      <div class="name">${item.name}</div>
-      <div class="stat">${statText}</div>
-      <div class="price">💰 ${sellPrice} 골드</div>
-      <button class="btn" ${isEquipped ? 'disabled' : ''} style="${!isEquipped ? 'background:linear-gradient(180deg,#e74c3c,#c0392b);' : ''}">${btnLabel}</button>
-    `;
-    if (!isEquipped) {
-      div.querySelector('.btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        sellItem(idx);
-      });
-    }
-    shopSellList.appendChild(div);
-  });
-}
-
-function buyItem(itemId) {
-  const item = ITEMS[itemId];
-  if (!item || player.gold < item.price) return;
-  player.gold -= item.price;
-  inventory.push(itemId);
-  AudioSystem.sfx.buy();
-  updateHUD();
-  renderShop();
-  addParticles(player.x, player.y, '#f1c40f', 8);
-  autoSave();
-}
-
-function sellItem(idx) {
-  if (idx < 0 || idx >= inventory.length) return;
-  const itemId = inventory[idx];
-  const item = ITEMS[itemId];
-  if (!item) return;
-  const allSlots = EQUIP_SLOTS;
-  const isEquipped = allSlots.some(s => equipped[s] === itemId);
-  if (isEquipped) return;
-  const sellPrice = Math.max(1, Math.floor(item.price * 0.5));
-  player.gold += sellPrice;
-  totalGoldEarned += sellPrice;
-  inventory.splice(idx, 1);
-  AudioSystem.sfx.sell();
-  updateHUD();
-  renderShopSell();
-  addParticles(player.x, player.y, '#f1c40f', 6);
-  showToast(item.name + ' 판매! +' + sellPrice + '골드');
-  autoSave();
-}
-

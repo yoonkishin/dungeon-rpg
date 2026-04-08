@@ -450,9 +450,129 @@ const SUBQUESTS = [
 let acceptedSubquests = [];
 let completedSubquests = [];
 let subquestProgress = {};
+let questRealtimeNoticeState = {
+  mainReadyQuestId: null,
+  subReadyQuestIds: {},
+  snapshot: ''
+};
 
 function getMainQuest() {
   return MAIN_QUESTS[mainQuestIndex] || null;
+}
+
+function getCurrentMainQuest() {
+  return getMainQuest();
+}
+
+function getQuestNpcById(id) {
+  return TOWN_NPCS.find(npc => npc.id === id) || NPCS.find(npc => npc.id === id) || null;
+}
+
+function getQuestNpcName(id) {
+  const npc = getQuestNpcById(id);
+  return npc ? npc.name : '알 수 없음';
+}
+
+function getQuestOfferNpcId(quest) {
+  if (!quest) return null;
+  return quest.offerNpcId || quest.npcId || quest.targetNpcId || null;
+}
+
+function getQuestTurnInNpcId(quest) {
+  if (!quest) return null;
+  return quest.turnInNpcId || quest.npcId || quest.targetNpcId || null;
+}
+
+function getMainQuestStatus(quest) {
+  if (!quest) return { label:'완료', ready:false };
+  if (isMainQuestObjectiveMet(quest)) return { label:'완료 - 보고 필요', ready:true };
+  if (quest.objectiveType === 'talk') return { label:'대화 필요', ready:false };
+  if (quest.objectiveType === 'clearDungeon') return { label:'던전 공략 중', ready:false };
+  return { label:'진행 중', ready:false };
+}
+
+function getSubquestStatus(quest) {
+  if (!quest) return { label:'알 수 없음', ready:false };
+  if (isSubquestObjectiveMet(quest)) return { label:'완료 - 보고 필요', ready:true };
+  return { label:'진행 중', ready:false };
+}
+
+function getAvailableSubquests() {
+  return SUBQUESTS.filter(quest => isSubquestAvailable(quest) && !isSubquestAccepted(quest.id));
+}
+
+function getAcceptedSubquestsDetailed() {
+  return acceptedSubquests.map(id => SUBQUESTS.find(quest => quest.id === id)).filter(Boolean).map(quest => {
+    const status = getSubquestStatus(quest);
+    return {
+      quest,
+      offerNpcName: getQuestNpcName(getQuestOfferNpcId(quest)),
+      turnInNpcName: getQuestNpcName(getQuestTurnInNpcId(quest)),
+      progressText: buildSubquestProgressText(quest),
+      rewardText: buildQuestRewardText(quest),
+      statusLabel: status.label,
+      readyToTurnIn: status.ready,
+    };
+  });
+}
+
+function buildQuestRealtimeSnapshot() {
+  const mainQuest = getMainQuest();
+  const mainReady = mainQuest && isMainQuestObjectiveMet(mainQuest) ? '1' : '0';
+  const subState = acceptedSubquests.map(id => {
+    const quest = SUBQUESTS.find(q => q.id === id);
+    if (!quest) return id + ':0';
+    return id + ':' + (isSubquestObjectiveMet(quest) ? '1' : '0') + ':' + buildSubquestProgressText(quest);
+  }).join('|');
+  return [
+    mainQuest ? mainQuest.id : 'none',
+    mainReady,
+    acceptedSubquests.slice().sort().join(','),
+    completedSubquests.slice().sort().join(','),
+    subState
+  ].join('||');
+}
+
+function updateQuestRealtimeStatus() {
+  const mainQuest = getMainQuest();
+  if (mainQuest && isMainQuestObjectiveMet(mainQuest)) {
+    if (questRealtimeNoticeState.mainReadyQuestId !== mainQuest.id) {
+      questRealtimeNoticeState.mainReadyQuestId = mainQuest.id;
+      if (typeof showToast === 'function') {
+        showToast('메인 퀘스트 완료! ' + getQuestNpcName(getQuestTurnInNpcId(mainQuest)) + '에게 보고하세요');
+      }
+    }
+  } else {
+    questRealtimeNoticeState.mainReadyQuestId = null;
+  }
+
+  const activeAcceptedIds = new Set(acceptedSubquests);
+  Object.keys(questRealtimeNoticeState.subReadyQuestIds).forEach(id => {
+    if (!activeAcceptedIds.has(id)) delete questRealtimeNoticeState.subReadyQuestIds[id];
+  });
+
+  acceptedSubquests.forEach(id => {
+    const quest = SUBQUESTS.find(q => q.id === id);
+    if (!quest) return;
+    if (isSubquestObjectiveMet(quest)) {
+      if (!questRealtimeNoticeState.subReadyQuestIds[id]) {
+        questRealtimeNoticeState.subReadyQuestIds[id] = true;
+        if (typeof showToast === 'function') {
+          showToast('서브 퀘스트 완료! ' + getQuestNpcName(getQuestTurnInNpcId(quest)) + '에게 보고하세요');
+        }
+      }
+    } else {
+      delete questRealtimeNoticeState.subReadyQuestIds[id];
+    }
+  });
+
+  const snapshot = buildQuestRealtimeSnapshot();
+  if (snapshot !== questRealtimeNoticeState.snapshot) {
+    questRealtimeNoticeState.snapshot = snapshot;
+    if (typeof questPanelOpen !== 'undefined' && questPanelOpen && typeof renderQuestPanel === 'function') {
+      renderQuestPanel();
+    }
+  }
 }
 
 function isMainQuestObjectiveMet(quest, npcId) {
