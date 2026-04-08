@@ -28,6 +28,9 @@ function autoSave() {
       mainQuestIndex: mainQuestIndex,
       completedMainQuests: completedMainQuests.slice(),
       villageUpgrades: { ...villageUpgrades },
+      acceptedSubquests: acceptedSubquests.slice(),
+      completedSubquests: completedSubquests.slice(),
+      subquestProgress: JSON.parse(JSON.stringify(subquestProgress)),
     };
     localStorage.setItem('rpg_save_data', JSON.stringify(saveData));
   } catch(ex) {
@@ -124,6 +127,9 @@ function loadSave() {
         alchemy: data.villageUpgrades.alchemy || 0,
       };
     }
+    acceptedSubquests = Array.isArray(data.acceptedSubquests) ? data.acceptedSubquests.slice() : [];
+    completedSubquests = Array.isArray(data.completedSubquests) ? data.completedSubquests.slice() : [];
+    subquestProgress = data.subquestProgress && typeof data.subquestProgress === 'object' ? data.subquestProgress : {};
 
     // If saved in dungeon, rebuild it
     if (currentMap === 'dungeon' && currentDungeonId >= 0) {

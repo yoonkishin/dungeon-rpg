@@ -515,6 +515,7 @@ function renderQuestPanel() {
   const nextDungeon = DUNGEON_INFO.find(info => !dungeonsCleared.includes(info.id)) || null;
   const nextTier = getNextTier();
   const activeQuest = typeof getMainQuest === 'function' ? getMainQuest() : null;
+  const activeSubquestList = SUBQUESTS.filter(q => acceptedSubquests.includes(q.id) && !completedSubquests.includes(q.id));
   const activeNames = activeCompanions.map(id => DUNGEON_INFO[id] && DUNGEON_INFO[id].companionName).filter(Boolean);
   const completionPct = Math.floor((dungeonsCleared.length / DUNGEON_INFO.length) * 100);
 
@@ -545,6 +546,10 @@ function renderQuestPanel() {
         return quest ? `<div class="quest-desc">✅ ${quest.title}</div>` : '';
       }).join('')
     : '<div class="quest-desc">아직 완료한 메인 퀘스트가 없다.</div>';
+
+  const subquestHtml = activeSubquestList.length > 0
+    ? activeSubquestList.map(q => `<div class="quest-desc">📝 ${q.title} <span style="color:#f1c40f;">(${buildSubquestProgressText(q)})</span></div>`).join('')
+    : '<div class="quest-desc">진행 중인 서브퀘스트가 없다. 경비병이나 현자, 촌장과 대화해보자.</div>';
 
   const dungeonRoadmapHtml = DUNGEON_INFO.map(info => {
     const cleared = dungeonsCleared.includes(info.id);
@@ -589,6 +594,12 @@ function renderQuestPanel() {
     <div class="quest-card">
       ${completedQuestHtml}
       ${activeQuest ? '<div class="quest-desc" style="margin-top:6px;color:#f1c40f;">▶ 현재 목표: ' + activeQuest.description + '</div>' : ''}
+    </div>
+
+    <div class="quest-section-title">서브퀘스트</div>
+    <div class="quest-card">
+      ${subquestHtml}
+      <div class="quest-desc" style="margin-top:6px;color:#9aa3b2;">NPC 요청은 수락 후 조건을 달성하고 다시 말을 걸어야 완료된다.</div>
     </div>
 
     <div class="quest-section-title">탐험 진행도</div>

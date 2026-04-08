@@ -306,6 +306,51 @@ function getVillageReviveDiscount() {
   return Math.min(0.5, getVillageUpgradeLevel('alchemy') * 0.1);
 }
 
+const SUBQUESTS = [
+  {
+    id: 'guard_patrol',
+    npcId: 'guard',
+    title: '경비병의 정찰 의뢰',
+    objectiveType: 'killEnemies',
+    targetAmount: 12,
+    prereqMainQuestIndex: 1,
+    description: '필드와 던전에서 적 12마리를 처치하고 경비병에게 보고하자.',
+    offerLines: ['요즘 필드 주변이 더 시끄럽습니다.', '밖으로 나가 적 12마리만 정리해주시면 방비에 큰 도움이 됩니다.'],
+    progressLines: ['정찰 임무는 아직 진행 중입니다.', '필드와 던전 어디서든 적을 처치하면 됩니다.'],
+    completionLines: ['좋습니다. 경계선이 훨씬 조용해졌군요.', '이 보급품을 챙겨가십시오. 다음 원정에 도움이 될 겁니다.'],
+    reward: { gold: 140, items: ['potion_hp2'] }
+  },
+  {
+    id: 'sage_survey',
+    npcId: 'sage',
+    title: '현자의 탐사 기록',
+    objectiveType: 'clearDungeonCount',
+    targetAmount: 2,
+    prereqMainQuestIndex: 2,
+    description: '새로운 던전 2곳을 정리하고 현자에게 지도를 갱신받자.',
+    offerLines: ['던전의 흐름을 더 정확히 알고 싶군.', '앞으로 2개의 던전을 더 정리해주면 내 기록을 보강해 주지.'],
+    progressLines: ['기록은 아직 완성되지 않았네.', '새로운 던전을 더 정리하고 돌아오게.'],
+    completionLines: ['좋군. 던전의 패턴이 훨씬 또렷해졌어.', '이제 더 깊은 곳도 대비할 수 있겠네.'],
+    reward: { gold: 180, items: ['ring_atk'] }
+  },
+  {
+    id: 'chief_companions',
+    npcId: 'chief',
+    title: '원정대 보강',
+    objectiveType: 'companionCount',
+    targetAmount: 3,
+    prereqMainQuestIndex: 4,
+    description: '동료를 3명 이상 확보해 촌장에게 원정대 구성을 보고하자.',
+    offerLines: ['자네도 이제 제법 이름이 알려졌네.', '동료를 셋 이상 모아 진짜 원정대답게 꾸려보게.'],
+    progressLines: ['원정대는 아직 부족하네.', '던전을 더 정리해서 믿을 만한 동료를 모아오게.'],
+    completionLines: ['훌륭하군. 이제 마을도 자네를 정식 원정대로 인정할 걸세.', '새 장비 한 점 마련할 수 있도록 지원금을 주지.'],
+    reward: { gold: 260, items: ['shield1'] }
+  }
+];
+let acceptedSubquests = [];
+let completedSubquests = [];
+let subquestProgress = {};
+
 function getMainQuest() {
   return MAIN_QUESTS[mainQuestIndex] || null;
 }
@@ -361,6 +406,97 @@ function tryCompleteMainQuest(npcId) {
   };
 }
 
+function isSubquestAccepted(id) {
+  return acceptedSubquests.includes(id);
+}
+
+function isSubquestCompleted(id) {
+  return completedSubquests.includes(id);
+}
+
+function isSubquestAvailable(quest) {
+  if (!quest) return false;
+  if (isSubquestCompleted(quest.id)) return false;
+  if (quest.prereqMainQuestIndex !== undefined && mainQuestIndex < quest.prereqMainQuestIndex) return false;
+  return true;
+}
+
+function getNpcSubquest(npcId) {
+  return SUBQUESTS.find(q => q.npcId === npcId && isSubquestAvailable(q)) || null;
+}
+
+function acceptSubquest(quest) {
+  if (!quest || isSubquestAccepted(quest.id)) return;
+  acceptedSubquests.push(quest.id);
+  const progress = {};
+  if (quest.objectiveType === 'killEnemies') progress.startKills = totalEnemiesKilled;
+  if (quest.objectiveType === 'clearDungeonCount') progress.startDungeons = dungeonsCleared.length;
+  if (quest.objectiveType === 'companionCount') progress.startCompanions = companions.length;
+  subquestProgress[quest.id] = progress;
+  if (typeof autoSave === 'function') autoSave();
+}
+
+function getSubquestProgressValue(quest) {
+  const progress = subquestProgress[quest.id] || {};
+  if (quest.objectiveType === 'killEnemies') return Math.max(0, totalEnemiesKilled - (progress.startKills || 0));
+  if (quest.objectiveType === 'clearDungeonCount') return Math.max(0, dungeonsCleared.length - (progress.startDungeons || 0));
+  if (quest.objectiveType === 'companionCount') return companions.length;
+  return 0;
+}
+
+function isSubquestObjectiveMet(quest) {
+  return getSubquestProgressValue(quest) >= (quest.targetAmount || 0);
+}
+
+function buildSubquestProgressText(quest) {
+  const value = Math.min(getSubquestProgressValue(quest), quest.targetAmount || 0);
+  return `${value}/${quest.targetAmount}`;
+}
+
+function grantSubquestReward(quest) {
+  if (!quest || !quest.reward) return;
+  if (quest.reward.gold) player.gold += quest.reward.gold;
+  if (Array.isArray(quest.reward.items)) {
+    quest.reward.items.forEach(id => {
+      if (ITEMS[id]) inventory.push(id);
+    });
+  }
+}
+
+function tryResolveSubquest(npcId) {
+  const quest = getNpcSubquest(npcId);
+  if (!quest) return null;
+
+  if (!isSubquestAccepted(quest.id)) {
+    acceptSubquest(quest);
+    return {
+      type: 'accepted',
+      quest,
+      rewardText: buildQuestRewardText(quest)
+    };
+  }
+
+  if (!isSubquestObjectiveMet(quest)) {
+    return {
+      type: 'progress',
+      quest,
+      progressText: buildSubquestProgressText(quest)
+    };
+  }
+
+  grantSubquestReward(quest);
+  acceptedSubquests = acceptedSubquests.filter(id => id !== quest.id);
+  completedSubquests.push(quest.id);
+  delete subquestProgress[quest.id];
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof autoSave === 'function') autoSave();
+  return {
+    type: 'completed',
+    quest,
+    rewardText: buildQuestRewardText(quest)
+  };
+}
+
 function getNpcInteractionLines(npc) {
   const quest = getMainQuest();
   const completion = tryCompleteMainQuest(npc.id);
@@ -378,6 +514,32 @@ function getNpcInteractionLines(npc) {
       quest.description,
       ...((quest.reminder && quest.reminder.length) ? quest.reminder : [])
     ];
+  }
+
+  const subquestResult = tryResolveSubquest(npc.id);
+  if (subquestResult) {
+    if (subquestResult.type === 'accepted') {
+      return [
+        `[서브퀘스트 수락] ${subquestResult.quest.title}`,
+        ...(subquestResult.quest.offerLines || []),
+        subquestResult.quest.description,
+        subquestResult.rewardText ? '보상: ' + subquestResult.rewardText : ''
+      ].filter(Boolean);
+    }
+    if (subquestResult.type === 'progress') {
+      return [
+        `[서브퀘스트] ${subquestResult.quest.title}`,
+        ...(subquestResult.quest.progressLines || []),
+        '진행도: ' + subquestResult.progressText
+      ].filter(Boolean);
+    }
+    if (subquestResult.type === 'completed') {
+      return [
+        `[서브퀘스트 완료] ${subquestResult.quest.title}`,
+        ...(subquestResult.quest.completionLines || []),
+        subquestResult.rewardText ? '보상: ' + subquestResult.rewardText : ''
+      ].filter(Boolean);
+    }
   }
 
   if (npc.id === 'guard' && quest) {
