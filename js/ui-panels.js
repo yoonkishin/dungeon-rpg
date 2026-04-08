@@ -433,13 +433,16 @@ function renderQuestPanel() {
   const content = document.getElementById('quest-panel-content');
   const nextDungeon = DUNGEON_INFO.find(info => !dungeonsCleared.includes(info.id)) || null;
   const nextTier = getNextTier();
+  const activeQuest = typeof getMainQuest === 'function' ? getMainQuest() : null;
   const activeNames = activeCompanions.map(id => DUNGEON_INFO[id] && DUNGEON_INFO[id].companionName).filter(Boolean);
   const completionPct = Math.floor((dungeonsCleared.length / DUNGEON_INFO.length) * 100);
 
-  const mainObjectiveTitle = nextDungeon ? `다음 던전: ${nextDungeon.name}` : '모든 던전 정복 완료';
-  const mainObjectiveDesc = nextDungeon
-    ? `${nextDungeon.zone} 지역의 ${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 권장 레벨은 ${nextDungeon.recommendedLevel} 이상.`
-    : '9개 던전을 모두 클리어했어. 이제는 빌드와 전투감을 더 다듬는 실험을 해볼 타이밍이다.';
+  const mainObjectiveTitle = activeQuest ? `[메인] ${activeQuest.title}` : (nextDungeon ? `다음 던전: ${nextDungeon.name}` : '모든 던전 정복 완료');
+  const mainObjectiveDesc = activeQuest
+    ? activeQuest.description
+    : (nextDungeon
+      ? `${nextDungeon.zone} 지역의 ${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 권장 레벨은 ${nextDungeon.recommendedLevel} 이상.`
+      : '9개 던전을 모두 클리어했어. 이제는 빌드와 전투감을 더 다듬는 실험을 해볼 타이밍이다.');
 
   const tierText = nextTier
     ? `${nextTier.name}까지 Lv.${nextTier.reqLevel} 필요 (${Math.max(0, nextTier.reqLevel - player.level)} 남음)`
@@ -448,6 +451,19 @@ function renderQuestPanel() {
   const companionGoal = activeCompanions.length >= 2
     ? `편성 완료 (${activeCompanions.length}/2)`
     : `${2 - activeCompanions.length}명 더 편성 가능`;
+
+  const activeQuestStatus = activeQuest
+    ? (activeQuest.objectiveType === 'clearDungeon'
+      ? (dungeonsCleared.includes(activeQuest.objectiveTarget) ? '조건 달성 · 보고 필요' : '던전 진행 중')
+      : '대화 필요')
+    : '모든 메인 퀘스트 완료';
+
+  const completedQuestHtml = (completedMainQuests || []).length > 0
+    ? completedMainQuests.map(id => {
+        const quest = MAIN_QUESTS.find(q => q.id === id);
+        return quest ? `<div class="quest-desc">✅ ${quest.title}</div>` : '';
+      }).join('')
+    : '<div class="quest-desc">아직 완료한 메인 퀘스트가 없다.</div>';
 
   const dungeonRoadmapHtml = DUNGEON_INFO.map(info => {
     const cleared = dungeonsCleared.includes(info.id);
@@ -478,14 +494,20 @@ function renderQuestPanel() {
     <div class="quest-card primary">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="color:#fff;font-size:12px;font-weight:bold;">${mainObjectiveTitle}</div>
-        <div class="quest-chip active">진행 중</div>
+        <div class="quest-chip active">${activeQuest ? '진행 중' : '완료'}</div>
       </div>
       <div class="quest-desc">${mainObjectiveDesc}</div>
       <div style="margin-top:6px;">
-        <span class="quest-chip ${nextDungeon ? 'warn' : 'done'}">${nextDungeon ? '보스 목표' : '완료'}</span>
+        <span class="quest-chip ${activeQuest ? 'warn' : 'done'}">${activeQuestStatus}</span>
         <span class="quest-chip ${currentMap === 'town' ? 'warn' : 'active'}">현재 위치: ${currentMap === 'town' ? '마을' : currentMap === 'field' ? '필드' : '던전'}</span>
         ${nextDungeon ? '<span class="quest-chip ' + (player.level >= nextDungeon.recommendedLevel ? 'done' : 'warn') + '">권장 Lv.' + nextDungeon.recommendedLevel + '</span>' : ''}
       </div>
+    </div>
+
+    <div class="quest-section-title">메인 퀘스트 로그</div>
+    <div class="quest-card">
+      ${completedQuestHtml}
+      ${activeQuest ? '<div class="quest-desc" style="margin-top:6px;color:#f1c40f;">▶ 현재 목표: ' + activeQuest.description + '</div>' : ''}
     </div>
 
     <div class="quest-section-title">탐험 진행도</div>
@@ -525,10 +547,10 @@ function renderQuestPanel() {
 
     <div class="quest-section-title">추천 다음 행동</div>
     <div class="quest-card">
-      <div class="quest-desc">1. 마을에서 장비/포션 확인</div>
-      <div class="quest-desc">2. 필드에서 다음 던전 포탈 탐색</div>
-      <div class="quest-desc">3. 보스 처치 후 동료 확보</div>
-      <div class="quest-desc">4. 귀환해서 장비/파티 재정비</div>
+      <div class="quest-desc">1. 촌장/현자 등 퀘스트 NPC와 대화</div>
+      <div class="quest-desc">2. 마을에서 장비/포션 점검</div>
+      <div class="quest-desc">3. 필드에서 포탈 탐색 후 던전 공략</div>
+      <div class="quest-desc">4. 클리어 후 다시 보고하여 보상 획득</div>
     </div>
   `;
 }

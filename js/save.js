@@ -25,6 +25,8 @@ function autoSave() {
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
+      mainQuestIndex: mainQuestIndex,
+      completedMainQuests: completedMainQuests.slice(),
     };
     localStorage.setItem('rpg_save_data', JSON.stringify(saveData));
   } catch(ex) {
@@ -111,6 +113,8 @@ function loadSave() {
     totalGoldEarned = data.totalGoldEarned || 0;
     totalEnemiesKilled = data.totalEnemiesKilled || 0;
     currentDungeonId = data.currentDungeonId !== undefined ? data.currentDungeonId : -1;
+    mainQuestIndex = data.mainQuestIndex !== undefined ? data.mainQuestIndex : 0;
+    completedMainQuests = Array.isArray(data.completedMainQuests) ? data.completedMainQuests.slice() : [];
 
     // If saved in dungeon, rebuild it
     if (currentMap === 'dungeon' && currentDungeonId >= 0) {

@@ -211,6 +211,140 @@ const TOWN_NPCS = [
 ];
 let npcDialogueIdx = {};
 
+const MAIN_QUESTS = [
+  {
+    id: 'chief_intro',
+    title: '촌장의 첫 부탁',
+    targetNpcId: 'chief',
+    objectiveType: 'talk',
+    objectiveTarget: 'chief',
+    description: '촌장에게 말을 걸어 첫 임무를 받자.',
+    reminder: ['촌장이 널 찾고 있다.', '마을 한가운데 있는 촌장에게 먼저 말을 걸어봐.'],
+    completionLines: ['좋아, 이제 모험을 시작할 때다.', '우선 필드의 첫 던전인 슬라임 동굴을 정리해다오.'],
+    reward: { gold: 100, items: ['potion_hp'] }
+  },
+  {
+    id: 'slime_cave_clear',
+    title: '슬라임 동굴 정리',
+    targetNpcId: 'chief',
+    objectiveType: 'clearDungeon',
+    objectiveTarget: 0,
+    description: '필드의 슬라임 동굴을 클리어하고 촌장에게 보고하자.',
+    reminder: ['슬라임 동굴이 아직 정리되지 않았다.', '필드의 첫 번째 포탈로 들어가 거대 슬라임을 쓰러뜨려라.'],
+    completionLines: ['수고했다! 마을 사람들이 한숨 돌릴 수 있겠구나.', '이번엔 현자에게 가서 다음 지역에 대한 조언을 들어보거라.'],
+    reward: { gold: 180, items: ['potion_hp2'] }
+  },
+  {
+    id: 'sage_report',
+    title: '현자의 조언',
+    targetNpcId: 'sage',
+    objectiveType: 'talk',
+    objectiveTarget: 'sage',
+    description: '현자와 대화해 다음 공략 목표를 듣자.',
+    reminder: ['현자가 다음 여정을 준비하고 있다.', '마을 북서쪽의 현자에게 가보자.'],
+    completionLines: ['좋다. 이제 고블린 소굴을 공략할 때다.', '활과 회복 아이템을 챙기고, 가능하면 동료도 편성해서 나가게.'],
+    reward: { gold: 120, items: ['ring_def'] }
+  },
+  {
+    id: 'goblin_den_clear',
+    title: '고블린 왕 토벌',
+    targetNpcId: 'sage',
+    objectiveType: 'clearDungeon',
+    objectiveTarget: 1,
+    description: '고블린 소굴을 클리어하고 현자에게 보고하자.',
+    reminder: ['고블린 소굴이 아직 남아 있다.', '두 번째 포탈로 들어가 고블린 왕을 처치해라.'],
+    completionLines: ['훌륭하군. 이제부터는 진짜 원정대의 형태를 갖춰가게 될 거다.', '다음 던전부터는 더 강한 장비와 동료 조합을 의식해라.'],
+    reward: { gold: 250, items: ['amulet1'] }
+  }
+];
+let mainQuestIndex = 0;
+let completedMainQuests = [];
+
+function getMainQuest() {
+  return MAIN_QUESTS[mainQuestIndex] || null;
+}
+
+function isMainQuestObjectiveMet(quest, npcId) {
+  if (!quest) return false;
+  if (quest.objectiveType === 'talk') {
+    return npcId === quest.objectiveTarget;
+  }
+  if (quest.objectiveType === 'clearDungeon') {
+    return dungeonsCleared.includes(quest.objectiveTarget);
+  }
+  return false;
+}
+
+function buildQuestRewardText(quest) {
+  if (!quest || !quest.reward) return '';
+  const chunks = [];
+  if (quest.reward.gold) chunks.push('💰 ' + quest.reward.gold + 'G');
+  if (Array.isArray(quest.reward.items)) {
+    quest.reward.items.forEach(id => {
+      if (ITEMS[id]) chunks.push(ITEMS[id].icon + ' ' + ITEMS[id].name);
+    });
+  }
+  return chunks.join(', ');
+}
+
+function grantMainQuestReward(quest) {
+  if (!quest || !quest.reward) return;
+  if (quest.reward.gold) player.gold += quest.reward.gold;
+  if (Array.isArray(quest.reward.items)) {
+    quest.reward.items.forEach(id => {
+      if (ITEMS[id]) inventory.push(id);
+    });
+  }
+}
+
+function tryCompleteMainQuest(npcId) {
+  const quest = getMainQuest();
+  if (!quest) return null;
+  if (quest.targetNpcId !== npcId) return null;
+  if (!isMainQuestObjectiveMet(quest, npcId)) return null;
+
+  grantMainQuestReward(quest);
+  completedMainQuests.push(quest.id);
+  mainQuestIndex++;
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof autoSave === 'function') autoSave();
+  return {
+    quest,
+    rewardText: buildQuestRewardText(quest),
+    nextQuest: getMainQuest()
+  };
+}
+
+function getNpcInteractionLines(npc) {
+  const quest = getMainQuest();
+  const completion = tryCompleteMainQuest(npc.id);
+  if (completion) {
+    const lines = [`[메인 퀘스트 완료] ${completion.quest.title}`];
+    (completion.quest.completionLines || []).forEach(line => lines.push(line));
+    if (completion.rewardText) lines.push('보상: ' + completion.rewardText);
+    if (completion.nextQuest) lines.push('[다음 목표] ' + completion.nextQuest.description);
+    return lines;
+  }
+
+  if (quest && quest.targetNpcId === npc.id) {
+    return [
+      `[메인 퀘스트] ${quest.title}`,
+      quest.description,
+      ...((quest.reminder && quest.reminder.length) ? quest.reminder : [])
+    ];
+  }
+
+  if (npc.id === 'guard' && quest) {
+    return [
+      '지금 목표를 잊지 마십시오.',
+      quest.description,
+      currentMap === 'town' ? '출구로 나가려면 동쪽이나 북쪽 길을 이용하면 됩니다.' : '필드에서는 포탈 위치를 미니맵으로 확인해보세요.'
+    ];
+  }
+
+  return npc.dialogue;
+}
+
 function getEquipBonus() {
   let bonusAtk = 0, bonusDef = 0, speedBonus = 0, critBonus = 0, goldBonus = 0;
   const slots = EQUIP_SLOTS;

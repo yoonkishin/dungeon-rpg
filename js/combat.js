@@ -154,6 +154,12 @@ function checkDungeonClear() {
           showDungeonClearBanner2(info.companionName);
         }, 2000);
       }
+      const quest = typeof getMainQuest === 'function' ? getMainQuest() : null;
+      if (quest && quest.objectiveType === 'clearDungeon' && quest.objectiveTarget === currentDungeonId && typeof showToast === 'function') {
+        setTimeout(() => {
+          showToast('보고 대상에게 돌아가 퀘스트를 완료하세요!');
+        }, 1000);
+      }
     }
     autoSave();
   }

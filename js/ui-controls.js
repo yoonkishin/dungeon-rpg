@@ -282,20 +282,45 @@ function toggleMinimap() {
 // ─── Dialogue Panel ──────────────────────────────────────────────────────────
 const dialoguePanel = document.getElementById('dialogue-panel');
 const dialogueCloseBtn = dialoguePanel.querySelector('.dialogue-close');
+let currentDialogueLines = [];
+let currentDialogueIndex = 0;
+let currentDialogueNpcName = '';
 
-dialogueCloseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeDialogue(); }, { passive: false });
-dialogueCloseBtn.addEventListener('click', closeDialogue);
-dialoguePanel.addEventListener('touchstart', (e) => { e.preventDefault(); closeDialogue(); }, { passive: false });
-dialoguePanel.addEventListener('click', closeDialogue);
+function renderDialogueStep() {
+  dialoguePanel.querySelector('.npc-name').textContent = currentDialogueNpcName;
+  dialoguePanel.querySelector('.npc-text').textContent = currentDialogueLines[currentDialogueIndex] || '';
+  dialogueCloseBtn.textContent = currentDialogueIndex < currentDialogueLines.length - 1 ? '다음' : '닫기';
+}
+
+function advanceDialogue(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!dialogueOpen) return;
+  if (currentDialogueIndex < currentDialogueLines.length - 1) {
+    currentDialogueIndex++;
+    renderDialogueStep();
+  } else {
+    closeDialogue();
+  }
+}
+
+dialogueCloseBtn.addEventListener('touchstart', advanceDialogue, { passive: false });
+dialogueCloseBtn.addEventListener('click', advanceDialogue);
+dialoguePanel.addEventListener('touchstart', advanceDialogue, { passive: false });
+dialoguePanel.addEventListener('click', advanceDialogue);
 
 function openDialogue(npc) {
   dialogueOpen = true;
-  if (!npcDialogueIdx[npc.id]) npcDialogueIdx[npc.id] = 0;
-  const idx = npcDialogueIdx[npc.id] % npc.dialogue.length;
-  dialoguePanel.querySelector('.npc-name').textContent = npc.name;
-  dialoguePanel.querySelector('.npc-text').textContent = npc.dialogue[idx];
+  currentDialogueNpcName = npc.name;
+  currentDialogueIndex = 0;
+  currentDialogueLines = getNpcInteractionLines(npc);
+  if (!Array.isArray(currentDialogueLines) || currentDialogueLines.length === 0) {
+    currentDialogueLines = npc.dialogue && npc.dialogue.length ? npc.dialogue : ['...'];
+  }
   dialoguePanel.style.display = 'flex';
-  npcDialogueIdx[npc.id] = idx + 1;
+  renderDialogueStep();
 }
 
 function closeDialogue() {
