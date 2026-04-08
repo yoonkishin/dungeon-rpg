@@ -27,6 +27,7 @@ function autoSave() {
       currentDungeonId: currentDungeonId,
       mainQuestIndex: mainQuestIndex,
       completedMainQuests: completedMainQuests.slice(),
+      villageUpgrades: { ...villageUpgrades },
     };
     localStorage.setItem('rpg_save_data', JSON.stringify(saveData));
   } catch(ex) {
@@ -115,6 +116,14 @@ function loadSave() {
     currentDungeonId = data.currentDungeonId !== undefined ? data.currentDungeonId : -1;
     mainQuestIndex = data.mainQuestIndex !== undefined ? data.mainQuestIndex : 0;
     completedMainQuests = Array.isArray(data.completedMainQuests) ? data.completedMainQuests.slice() : [];
+    if (data.villageUpgrades && typeof data.villageUpgrades === 'object') {
+      villageUpgrades = {
+        forge: data.villageUpgrades.forge || 0,
+        guard: data.villageUpgrades.guard || 0,
+        trade: data.villageUpgrades.trade || 0,
+        alchemy: data.villageUpgrades.alchemy || 0,
+      };
+    }
 
     // If saved in dungeon, rebuild it
     if (currentMap === 'dungeon' && currentDungeonId >= 0) {

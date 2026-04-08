@@ -200,7 +200,7 @@ function renderCompanionPanel() {
     let btnLabel, btnColor, btnAction;
     if (isDead) {
       if (currentMap === 'town') {
-        btnLabel = '부활 (100G)';
+        btnLabel = '부활 (' + getReviveCost(cId) + 'G)';
         btnColor = '#27ae60';
         btnAction = 'revive';
       } else {
@@ -241,8 +241,9 @@ function renderCompanionPanel() {
           activeCompanions = activeCompanions.filter(id => id !== cId);
           delete companionStates[cId];
         } else if (btnAction === 'revive') {
-          if (player.gold >= 100) {
-            player.gold -= 100;
+          const reviveCost = getReviveCost(cId);
+          if (player.gold >= reviveCost) {
+            player.gold -= reviveCost;
             deadCompanions = deadCompanions.filter(id => id !== cId);
             updateHUD();
             AudioSystem.sfx.heal();
@@ -293,7 +294,7 @@ function renderTemple() {
   deadCompanions.forEach(cId => {
     const info = DUNGEON_INFO[cId];
     if (!info) return;
-    const cost = 50 + cId * 25;
+    const cost = getReviveCost(cId);
     const canAfford = player.gold >= cost;
     html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;margin-bottom:5px;">' +
       '<div style="width:28px;height:28px;border-radius:6px;background:' + info.companionColor + ';display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;opacity:0.5;">★</div>' +
@@ -309,7 +310,7 @@ function renderTemple() {
   });
 
   // Revive all button
-  const totalCost = deadCompanions.reduce((sum, cId) => sum + 50 + cId * 25, 0);
+  const totalCost = deadCompanions.reduce((sum, cId) => sum + getReviveCost(cId), 0);
   const canAffordAll = player.gold >= totalCost && deadCompanions.length > 1;
   html += '<div style="margin-top:10px;text-align:center;">' +
     '<button id="temple-revive-all" style="padding:6px 16px;border:none;border-radius:8px;font-size:11px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;' +
@@ -325,7 +326,7 @@ function renderTemple() {
     function handleRevive(e) {
       e.preventDefault(); e.stopPropagation();
       const cId = parseInt(btn.getAttribute('data-cid'));
-      const cost = 50 + cId * 25;
+      const cost = getReviveCost(cId);
       if (player.gold < cost) return;
       player.gold -= cost;
       deadCompanions = deadCompanions.filter(id => id !== cId);
@@ -415,10 +416,18 @@ function renderSkillPanel() {
   });
 }
 
-// ─── Quest Panel UI ──────────────────────────────────────────────────────
+// ─── Quest / Village Panel UI ───────────────────────────────────────────
 const questPanel = document.getElementById('quest-panel');
+const villagePanel = document.getElementById('village-panel');
 document.getElementById('quest-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeQuestPanel(); }, { passive: false });
 document.getElementById('quest-panel-close').addEventListener('click', closeQuestPanel);
+document.getElementById('village-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeVillagePanel(); }, { passive: false });
+document.getElementById('village-panel-close').addEventListener('click', closeVillagePanel);
+
+function getReviveCost(cId) {
+  const base = 50 + cId * 25;
+  return Math.max(10, Math.floor(base * (1 - getVillageReviveDiscount())));
+}
 
 function openQuestPanel() {
   questPanelOpen = true;
@@ -428,6 +437,78 @@ function openQuestPanel() {
 function closeQuestPanel() {
   questPanelOpen = false;
   hidePanel(questPanel);
+}
+function openVillagePanel() {
+  villagePanelOpen = true;
+  showPanel(villagePanel);
+  renderVillagePanel();
+}
+function closeVillagePanel() {
+  villagePanelOpen = false;
+  hidePanel(villagePanel);
+}
+function renderVillagePanel() {
+  const content = document.getElementById('village-panel-content');
+  const totalLevels = Object.values(villageUpgrades).reduce((sum, lv) => sum + lv, 0);
+  const cards = Object.values(TOWN_UPGRADES).map(upg => {
+    const lv = getVillageUpgradeLevel(upg.id);
+    const maxed = lv >= upg.maxLevel;
+    const cost = getVillageUpgradeCost(upg.id);
+    const canBuy = !maxed && player.gold >= cost;
+    return `
+      <div class="quest-card ${canBuy ? 'primary' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <div style="color:#fff;font-size:12px;font-weight:bold;">${upg.icon} ${upg.name}</div>
+          <div class="quest-chip ${maxed ? 'done' : 'active'}">Lv.${lv}/${upg.maxLevel}</div>
+        </div>
+        <div class="quest-desc">${upg.bonusText}</div>
+        <div class="quest-desc" style="margin-top:4px;color:#9aa3b2;">다음 투자 비용: ${maxed ? 'MAX' : '💰 ' + cost}</div>
+        <button class="comp-btn village-upgrade-btn" data-upgrade="${upg.id}" style="margin-top:8px;background:${maxed ? '#555' : (canBuy ? '#27ae60' : '#666')};" ${maxed ? 'disabled' : ''}>${maxed ? '완료' : (canBuy ? '투자' : '골드 부족')}</button>
+      </div>
+    `;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="quest-card primary">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div style="color:#fff;font-size:12px;font-weight:bold;">마을 성장 단계</div>
+        <div class="quest-chip active">총 투자 Lv.${totalLevels}</div>
+      </div>
+      <div class="quest-desc">던전에서 번 골드를 마을에 투자하면 영구 보너스가 쌓인다. 이 효과는 저장되며 다음 원정에도 유지된다.</div>
+      <div style="margin-top:6px;">
+        <span class="quest-chip done">공격 +${getVillageAttackBonus()}</span>
+        <span class="quest-chip done">방어 +${getVillageDefenseBonus()}</span>
+        <span class="quest-chip done">골드 x${getVillageGoldMultiplier().toFixed(2)}</span>
+        <span class="quest-chip done">포션 x${getVillagePotionMultiplier().toFixed(2)}</span>
+      </div>
+    </div>
+
+    <div class="quest-section-title">발전 선택지</div>
+    ${cards}
+  `;
+
+  content.querySelectorAll('.village-upgrade-btn').forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = btn.getAttribute('data-upgrade');
+      const upg = TOWN_UPGRADES[id];
+      if (!upg) return;
+      const cost = getVillageUpgradeCost(id);
+      if (player.gold < cost) {
+        showToast('골드가 부족합니다!');
+        return;
+      }
+      player.gold -= cost;
+      villageUpgrades[id] = getVillageUpgradeLevel(id) + 1;
+      AudioSystem.sfx.buy();
+      showToast(upg.name + ' 강화!');
+      updateHUD();
+      autoSave();
+      renderVillagePanel();
+    });
+  });
 }
 function renderQuestPanel() {
   const content = document.getElementById('quest-panel-content');

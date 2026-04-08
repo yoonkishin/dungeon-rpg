@@ -114,9 +114,10 @@ canvas {
   white-space: nowrap;
 }
 
-/* ── Skill / Quest Panel ── */
+/* ── Skill / Quest / Village Panel ── */
 #skill-panel,
-#quest-panel {
+#quest-panel,
+#village-panel {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(8,10,18,0.97), rgba(15,18,30,0.97));
@@ -132,7 +133,7 @@ canvas {
   transition: opacity 0.15s ease;
 }
 /* ── Panel transitions ── */
-#menu-panel, #settings-panel, #inventory-panel, #shop-panel, #profile-panel, #companion-panel, #skill-panel, #quest-panel, #temple-panel {
+#menu-panel, #settings-panel, #inventory-panel, #shop-panel, #profile-panel, #companion-panel, #skill-panel, #quest-panel, #village-panel, #temple-panel {
   transition: opacity 0.15s ease;
   opacity: 0;
 }

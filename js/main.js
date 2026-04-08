@@ -82,7 +82,7 @@ function ch() { return Math.round(canvas.height / dpr); }
 
 function update(dt) {
   if (player.dead) return;
-  if (invOpen || shopOpen || menuOpen || settingsOpen || dialogueOpen || profileOpen || companionPanelOpen || skillPanelOpen || questPanelOpen) return;
+  if (invOpen || shopOpen || menuOpen || settingsOpen || dialogueOpen || profileOpen || companionPanelOpen || skillPanelOpen || questPanelOpen || villagePanelOpen) return;
 
   // Day/night cycle
   // Day/night cycle disabled - always daytime

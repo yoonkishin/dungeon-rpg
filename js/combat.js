@@ -287,8 +287,9 @@ function killEnemy(e) {
   e.dead = true;
   AudioSystem.sfx.enemyDeath();
   gainXP(e.xp);
-  player.gold += e.gold;
-  totalGoldEarned += e.gold;
+  const earnedGold = Math.max(1, Math.floor(e.gold * getVillageGoldMultiplier()));
+  player.gold += earnedGold;
+  totalGoldEarned += earnedGold;
   totalEnemiesKilled++;
   const drops = DROP_TABLE[e.typeIdx] || [];
   drops.forEach(d => {

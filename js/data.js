@@ -83,11 +83,11 @@ function initCompanionState(cId) {
 }
 
 function getCompanionMaxHp(cId) {
-  return 80 + cId * 30;
+  return 80 + cId * 30 + getVillageCompanionHpBonus();
 }
 
 function getCompanionAtk(cId) {
-  return 10 + cId * 5;
+  return 10 + cId * 5 + getVillageCompanionAtkBonus();
 }
 
 // Stats tracking
@@ -260,6 +260,52 @@ const MAIN_QUESTS = [
 let mainQuestIndex = 0;
 let completedMainQuests = [];
 
+const TOWN_UPGRADES = {
+  forge: { id:'forge', icon:'⚔️', name:'훈련장', maxLevel:5, baseCost:120, costStep:120, bonusText:'+2 공격력 / +1 동료 공격' },
+  guard: { id:'guard', icon:'🛡️', name:'방비대', maxLevel:5, baseCost:140, costStep:140, bonusText:'+1 방어력 / +10 동료 체력' },
+  trade: { id:'trade', icon:'💰', name:'상단 계약', maxLevel:5, baseCost:160, costStep:160, bonusText:'+12% 골드 획득' },
+  alchemy: { id:'alchemy', icon:'🧪', name:'연금 공방', maxLevel:5, baseCost:180, costStep:180, bonusText:'+15% 포션 효율 / 부활비 할인' },
+};
+let villageUpgrades = { forge: 0, guard: 0, trade: 0, alchemy: 0 };
+
+function getVillageUpgradeLevel(id) {
+  return villageUpgrades[id] || 0;
+}
+
+function getVillageUpgradeCost(id) {
+  const def = TOWN_UPGRADES[id];
+  if (!def) return 999999;
+  return def.baseCost + def.costStep * getVillageUpgradeLevel(id);
+}
+
+function getVillageAttackBonus() {
+  return getVillageUpgradeLevel('forge') * 2;
+}
+
+function getVillageDefenseBonus() {
+  return getVillageUpgradeLevel('guard');
+}
+
+function getVillageCompanionHpBonus() {
+  return getVillageUpgradeLevel('guard') * 10;
+}
+
+function getVillageCompanionAtkBonus() {
+  return getVillageUpgradeLevel('forge');
+}
+
+function getVillageGoldMultiplier() {
+  return 1 + getVillageUpgradeLevel('trade') * 0.12;
+}
+
+function getVillagePotionMultiplier() {
+  return 1 + getVillageUpgradeLevel('alchemy') * 0.15;
+}
+
+function getVillageReviveDiscount() {
+  return Math.min(0.5, getVillageUpgradeLevel('alchemy') * 0.1);
+}
+
 function getMainQuest() {
   return MAIN_QUESTS[mainQuestIndex] || null;
 }
@@ -363,11 +409,11 @@ function getEquipBonus() {
 }
 
 function playerAtk() {
-  return player.atk + getEquipBonus().atk;
+  return player.atk + getEquipBonus().atk + getVillageAttackBonus();
 }
 
 function playerDef() {
-  let d = player.def + getEquipBonus().def;
+  let d = player.def + getEquipBonus().def + getVillageDefenseBonus();
   Object.values(skillBuffs).forEach(b => {
     if (b.defBuff && b.timer > 0) d += b.defBuff;
   });

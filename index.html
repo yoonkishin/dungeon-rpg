@@ -64,7 +64,7 @@
       <div class="menu-grid-btn" data-action="equipment"><div class="m-icon">⚔️</div><div class="m-label">장비</div></div>
       <div class="menu-grid-btn" data-action="bag"><div class="m-icon">🎒</div><div class="m-label">가방</div></div>
       <div class="menu-grid-btn" data-action="companion"><div class="m-icon">👥</div><div class="m-label">동료</div></div>
-      <div class="menu-grid-btn" data-action="town-return"><div class="m-icon">🏠</div><div class="m-label">마을귀환</div></div>
+      <div class="menu-grid-btn" data-action="town-return" id="town-action-btn"><div class="m-icon">🏠</div><div class="m-label">마을귀환</div></div>
       <div class="menu-grid-btn" data-action="quests"><div class="m-icon">📜</div><div class="m-label">퀘스트</div></div>
       <div class="menu-grid-btn" data-action="skill"><div class="m-icon">⚡</div><div class="m-label">스킬</div></div>
       <div class="menu-grid-btn" data-action="settings"><div class="m-icon">⚙️</div><div class="m-label">설정</div></div>
@@ -207,6 +207,17 @@
     </div>
     <div class="panel-scroll">
     <div id="quest-panel-content"></div>
+    </div>
+  </div>
+
+  <!-- Village Progress Panel -->
+  <div id="village-panel">
+    <div class="inv-header">
+      <h2>🏘️ 마을 발전</h2>
+      <button class="inv-close" id="village-panel-close">✕</button>
+    </div>
+    <div class="panel-scroll">
+    <div id="village-panel-content"></div>
     </div>
   </div>
 

@@ -86,8 +86,9 @@ function usePotion() {
   const itemId = inventory[useIdx];
   const item = ITEMS[itemId];
   if (!item || item.type !== 'potion') return;
-  const healAmt = Math.min(item.heal, player.maxHp - player.hp);
-  player.hp = Math.min(player.hp + item.heal, player.maxHp);
+  const boostedHeal = Math.floor(item.heal * getVillagePotionMultiplier());
+  const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
+  player.hp = Math.min(player.hp + boostedHeal, player.maxHp);
   inventory.splice(useIdx, 1);
   addParticles(player.x, player.y, '#e74c3c', 10);
   if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
@@ -103,6 +104,7 @@ let profileOpen = false;
 let companionPanelOpen = false;
 let skillPanelOpen = false;
 let questPanelOpen = false;
+let villagePanelOpen = false;
 
 const menuPanel = document.getElementById('menu-panel');
 const settingsPanel = document.getElementById('settings-panel');
@@ -151,6 +153,11 @@ document.getElementById('settings-close').addEventListener('click', closeSetting
 
 function openMenu() {
   if (settingsOpen) closeSettings();
+  const townActionBtn = document.getElementById('town-action-btn');
+  if (townActionBtn) {
+    const labelEl = townActionBtn.querySelector('.m-label');
+    if (labelEl) labelEl.textContent = currentMap === 'town' ? '마을발전' : '마을귀환';
+  }
   menuOpen = true;
   showPanel(menuPanel);
 }
@@ -199,7 +206,7 @@ document.querySelectorAll('.menu-grid-btn').forEach(btn => {
       menuOpen = false;
       hidePanel(menuPanel);
       if (currentMap === 'town') {
-        showToast('이미 마을에 있습니다');
+        openVillagePanel();
       } else {
         if (currentMap === 'dungeon') {
           // Companions die when leaving dungeon early
