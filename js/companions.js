@@ -1,16 +1,90 @@
 'use strict';
 
-function getCompanionFollowPoint(idx, profile) {
+function getCompanionFollowPoint(cId, idx, profile, cs) {
+  const mode = getCompanionAIMode(cId, cs);
   const offsetAngle = idx === 0 ? -Math.PI / 3 : Math.PI / 3;
   const dirAngle = player.dir === 0 ? 0 : player.dir === 1 ? Math.PI : player.dir === 2 ? -Math.PI / 2 : Math.PI / 2;
-  const baseDist = profile.roleKey === 'support' ? 46 : (profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster' ? 54 : 34);
+  const ranged = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
+  let baseDist = profile.roleKey === 'support' ? 46 : (ranged ? 54 : 34);
+
+  if (mode === 'aggressive') baseDist += ranged ? -6 : -8;
+  else if (mode === 'defensive') baseDist += ranged || profile.roleKey === 'support' ? 10 : 6;
+  else if (mode === 'support') baseDist += ranged || profile.roleKey === 'support' ? 18 : 10;
+
   return {
     x: player.x - baseDist * Math.cos(dirAngle + offsetAngle),
     y: player.y - baseDist * Math.sin(dirAngle + offsetAngle)
   };
 }
 
-function getCompanionPriorityEnemy(cId, cs) {
+function getCompanionModeBehavior(cId, cs, profile) {
+  const mode = getCompanionAIMode(cId, cs);
+  const ranged = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
+  const supportRole = profile.roleKey === 'support';
+
+  const behavior = {
+    mode,
+    engageRadius: 170,
+    leashRadius: 80,
+    guardRadius: 92,
+    preferredRange: getCompanionPreferredRange(cId),
+    attackRange: getCompanionAttackRange(cId),
+    chaseSpeed: 1.05,
+    fallbackSpeed: 0.92,
+    retreatSpeed: 0.88,
+    skillTickMult: 1,
+    attackCooldown: getCompanionAttackCooldown(cId, cs),
+    supportHealThreshold: 0.80,
+    protectThreshold: 0.55,
+    prioritizePlayerThreat: false,
+    finishOffBonus: 0,
+    keepTighterFormation: false,
+  };
+
+  if (mode === 'aggressive') {
+    behavior.engageRadius = supportRole ? 145 : (ranged ? 235 : 225);
+    behavior.leashRadius = 120;
+    behavior.guardRadius = 76;
+    behavior.preferredRange += ranged ? -6 : -4;
+    behavior.chaseSpeed = 1.18;
+    behavior.fallbackSpeed = 0.84;
+    behavior.retreatSpeed = 0.76;
+    behavior.skillTickMult = supportRole ? 1.05 : 1.20;
+    behavior.supportHealThreshold = 0.76;
+    behavior.protectThreshold = 0.52;
+    behavior.finishOffBonus = 22;
+  } else if (mode === 'defensive') {
+    behavior.engageRadius = 160;
+    behavior.leashRadius = 58;
+    behavior.guardRadius = 115;
+    behavior.preferredRange += ranged || supportRole ? 12 : 6;
+    behavior.chaseSpeed = 0.96;
+    behavior.fallbackSpeed = 1.04;
+    behavior.retreatSpeed = 1.00;
+    behavior.skillTickMult = 0.96;
+    behavior.supportHealThreshold = 0.85;
+    behavior.protectThreshold = 0.68;
+    behavior.prioritizePlayerThreat = true;
+    behavior.keepTighterFormation = true;
+  } else if (mode === 'support') {
+    behavior.engageRadius = supportRole ? 145 : 130;
+    behavior.leashRadius = 52;
+    behavior.guardRadius = 130;
+    behavior.preferredRange += ranged || supportRole ? 20 : 10;
+    behavior.chaseSpeed = 0.90;
+    behavior.fallbackSpeed = 1.08;
+    behavior.retreatSpeed = 1.10;
+    behavior.skillTickMult = supportRole ? 1.28 : 1.02;
+    behavior.supportHealThreshold = 0.90;
+    behavior.protectThreshold = 0.72;
+    behavior.prioritizePlayerThreat = true;
+    behavior.keepTighterFormation = true;
+  }
+
+  return behavior;
+}
+
+function getCompanionPriorityEnemy(cId, cs, behavior) {
   const profile = getCompanionProfile(cId);
   let best = null;
   let bestScore = -Infinity;
@@ -18,13 +92,27 @@ function getCompanionPriorityEnemy(cId, cs) {
   enemies.forEach(e => {
     if (e.dead) return;
     const d = Math.sqrt((cs.x - e.x) ** 2 + (cs.y - e.y) ** 2);
-    if (d > 170) return;
+    if (d > behavior.engageRadius) return;
 
+    const dPlayer = Math.sqrt((player.x - e.x) ** 2 + (player.y - e.y) ** 2);
     let score = 200 - d;
+
     if (profile.roleKey === 'assassin') score += (e.maxHp - e.hp) * 0.8;
     if (profile.roleKey === 'tank' || profile.roleKey === 'bruiser' || profile.roleKey === 'guardian' || profile.roleKey === 'paladin') score += d < 70 ? 40 : 0;
     if (profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster') score += d > 60 ? 15 : 0;
-    if (e.isBoss) score += 25;
+    if (e.isBoss) score += behavior.mode === 'defensive' || behavior.mode === 'support' ? 40 : 25;
+
+    if (behavior.prioritizePlayerThreat && dPlayer < behavior.guardRadius) score += 80 - dPlayer * 0.3;
+    if (behavior.mode === 'aggressive') {
+      score += (e.maxHp - e.hp) * 0.35;
+      if (e.hp / e.maxHp < 0.35) score += behavior.finishOffBonus;
+    } else if (behavior.mode !== 'aggressive' && dPlayer > behavior.guardRadius + 40) {
+      score -= 55;
+    }
+
+    if (profile.roleKey === 'support') {
+      score += dPlayer < behavior.guardRadius ? 28 : -30;
+    }
 
     if (score > bestScore) {
       bestScore = score;
@@ -46,8 +134,9 @@ function moveCompanionToward(cs, tx, ty, speedMul = 1) {
   cs.y = pos.y;
 }
 
-function useCompanionSkill(cId, cs, target) {
+function useCompanionSkill(cId, cs, target, behavior) {
   const profile = getCompanionProfile(cId);
+  const modeBehavior = behavior || getCompanionModeBehavior(cId, cs, profile);
   if (cs.skillTimer > 0) return false;
 
   const skillReady = () => { cs.skillTimer = profile.skillCooldown; };
@@ -76,7 +165,7 @@ function useCompanionSkill(cId, cs, target) {
       if (state) allies.push({ kind: id, hp: state.hp, maxHp: state.maxHp });
     });
     const lowest = allies.sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
-    if (!lowest || (lowest.hp / lowest.maxHp) > 0.8) return false;
+    if (!lowest || (lowest.hp / lowest.maxHp) > modeBehavior.supportHealThreshold) return false;
     const healAmt = Math.floor((22 + cId * 3) * getHealingMultiplier());
     player.hp = Math.min(player.maxHp, player.hp + Math.floor(healAmt * 0.8));
     addDamageNumber(player.x, player.y, Math.floor(healAmt * 0.8), 'heal');
@@ -182,7 +271,7 @@ function useCompanionSkill(cId, cs, target) {
   }
 
   if (profile.skillId === 'dark_aegis') {
-    if (player.hp / player.maxHp > 0.55) return false;
+    if (player.hp / player.maxHp > modeBehavior.protectThreshold) return false;
     const healAmt = Math.floor((12 + cId * 2) * getHealingMultiplier());
     player.hp = Math.min(player.maxHp, player.hp + healAmt);
     player.invincible = Math.max(player.invincible, 500);
@@ -212,32 +301,45 @@ function updateCompanion(dt) {
     const cs = companionStates[cId];
     if (!cs) return;
     const profile = getCompanionProfile(cId);
+    const behavior = getCompanionModeBehavior(cId, cs, profile);
+    const followPoint = getCompanionFollowPoint(cId, idx, profile, cs);
 
     if (cs.flashTimer > 0) cs.flashTimer -= 1;
     if (cs.attackTimer > 0) cs.attackTimer -= dt;
-    if (cs.skillTimer > 0) cs.skillTimer -= dt;
+    if (cs.skillTimer > 0) cs.skillTimer = Math.max(0, cs.skillTimer - dt * behavior.skillTickMult);
 
-    const target = getCompanionPriorityEnemy(cId, cs);
-    const followPoint = getCompanionFollowPoint(idx, profile);
-    const preferredRange = getCompanionPreferredRange(cId);
-    const attackRange = getCompanionAttackRange(cId);
+    const target = getCompanionPriorityEnemy(cId, cs, behavior);
+    const preferredRange = behavior.preferredRange;
+    const attackRange = behavior.attackRange;
 
     if (target) {
       const d = Math.sqrt((cs.x - target.x) ** 2 + (cs.y - target.y) ** 2);
+      const targetPlayerDist = Math.sqrt((player.x - target.x) ** 2 + (player.y - target.y) ** 2);
+      const lowHp = cs.hp / cs.maxHp < (behavior.mode === 'aggressive' ? 0.25 : 0.40);
+      const rangedRole = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
+      const shouldHoldLine = behavior.keepTighterFormation && dist(cs, followPoint) > behavior.leashRadius && targetPlayerDist > behavior.guardRadius && !target.isBoss;
+
       if (profile.roleKey === 'support') {
-        moveCompanionToward(cs, followPoint.x, followPoint.y, 0.95);
+        moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
+        if (d < preferredRange - 10) {
+          moveCompanionToward(cs, cs.x - (target.x - cs.x), cs.y - (target.y - cs.y), behavior.retreatSpeed);
+        }
+      } else if (shouldHoldLine) {
+        moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
+      } else if (lowHp && d < attackRange + 10) {
+        moveCompanionToward(cs, cs.x - (target.x - cs.x), cs.y - (target.y - cs.y), behavior.retreatSpeed);
       } else if (d > preferredRange + 10) {
-        moveCompanionToward(cs, target.x, target.y, 1.05);
-      } else if (d < preferredRange - 10 && (profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster')) {
-        moveCompanionToward(cs, cs.x - (target.x - cs.x), cs.y - (target.y - cs.y), 0.85);
-      } else if (dist(cs, followPoint) > 80 && !target.isBoss) {
-        moveCompanionToward(cs, followPoint.x, followPoint.y, 0.9);
+        moveCompanionToward(cs, target.x, target.y, behavior.chaseSpeed);
+      } else if (d < preferredRange - 10 && rangedRole) {
+        moveCompanionToward(cs, cs.x - (target.x - cs.x), cs.y - (target.y - cs.y), behavior.retreatSpeed);
+      } else if (dist(cs, followPoint) > behavior.leashRadius && !target.isBoss) {
+        moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
       }
 
-      if (useCompanionSkill(cId, cs, target)) return;
+      if (useCompanionSkill(cId, cs, target, behavior)) return;
 
       if (cs.attackTimer <= 0 && d <= attackRange) {
-        cs.attackTimer = getCompanionAttackCooldown(cId);
+        cs.attackTimer = behavior.attackCooldown;
         const dmg = getCompanionAtk(cId);
         target.hp -= dmg;
         target.flashTimer = 8;
@@ -249,8 +351,8 @@ function updateCompanion(dt) {
         if (target.hp <= 0) killEnemy(target);
       }
     } else {
-      moveCompanionToward(cs, followPoint.x, followPoint.y, 0.95);
-      useCompanionSkill(cId, cs, null);
+      moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
+      useCompanionSkill(cId, cs, null, behavior);
     }
   });
 }

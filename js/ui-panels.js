@@ -180,10 +180,9 @@ function renderCompanionPanel() {
   }
   content.innerHTML = '';
 
-  // Active count display
   const countDiv = document.createElement('div');
   countDiv.style.cssText = 'color:#f1c40f;font-size:12px;margin-bottom:10px;text-align:center;';
-  countDiv.textContent = '활성 동료: ' + activeCompanions.length + '/2' + (deadCompanions.length > 0 ? ' | 사망: ' + deadCompanions.length + '명' : '');
+  countDiv.textContent = '활성 동료: ' + activeCompanions.length + '/2' + (deadCompanions.length > 0 ? ' | 사망: ' + deadCompanions.length + '명' : '') + ' | 용병 슬롯: 잠김';
   content.appendChild(countDiv);
 
   const synergy = getActiveCompanionSynergy();
@@ -200,6 +199,8 @@ function renderCompanionPanel() {
     const isDead = deadCompanions.includes(cId);
     const maxHp = getCompanionMaxHp(cId);
     const currentHp = companionStates[cId] ? companionStates[cId].hp : maxHp;
+    const aiMode = getCompanionAIMode(cId, companionStates[cId]);
+    const aiMeta = COMPANION_AI_MODES[aiMode] || COMPANION_AI_MODES.aggressive;
     const div = document.createElement('div');
     div.className = 'companion-item' + (isActive ? ' active-companion' : '');
     if (isDead) div.style.opacity = '0.5';
@@ -227,15 +228,35 @@ function renderCompanionPanel() {
 
     const hpBarHtml = isDead
       ? '<div style="color:#e74c3c;font-size:10px;">사망</div>'
-      : '<div style="height:4px;background:rgba(0,0,0,0.4);border-radius:2px;width:60px;overflow:hidden;"><div style="height:100%;width:' + (currentHp/maxHp*100) + '%;background:#2ecc71;border-radius:2px;"></div></div>';
+      : '<div style="height:4px;background:rgba(0,0,0,0.4);border-radius:2px;width:100%;overflow:hidden;"><div style="height:100%;width:' + (currentHp / maxHp * 100) + '%;background:#2ecc71;border-radius:2px;"></div></div>';
 
     div.innerHTML =
-      '<div class="comp-icon" style="background:' + info.companionColor + ';">★</div>' +
-      '<span class="comp-name">' + info.companionName + '</span>' +
-      '<span style="color:#aaa;font-size:10px;">' + profile.roleLabel + ' · ' + profile.skillName + '</span>' +
-      '<span style="color:#aaa;font-size:10px;">ATK:' + getCompanionAtk(cId) + ' HP:' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
-      hpBarHtml +
-      '<button class="comp-btn" style="background:' + btnColor + ';"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>';
+      '<div style="display:flex;align-items:flex-start;gap:10px;width:100%;">' +
+        '<div class="comp-icon" style="background:' + info.companionColor + ';flex-shrink:0;">★</div>' +
+        '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;">' +
+          '<span class="comp-name">' + info.companionName + '</span>' +
+          '<span style="color:#aaa;font-size:10px;">' + profile.roleLabel + ' · ' + profile.skillName + '</span>' +
+          '<span style="color:#aaa;font-size:10px;">ATK:' + getCompanionAtk(cId) + ' HP:' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
+          hpBarHtml +
+          '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px;">' +
+            '<button class="comp-ai-btn" style="background:' + aiMeta.color + ';border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;">AI: ' + aiMeta.label + '</button>' +
+            '<button class="comp-btn" style="background:' + btnColor + ';border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    const aiBtn = div.querySelector('.comp-ai-btn');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextMode = cycleCompanionAIMode(cId);
+        const nextMeta = COMPANION_AI_MODES[nextMode] || COMPANION_AI_MODES.aggressive;
+        showToast(info.companionName + ' AI: ' + nextMeta.label);
+        renderCompanionPanel();
+        autoSave();
+      });
+    }
 
     if (btnAction !== 'none') {
       function handleCompBtn(e) {

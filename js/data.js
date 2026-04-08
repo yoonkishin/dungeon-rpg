@@ -89,9 +89,50 @@ let deadCompanions = [];    // IDs of dead companions
 
 // Companion runtime states (keyed by companion ID)
 let companionStates = {};
+let companionAIModes = {};
+
+const COMPANION_AI_MODES = {
+  aggressive: { key:'aggressive', label:'공격적', color:'#e74c3c' },
+  defensive: { key:'defensive', label:'방어적', color:'#3498db' },
+  support: { key:'support', label:'서포트', color:'#2ecc71' },
+};
 
 function getCompanionProfile(cId) {
   return COMPANION_PROFILES[cId] || COMPANION_PROFILES[0];
+}
+
+function normalizeCompanionAIMode(mode) {
+  return COMPANION_AI_MODES[mode] ? mode : 'aggressive';
+}
+
+function getDefaultCompanionAIMode(cId) {
+  const roleKey = getCompanionProfile(cId).roleKey;
+  if (roleKey === 'support') return 'support';
+  if (roleKey === 'tank' || roleKey === 'guardian' || roleKey === 'paladin') return 'defensive';
+  return 'aggressive';
+}
+
+function getCompanionAIMode(cId, state) {
+  if (state && state.aiMode && COMPANION_AI_MODES[state.aiMode]) return state.aiMode;
+  if (companionAIModes[cId] && COMPANION_AI_MODES[companionAIModes[cId]]) return companionAIModes[cId];
+  const fallback = getDefaultCompanionAIMode(cId);
+  companionAIModes[cId] = fallback;
+  return fallback;
+}
+
+function setCompanionAIMode(cId, mode) {
+  const normalized = normalizeCompanionAIMode(mode || getDefaultCompanionAIMode(cId));
+  companionAIModes[cId] = normalized;
+  if (companionStates[cId]) companionStates[cId].aiMode = normalized;
+  return normalized;
+}
+
+function cycleCompanionAIMode(cId) {
+  const order = ['aggressive', 'defensive', 'support'];
+  const current = getCompanionAIMode(cId);
+  const idx = order.indexOf(current);
+  const next = order[(idx + 1) % order.length];
+  return setCompanionAIMode(cId, next);
 }
 
 function getActiveCompanionSynergy() {
@@ -114,7 +155,8 @@ function initCompanionState(cId) {
     maxHp: maxHp,
     attackTimer: 0,
     skillTimer: Math.random() * 1200,
-    flashTimer: 0
+    flashTimer: 0,
+    aiMode: getCompanionAIMode(cId)
   };
 }
 
@@ -136,11 +178,17 @@ function getCompanionPreferredRange(cId) {
   return getCompanionProfile(cId).preferredRange;
 }
 
-function getCompanionAttackCooldown(cId) {
+function getCompanionAttackCooldown(cId, state) {
   const profile = getCompanionProfile(cId);
   const synergy = getActiveCompanionSynergy();
-  return Math.floor(profile.attackCooldown * (synergy && synergy.cooldownMult ? synergy.cooldownMult : 1));
+  const mode = getCompanionAIMode(cId, state);
+  let modeMult = 1;
+  if (mode === 'aggressive') modeMult = 0.88;
+  else if (mode === 'defensive') modeMult = 1.06;
+  else if (mode === 'support') modeMult = 1.12;
+  return Math.floor(profile.attackCooldown * (synergy && synergy.cooldownMult ? synergy.cooldownMult : 1) * modeMult);
 }
+
 
 // Stats tracking
 let totalGoldEarned = 0;

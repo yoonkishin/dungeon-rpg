@@ -22,6 +22,7 @@ function autoSave() {
       companions: companions.slice(),
       activeCompanions: activeCompanions.slice(),
       deadCompanions: deadCompanions.slice(),
+      companionAIModes: { ...companionAIModes },
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
@@ -112,6 +113,10 @@ function loadSave() {
       activeCompanions = [];
     }
     deadCompanions = Array.isArray(data.deadCompanions) ? data.deadCompanions.slice() : [];
+    companionAIModes = data.companionAIModes && typeof data.companionAIModes === 'object' ? { ...data.companionAIModes } : {};
+    companions.forEach(cId => {
+      if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);
+    });
     activeCompanions.forEach(cId => initCompanionState(cId));
 
     totalGoldEarned = data.totalGoldEarned || 0;
