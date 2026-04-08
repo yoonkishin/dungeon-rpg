@@ -102,6 +102,7 @@ let dialogueOpen = false;
 let profileOpen = false;
 let companionPanelOpen = false;
 let skillPanelOpen = false;
+let questPanelOpen = false;
 
 const menuPanel = document.getElementById('menu-panel');
 const settingsPanel = document.getElementById('settings-panel');
@@ -214,9 +215,9 @@ document.querySelectorAll('.menu-grid-btn').forEach(btn => {
         autoSave();
       }
     } else if (action === 'quests') {
+      openQuestPanel();
       menuOpen = false;
       hidePanel(menuPanel);
-      showToast('준비 중...');
     }
   }
   btn.addEventListener('touchstart', handleAction, { passive: false });

@@ -114,8 +114,9 @@ canvas {
   white-space: nowrap;
 }
 
-/* ── Skill Panel ── */
-#skill-panel {
+/* ── Skill / Quest Panel ── */
+#skill-panel,
+#quest-panel {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(8,10,18,0.97), rgba(15,18,30,0.97));
@@ -131,7 +132,7 @@ canvas {
   transition: opacity 0.15s ease;
 }
 /* ── Panel transitions ── */
-#menu-panel, #settings-panel, #inventory-panel, #shop-panel, #profile-panel, #companion-panel, #skill-panel, #temple-panel {
+#menu-panel, #settings-panel, #inventory-panel, #shop-panel, #profile-panel, #companion-panel, #skill-panel, #quest-panel, #temple-panel {
   transition: opacity 0.15s ease;
   opacity: 0;
 }
@@ -198,6 +199,76 @@ canvas {
   font-weight: bold;
 }
 .skill-slot-info { font-size: 8px; margin-top: 1px; color: #555; }
+
+/* ── Quest Panel Cards ── */
+.quest-section-title {
+  color: #f1c40f;
+  font-size: 11px;
+  font-weight: bold;
+  margin: 8px 0 6px;
+}
+.quest-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.quest-card.primary {
+  border-color: rgba(241,196,15,0.28);
+  background: linear-gradient(180deg, rgba(241,196,15,0.08), rgba(255,255,255,0.03));
+}
+.quest-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  color: #ddd;
+  font-size: 10px;
+  padding: 4px 0;
+}
+.quest-row + .quest-row {
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.quest-label {
+  color: #aaa;
+}
+.quest-value {
+  color: #f1c40f;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.quest-desc {
+  color: #bbb;
+  font-size: 10px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+.quest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: bold;
+  margin-right: 4px;
+  margin-top: 4px;
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
+}
+.quest-chip.done {
+  background: rgba(46,204,113,0.16);
+  color: #2ecc71;
+}
+.quest-chip.active {
+  background: rgba(52,152,219,0.18);
+  color: #74b9ff;
+}
+.quest-chip.warn {
+  background: rgba(241,196,15,0.16);
+  color: #f1c40f;
+}
 
 /* ── Tier promotion banner ── */
 #tier-banner {

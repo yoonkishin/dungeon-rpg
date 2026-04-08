@@ -415,6 +415,93 @@ function renderSkillPanel() {
   });
 }
 
+// ─── Quest Panel UI ──────────────────────────────────────────────────────
+const questPanel = document.getElementById('quest-panel');
+document.getElementById('quest-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeQuestPanel(); }, { passive: false });
+document.getElementById('quest-panel-close').addEventListener('click', closeQuestPanel);
+
+function openQuestPanel() {
+  questPanelOpen = true;
+  showPanel(questPanel);
+  renderQuestPanel();
+}
+function closeQuestPanel() {
+  questPanelOpen = false;
+  hidePanel(questPanel);
+}
+function renderQuestPanel() {
+  const content = document.getElementById('quest-panel-content');
+  const nextDungeon = DUNGEON_INFO.find(info => !dungeonsCleared.includes(info.id)) || null;
+  const nextTier = getNextTier();
+  const activeNames = activeCompanions.map(id => DUNGEON_INFO[id] && DUNGEON_INFO[id].companionName).filter(Boolean);
+  const completionPct = Math.floor((dungeonsCleared.length / DUNGEON_INFO.length) * 100);
+
+  const mainObjectiveTitle = nextDungeon ? `다음 던전: ${nextDungeon.name}` : '모든 던전 정복 완료';
+  const mainObjectiveDesc = nextDungeon
+    ? `${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 현재 필드에서 포탈을 타고 던전에 진입하면 된다.`
+    : '9개 던전을 모두 클리어했어. 이제는 빌드와 전투감을 더 다듬는 실험을 해볼 타이밍이다.';
+
+  const tierText = nextTier
+    ? `${nextTier.name}까지 Lv.${nextTier.reqLevel} 필요 (${Math.max(0, nextTier.reqLevel - player.level)} 남음)`
+    : '최고 티어 도달';
+
+  const companionGoal = activeCompanions.length >= 2
+    ? `편성 완료 (${activeCompanions.length}/2)`
+    : `${2 - activeCompanions.length}명 더 편성 가능`;
+
+  content.innerHTML = `
+    <div class="quest-card primary">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div style="color:#fff;font-size:12px;font-weight:bold;">${mainObjectiveTitle}</div>
+        <div class="quest-chip active">진행 중</div>
+      </div>
+      <div class="quest-desc">${mainObjectiveDesc}</div>
+      <div style="margin-top:6px;">
+        <span class="quest-chip ${nextDungeon ? 'warn' : 'done'}">${nextDungeon ? '보스 목표' : '완료'}</span>
+        <span class="quest-chip ${currentMap === 'town' ? 'warn' : 'active'}">현재 위치: ${currentMap === 'town' ? '마을' : currentMap === 'field' ? '필드' : '던전'}</span>
+      </div>
+    </div>
+
+    <div class="quest-section-title">탐험 진행도</div>
+    <div class="quest-card">
+      <div class="quest-row">
+        <span class="quest-label">던전 클리어</span>
+        <span class="quest-value">${dungeonsCleared.length}/${DUNGEON_INFO.length} (${completionPct}%)</span>
+      </div>
+      <div class="quest-row">
+        <span class="quest-label">획득 동료</span>
+        <span class="quest-value">${companions.length}/${DUNGEON_INFO.length}</span>
+      </div>
+      <div class="quest-row">
+        <span class="quest-label">활성 동료</span>
+        <span class="quest-value">${companionGoal}</span>
+      </div>
+      <div class="quest-row">
+        <span class="quest-label">다음 티어</span>
+        <span class="quest-value">${tierText}</span>
+      </div>
+    </div>
+
+    <div class="quest-section-title">현재 파티 메모</div>
+    <div class="quest-card">
+      <div class="quest-desc">${activeNames.length > 0 ? '활성 동료: ' + activeNames.join(', ') : '아직 활성 동료가 없어. 던전을 클리어하고 동료 패널에서 최대 2명까지 편성해봐.'}</div>
+      ${deadCompanions.length > 0 ? '<div class="quest-desc" style="color:#e74c3c;">쓰러진 동료 ' + deadCompanions.length + '명 있음. 마을 신전에서 부활 가능.</div>' : ''}
+      <div style="margin-top:4px;">
+        <span class="quest-chip ${player.gold >= 100 ? 'done' : 'warn'}">골드 ${player.gold}</span>
+        <span class="quest-chip ${player.level >= 6 ? 'done' : 'warn'}">Lv.${player.level}</span>
+      </div>
+    </div>
+
+    <div class="quest-section-title">추천 다음 행동</div>
+    <div class="quest-card">
+      <div class="quest-desc">1. 마을에서 장비/포션 확인</div>
+      <div class="quest-desc">2. 필드에서 다음 던전 포탈 탐색</div>
+      <div class="quest-desc">3. 보스 처치 후 동료 확보</div>
+      <div class="quest-desc">4. 귀환해서 장비/파티 재정비</div>
+    </div>
+  `;
+}
+
 
 // ─── Inventory UI ────────────────────────────────────────────────────────────
 const invPanel = document.getElementById('inventory-panel');
