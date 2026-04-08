@@ -142,6 +142,9 @@ function enterDungeon(dungeonId) {
   spawnEnemies();
   const info = DUNGEON_INFO[dungeonId];
   showAreaLabel(info ? info.name : '던전');
+  if (info && info.layoutHint && typeof showToast === 'function') {
+    setTimeout(() => showToast(info.layoutHint), 200);
+  }
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('dungeon');
   // Initialize companion states for dungeon

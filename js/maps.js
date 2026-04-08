@@ -134,25 +134,172 @@ function buildField() {
 }
 
 const DG_W = 20, DG_H = 15;
-function buildDungeon() {
+
+function createDungeonGrid(fill = TILE_WALL) {
   const m = [];
   for (let y = 0; y < DG_H; y++) {
     m[y] = [];
-    for (let x = 0; x < DG_W; x++) {
-      m[y][x] = TILE_WALL;
+    for (let x = 0; x < DG_W; x++) m[y][x] = fill;
+  }
+  return m;
+}
+
+function carveRect(m, x1, y1, x2, y2, tile = TILE_FLOOR) {
+  for (let y = y1; y <= y2; y++) {
+    for (let x = x1; x <= x2; x++) {
+      if (x > 0 && x < DG_W - 1 && y > 0 && y < DG_H - 1) m[y][x] = tile;
     }
   }
-  for (let y = 2; y < DG_H-2; y++) {
-    for (let x = 2; x < DG_W-2; x++) {
-      m[y][x] = TILE_FLOOR;
-    }
-  }
-  [[4,4],[4,8],[4,12],[8,4],[8,8],[8,12],[10,6],[10,10]].forEach(([y,x]) => {
-    if (y>=2&&y<DG_H-2&&x>=2&&x<DG_W-2) m[y][x] = TILE_WALL;
-  });
+}
+
+function carveH(m, y, x1, x2, tile = TILE_FLOOR) {
+  carveRect(m, Math.min(x1, x2), y, Math.max(x1, x2), y, tile);
+}
+
+function carveV(m, x, y1, y2, tile = TILE_FLOOR) {
+  carveRect(m, x, Math.min(y1, y2), x, Math.max(y1, y2), tile);
+}
+
+function addExitAndSpawnLane(m) {
+  carveRect(m, 9, 10, 12, 12, TILE_FLOOR);
+  carveRect(m, 9, 2, 12, 6, TILE_FLOOR);
+  carveV(m, 10, 2, 12, TILE_FLOOR);
+  carveV(m, 11, 2, 12, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+}
+
+function buildOpenDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 2, 2, 17, 12, TILE_FLOOR);
+  [[4,4],[4,15],[10,4],[10,15],[6,9],[8,11]].forEach(([y,x]) => { m[y][x] = TILE_STONE; });
+  addExitAndSpawnLane(m);
+  return m;
+}
+
+function buildForkDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 8, 10, 12, 12, TILE_FLOOR);
+  carveV(m, 10, 3, 12, TILE_FLOOR);
+  carveV(m, 11, 3, 12, TILE_FLOOR);
+  carveRect(m, 3, 3, 7, 6, TILE_FLOOR);
+  carveRect(m, 12, 3, 16, 6, TILE_FLOOR);
+  carveRect(m, 8, 4, 12, 7, TILE_FLOOR);
+  carveH(m, 6, 7, 12, TILE_FLOOR);
+  carveH(m, 6, 10, 12, TILE_FLOOR);
   m[2][10] = TILE_EXIT;
   m[2][11] = TILE_EXIT;
   return m;
+}
+
+function buildCatacombDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 9, 10, 12, 12, TILE_FLOOR);
+  carveV(m, 10, 2, 12, TILE_FLOOR);
+  carveV(m, 11, 2, 12, TILE_FLOOR);
+  carveH(m, 4, 3, 16, TILE_FLOOR);
+  carveH(m, 8, 3, 16, TILE_FLOOR);
+  carveV(m, 4, 4, 10, TILE_FLOOR);
+  carveV(m, 8, 4, 10, TILE_FLOOR);
+  carveV(m, 13, 4, 10, TILE_FLOOR);
+  [[4,6],[4,14],[8,6],[8,10],[8,14],[10,8],[10,13]].forEach(([y,x]) => { m[y][x] = TILE_STONE; });
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildFortressDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 7, 2, 12, 12, TILE_FLOOR);
+  carveRect(m, 3, 5, 16, 9, TILE_FLOOR);
+  [[5,5],[5,14],[9,5],[9,14],[7,9],[7,10]].forEach(([y,x]) => { m[y][x] = TILE_WALL; });
+  carveRect(m, 9, 10, 12, 12, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildMazeDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 2, 2, 17, 12, TILE_FLOOR);
+  for (let x = 4; x <= 15; x += 3) {
+    for (let y = 3; y <= 11; y++) {
+      if (y === 5 || y === 9) continue;
+      m[y][x] = TILE_WALL;
+    }
+  }
+  carveRect(m, 9, 10, 12, 12, TILE_FLOOR);
+  carveRect(m, 9, 2, 12, 4, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildLavaDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 2, 2, 17, 12, TILE_FLOOR);
+  for (let x = 3; x <= 16; x++) {
+    if (x === 9 || x === 10 || x === 11) continue;
+    if (x % 2 === 0) m[7][x] = TILE_WALL;
+  }
+  [[4,7],[4,12],[10,7],[10,12],[6,9]].forEach(([y,x]) => { m[y][x] = TILE_STONE; });
+  addExitAndSpawnLane(m);
+  return m;
+}
+
+function buildHallDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 8, 2, 12, 12, TILE_FLOOR);
+  carveRect(m, 4, 4, 7, 6, TILE_FLOOR);
+  carveRect(m, 13, 4, 16, 6, TILE_FLOOR);
+  carveRect(m, 4, 8, 7, 10, TILE_FLOOR);
+  carveRect(m, 13, 8, 16, 10, TILE_FLOOR);
+  carveH(m, 5, 7, 13, TILE_FLOOR);
+  carveH(m, 9, 7, 13, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildLaneDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 3, 2, 5, 12, TILE_FLOOR);
+  carveRect(m, 8, 2, 11, 12, TILE_FLOOR);
+  carveRect(m, 14, 2, 16, 12, TILE_FLOOR);
+  carveH(m, 11, 5, 14, TILE_FLOOR);
+  carveH(m, 4, 5, 14, TILE_FLOOR);
+  carveRect(m, 9, 10, 11, 12, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildFinalDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 7, 2, 12, 12, TILE_FLOOR);
+  carveRect(m, 3, 4, 16, 10, TILE_FLOOR);
+  [[4,4],[4,15],[10,4],[10,15],[7,7],[7,12],[9,7],[9,12]].forEach(([y,x]) => { m[y][x] = TILE_STONE; });
+  [[6,10],[8,10]].forEach(([y,x]) => { m[y][x] = TILE_WALL; });
+  carveRect(m, 9, 10, 12, 12, TILE_FLOOR);
+  m[2][10] = TILE_EXIT;
+  m[2][11] = TILE_EXIT;
+  return m;
+}
+
+function buildDungeon() {
+  const id = (typeof currentDungeonId !== 'undefined' && currentDungeonId >= 0) ? currentDungeonId : 0;
+  switch (id) {
+    case 0: return buildOpenDungeon();
+    case 1: return buildForkDungeon();
+    case 2: return buildCatacombDungeon();
+    case 3: return buildFortressDungeon();
+    case 4: return buildMazeDungeon();
+    case 5: return buildLavaDungeon();
+    case 6: return buildHallDungeon();
+    case 7: return buildLaneDungeon();
+    case 8: return buildFinalDungeon();
+    default: return buildOpenDungeon();
+  }
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
