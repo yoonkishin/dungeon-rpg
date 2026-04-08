@@ -4,6 +4,7 @@
 function spawnEnemies() {
   enemies = [];
   droppedItems = [];
+  enemyEffects = [];
   if (currentMap === 'town') {
     // No enemies in town
   } else if (currentMap === 'field') {
@@ -90,6 +91,11 @@ function spawnDungeonEnemies() {
       knockbackVx: 0,
       knockbackVy: 0,
       attackWindup: 0,
+      specialTimer: 1800,
+      specialCooldown: Math.max(2600, 4200 - difficulty * 180),
+      bossSkillType: info.bossSkillType,
+      bossSkillName: info.bossSkillName,
+      bossSkillColor: info.bossSkillColor,
       typeIdx: Math.min(difficulty, ENEMY_TYPES.length - 1),
       isBoss: true,
     };

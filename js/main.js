@@ -276,6 +276,7 @@ function update(dt) {
 
     if (e.flashTimer > 0) e.flashTimer--;
     if (e.attackTimer > 0) e.attackTimer -= dt;
+    if (e.isBoss && e.specialTimer > 0) e.specialTimer -= dt;
 
     e.frameTimer += dt;
     if (e.frameTimer > 300) { e.frameTimer = 0; e.frame = 1 - e.frame; }
@@ -308,6 +309,10 @@ function update(dt) {
         e.attackWindup = 0;
         return;
       }
+      if (e.isBoss && e.specialTimer <= 0 && d < 220) {
+        queueBossSpecial(e);
+        e.specialTimer = e.specialCooldown;
+      }
       if (d > e.attackRange + 8) {
         e.attackWindup = 0;
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
@@ -330,6 +335,8 @@ function update(dt) {
       }
     }
   });
+
+  updateEnemyEffects(dt);
 
   enemies = enemies.filter(e => !e.dead || e.flashTimer > 0);
 

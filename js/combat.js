@@ -53,23 +53,45 @@ function doAttack() {
   }
 }
 
+function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
+  player.hp -= dmg;
+  player.invincible = invincibleMs;
+  triggerShake(source && source.isBoss ? 14 : 10);
+  addParticles(hitX ?? player.x, hitY ?? player.y, '#e74c3c', source && source.isBoss ? 10 : 6);
+  addDamageNumber(hitX ?? player.x, hitY ?? player.y, dmg, 'received');
+  AudioSystem.sfx.playerHit();
+  if (player.hp <= 0) {
+    player.hp = 0;
+    player.dead = true;
+    AudioSystem.sfx.death();
+    AudioSystem.stopBgm();
+    document.getElementById('death-screen').style.display = 'flex';
+  }
+  updateHUD();
+}
+
+function damageCompanionById(cId, dmg, hitX, hitY) {
+  const cs = companionStates[cId];
+  if (!cs) return false;
+  cs.hp -= dmg;
+  cs.flashTimer = 12;
+  addDamageNumber(hitX ?? cs.x, hitY ?? cs.y, dmg, 'received');
+  addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 4);
+  if (cs.hp <= 0) {
+    cs.hp = 0;
+    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
+    activeCompanions = activeCompanions.filter(id => id !== cId);
+    const cInfo = DUNGEON_INFO[cId];
+    showToast((cInfo ? cInfo.companionName : '동료') + ' 쓰러짐!');
+    addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 15);
+  }
+  return true;
+}
+
 function performEnemyAttack(e) {
   if (player.invincible <= 0) {
     const dmg = Math.max(1, e.atk - playerDef() - Math.floor(Math.random() * 4));
-    player.hp -= dmg;
-    player.invincible = 600;
-    triggerShake(e.isBoss ? 14 : 10);
-    addParticles(player.x, player.y, '#e74c3c', e.isBoss ? 10 : 6);
-    addDamageNumber(player.x, player.y, dmg, 'received');
-    AudioSystem.sfx.playerHit();
-    if (player.hp <= 0) {
-      player.hp = 0;
-      player.dead = true;
-      AudioSystem.sfx.death();
-      AudioSystem.stopBgm();
-      document.getElementById('death-screen').style.display = 'flex';
-    }
-    updateHUD();
+    damagePlayerFromEnemy(e, dmg, player.x, player.y, 600);
     return true;
   }
 
@@ -83,25 +105,176 @@ function performEnemyAttack(e) {
       if (cd < compDist) { targetComp = cId; compDist = cd; }
     });
     if (targetComp !== null) {
-      const cs = companionStates[targetComp];
       const dmg = Math.max(1, e.atk - 2);
-      cs.hp -= dmg;
-      cs.flashTimer = 12;
-      addDamageNumber(cs.x, cs.y, dmg, 'received');
-      addParticles(cs.x, cs.y, '#e74c3c', 4);
-      if (cs.hp <= 0) {
-        cs.hp = 0;
-        deadCompanions.push(targetComp);
-        activeCompanions = activeCompanions.filter(id => id !== targetComp);
-        const cInfo = DUNGEON_INFO[targetComp];
-        showToast((cInfo ? cInfo.companionName : '동료') + ' 쓰러짐!');
-        addParticles(cs.x, cs.y, '#e74c3c', 15);
-      }
+      damageCompanionById(targetComp, dmg);
       return true;
     }
   }
 
   return false;
+}
+
+function queueBossSpecial(e) {
+  if (!e || !e.isBoss || !e.bossSkillType) return;
+  const skillColor = e.bossSkillColor || e.color;
+  const baseDamage = Math.max(8, Math.floor(e.atk * 0.9));
+
+  if (e.bossSkillType === 'slam') {
+    enemyEffects.push({
+      kind: 'warning',
+      x: player.x,
+      y: player.y,
+      radius: 48,
+      timer: 950,
+      maxTimer: 950,
+      damage: baseDamage + 8,
+      color: skillColor,
+      label: e.bossSkillName || '강타',
+      ownerId: e.name
+    });
+    showToast((e.bossSkillName || e.name) + ' 준비!');
+  } else if (e.bossSkillType === 'nova') {
+    enemyEffects.push({
+      kind: 'warning',
+      x: e.x,
+      y: e.y,
+      radius: e.attackRange + 36,
+      timer: 1100,
+      maxTimer: 1100,
+      damage: baseDamage + 12,
+      color: skillColor,
+      followBoss: true,
+      ownerId: e.name,
+      label: e.bossSkillName || '파동'
+    });
+    showToast((e.bossSkillName || e.name) + ' 시전!');
+  } else if (e.bossSkillType === 'bolt') {
+    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+    enemyEffects.push({
+      kind: 'projectile',
+      x: e.x,
+      y: e.y,
+      vx: Math.cos(angle) * 3.2,
+      vy: Math.sin(angle) * 3.2,
+      radius: 12,
+      life: 1800,
+      damage: baseDamage + 6,
+      color: skillColor,
+      label: e.bossSkillName || '투사체',
+      ownerId: e.name
+    });
+    addParticles(e.x, e.y, skillColor, 10);
+  } else if (e.bossSkillType === 'charge') {
+    const angle = Math.atan2(player.y - e.y, player.x - e.x);
+    enemyEffects.push({
+      kind: 'charge',
+      x: e.x,
+      y: e.y,
+      radius: 22,
+      timer: 900,
+      maxTimer: 900,
+      damage: baseDamage + 10,
+      color: skillColor,
+      dirX: Math.cos(angle),
+      dirY: Math.sin(angle),
+      ownerId: e.name,
+      hitPlayer: false,
+      hitCompanions: {},
+      label: e.bossSkillName || '돌진'
+    });
+    showToast((e.bossSkillName || e.name) + ' 돌진!');
+  }
+}
+
+function updateEnemyEffects(dt) {
+  enemyEffects = enemyEffects.filter(effect => {
+    if (effect.kind === 'warning') {
+      if (effect.followBoss) {
+        const owner = enemies.find(en => !en.dead && en.isBoss && en.name === effect.ownerId);
+        if (owner) {
+          effect.x = owner.x;
+          effect.y = owner.y;
+        }
+      }
+      effect.timer -= dt;
+      if (effect.timer <= 0) {
+        if (dist({ x: effect.x, y: effect.y }, player) <= effect.radius && player.invincible <= 0) {
+          damagePlayerFromEnemy({ isBoss: true }, effect.damage, effect.x, effect.y, 550);
+        }
+        if (currentMap === 'dungeon') {
+          activeCompanions.slice().forEach(cId => {
+            const cs = companionStates[cId];
+            if (!cs) return;
+            const cd = Math.sqrt((cs.x - effect.x)**2 + (cs.y - effect.y)**2);
+            if (cd <= effect.radius) {
+              damageCompanionById(cId, Math.max(1, effect.damage - 4), effect.x, effect.y);
+            }
+          });
+        }
+        addParticles(effect.x, effect.y, effect.color, 18);
+        triggerShake(12);
+        return false;
+      }
+      return true;
+    }
+
+    if (effect.kind === 'projectile') {
+      effect.life -= dt;
+      effect.x += effect.vx * (dt / 16.666);
+      effect.y += effect.vy * (dt / 16.666);
+      if (dist({ x: effect.x, y: effect.y }, player) <= effect.radius + player.w * 0.4 && player.invincible <= 0) {
+        damagePlayerFromEnemy({ isBoss: true }, effect.damage, effect.x, effect.y, 450);
+        addParticles(effect.x, effect.y, effect.color, 12);
+        return false;
+      }
+      if (currentMap === 'dungeon') {
+        for (const cId of activeCompanions.slice()) {
+          const cs = companionStates[cId];
+          if (!cs) continue;
+          const cd = Math.sqrt((cs.x - effect.x)**2 + (cs.y - effect.y)**2);
+          if (cd <= effect.radius + 10) {
+            damageCompanionById(cId, Math.max(1, effect.damage - 5), effect.x, effect.y);
+            addParticles(effect.x, effect.y, effect.color, 10);
+            return false;
+          }
+        }
+      }
+      return effect.life > 0;
+    }
+
+    if (effect.kind === 'charge') {
+      effect.timer -= dt;
+      const owner = enemies.find(en => !en.dead && en.isBoss && en.name === effect.ownerId);
+      if (!owner) return false;
+      const phasePct = 1 - Math.max(0, effect.timer) / effect.maxTimer;
+      const speed = (phasePct > 0.45 ? 5.2 : 0.8) * (dt / 16.666);
+      const pos = resolveCollision(owner, owner.x + effect.dirX * speed, owner.y + effect.dirY * speed);
+      owner.x = pos.x;
+      owner.y = pos.y;
+      effect.x = owner.x;
+      effect.y = owner.y;
+      if (phasePct > 0.45) {
+        if (!effect.hitPlayer && dist(owner, player) <= effect.radius + 10 && player.invincible <= 0) {
+          effect.hitPlayer = true;
+          damagePlayerFromEnemy(owner, effect.damage, owner.x, owner.y, 500);
+        }
+        if (currentMap === 'dungeon') {
+          activeCompanions.slice().forEach(cId => {
+            const cs = companionStates[cId];
+            if (!cs || effect.hitCompanions[cId]) return;
+            const cd = Math.sqrt((cs.x - owner.x)**2 + (cs.y - owner.y)**2);
+            if (cd <= effect.radius + 6) {
+              effect.hitCompanions[cId] = true;
+              damageCompanionById(cId, Math.max(1, effect.damage - 5), owner.x, owner.y);
+            }
+          });
+        }
+      }
+      return effect.timer > 0;
+    }
+
+    return false;
+  });
 }
 
 

@@ -249,6 +249,67 @@ function drawEnemy(e) {
   }
 }
 
+function drawEnemyEffects() {
+  enemyEffects.forEach(effect => {
+    const sx = effect.x - cameraX + screenShake.x;
+    const sy = effect.y - cameraY + screenShake.y;
+
+    if (effect.kind === 'warning') {
+      const pct = Math.max(0, effect.timer / effect.maxTimer);
+      ctx.save();
+      ctx.globalAlpha = 0.18 + (1 - pct) * 0.22;
+      ctx.fillStyle = effect.color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, effect.radius * (0.92 + (1 - pct) * 0.08), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(sx, sy, effect.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      if (effect.label) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(effect.label, sx, sy - effect.radius - 8);
+      }
+      ctx.restore();
+    } else if (effect.kind === 'projectile') {
+      ctx.save();
+      ctx.fillStyle = effect.color;
+      ctx.shadowColor = effect.color;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(sx, sy, effect.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    } else if (effect.kind === 'charge') {
+      const pct = Math.max(0, effect.timer / effect.maxTimer);
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = effect.color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, effect.radius + (1 - pct) * 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.95;
+      ctx.strokeStyle = effect.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + effect.dirX * 28, sy + effect.dirY * 28);
+      ctx.stroke();
+      if (effect.label) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(effect.label, sx, sy - effect.radius - 10);
+      }
+      ctx.restore();
+    }
+  });
+}
+
 function drawParticles() {
   particles.forEach(p => {
     const alpha = p.life / 50;
@@ -429,6 +490,7 @@ function draw() {
   entities.sort((a, b) => a.y - b.y);
   entities.forEach(e => e.draw());
 
+  drawEnemyEffects();
   drawParticles();
   drawDamageNumbers();
   drawDayNight();
