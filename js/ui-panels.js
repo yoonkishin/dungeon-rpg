@@ -438,7 +438,7 @@ function renderQuestPanel() {
 
   const mainObjectiveTitle = nextDungeon ? `다음 던전: ${nextDungeon.name}` : '모든 던전 정복 완료';
   const mainObjectiveDesc = nextDungeon
-    ? `${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 현재 필드에서 포탈을 타고 던전에 진입하면 된다.`
+    ? `${nextDungeon.zone} 지역의 ${nextDungeon.bossName}을 쓰러뜨리고 동료 \"${nextDungeon.companionName}\"를 확보해봐. 권장 레벨은 ${nextDungeon.recommendedLevel} 이상.`
     : '9개 던전을 모두 클리어했어. 이제는 빌드와 전투감을 더 다듬는 실험을 해볼 타이밍이다.';
 
   const tierText = nextTier
@@ -448,6 +448,31 @@ function renderQuestPanel() {
   const companionGoal = activeCompanions.length >= 2
     ? `편성 완료 (${activeCompanions.length}/2)`
     : `${2 - activeCompanions.length}명 더 편성 가능`;
+
+  const dungeonRoadmapHtml = DUNGEON_INFO.map(info => {
+    const cleared = dungeonsCleared.includes(info.id);
+    const isNext = nextDungeon && nextDungeon.id === info.id;
+    const statusClass = cleared ? 'done' : (isNext ? 'next' : '');
+    const statusChip = cleared
+      ? '<span class="quest-chip done">클리어</span>'
+      : (isNext ? '<span class="quest-chip active">다음 목표</span>' : '<span class="quest-chip warn">대기</span>');
+    const levelGap = Math.max(0, info.recommendedLevel - player.level);
+    const levelText = levelGap === 0 ? '입장 적정' : `권장까지 ${levelGap} Lv 남음`;
+    return `
+      <div class="quest-dungeon-item ${statusClass}">
+        <div class="quest-dungeon-head">
+          <div>
+            <div class="quest-dungeon-name">${info.id + 1}. ${info.name}</div>
+            <div class="quest-dungeon-meta">${info.zone} · 권장 Lv.${info.recommendedLevel}</div>
+          </div>
+          <div>${statusChip}</div>
+        </div>
+        <div class="quest-dungeon-boss">보스: <span style="color:${info.bossColor};font-weight:bold;">${info.bossName}</span> · ATK ${info.bossAtk} · HP ${info.bossHp}</div>
+        <div class="quest-dungeon-reward">보상 동료: <span style="color:${info.companionColor};font-weight:bold;">${info.companionName}</span></div>
+        ${!cleared ? '<div class="quest-dungeon-meta">현재 상태: ' + levelText + '</div>' : ''}
+      </div>
+    `;
+  }).join('');
 
   content.innerHTML = `
     <div class="quest-card primary">
@@ -459,6 +484,7 @@ function renderQuestPanel() {
       <div style="margin-top:6px;">
         <span class="quest-chip ${nextDungeon ? 'warn' : 'done'}">${nextDungeon ? '보스 목표' : '완료'}</span>
         <span class="quest-chip ${currentMap === 'town' ? 'warn' : 'active'}">현재 위치: ${currentMap === 'town' ? '마을' : currentMap === 'field' ? '필드' : '던전'}</span>
+        ${nextDungeon ? '<span class="quest-chip ' + (player.level >= nextDungeon.recommendedLevel ? 'done' : 'warn') + '">권장 Lv.' + nextDungeon.recommendedLevel + '</span>' : ''}
       </div>
     </div>
 
@@ -488,8 +514,13 @@ function renderQuestPanel() {
       ${deadCompanions.length > 0 ? '<div class="quest-desc" style="color:#e74c3c;">쓰러진 동료 ' + deadCompanions.length + '명 있음. 마을 신전에서 부활 가능.</div>' : ''}
       <div style="margin-top:4px;">
         <span class="quest-chip ${player.gold >= 100 ? 'done' : 'warn'}">골드 ${player.gold}</span>
-        <span class="quest-chip ${player.level >= 6 ? 'done' : 'warn'}">Lv.${player.level}</span>
+        <span class="quest-chip ${nextDungeon && player.level >= nextDungeon.recommendedLevel ? 'done' : 'warn'}">Lv.${player.level}</span>
       </div>
+    </div>
+
+    <div class="quest-section-title">던전 로드맵</div>
+    <div class="quest-dungeon-list">
+      ${dungeonRoadmapHtml}
     </div>
 
     <div class="quest-section-title">추천 다음 행동</div>
