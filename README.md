@@ -68,6 +68,35 @@ js/audio.js
 
 가장 간단한 방법은 정적 파일 서버로 실행하는 것이다.
 
+---
+
+## 부팅 스모크 테스트
+
+검은 화면급 부팅 실패를 줄이기 위해, 이 repo에는 **Node 기반 부팅 스모크 테스트**가 포함되어 있다.
+
+```bash
+node scripts/check-boot.js
+```
+
+이 스크립트는 핵심 JS 파일을 실제 로드 순서대로 실행해 보고,
+초기 부팅 경로에서 예외가 나는지 빠르게 확인한다.
+
+또한 현재 로컬 repo에는 `core.hooksPath=.githooks`가 설정되어 있어,
+`git push` 전에 아래 훅이 자동으로 실행된다.
+
+- `.githooks/pre-push`
+- 내부에서 `node scripts/check-boot.js` 실행
+
+즉, 앞으로는 **push 전에 최소한 부팅 크래시 여부를 한 번 자동 검사**한다.
+
+추가로, 런타임 예외가 발생했을 때 검은 화면만 남지 않도록
+`js/constants.js`에서 **Runtime Error Overlay**를 켜두었다.
+
+- `window.onerror`
+- `unhandledrejection`
+
+두 경로를 잡아, 모바일에서도 에러 메시지/파일/라인/스택이 화면에 바로 보이게 한다.
+
 ### 방법 1: Python
 
 ```bash
