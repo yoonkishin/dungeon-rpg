@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
+<meta name="browsermode" content="application">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#000000">
+<title>던전 탐험 RPG</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui">
+  <!-- Player Status (top-left) -->
+  <div id="player-status">
+    <div id="player-avatar">1</div>
+    <div>
+      <div id="status-bars">
+        <div class="status-bar-row">
+          <div class="status-bar-fill" id="hp-fill"></div>
+          <div class="status-bar-text" id="hp-text">100/100</div>
+        </div>
+        <div class="status-bar-row mp-row">
+          <div class="status-bar-fill" id="mp-fill"></div>
+          <div class="status-bar-text" id="mp-text">50/50</div>
+        </div>
+        <div class="xp-bar-row">
+          <div id="xp-fill"></div>
+          <span class="xp-label">EXP</span>
+          <span class="xp-text" id="xp-text">0/30</span>
+        </div>
+      </div>
+      <div id="status-gold">💰 0</div>
+    </div>
+  </div>
+
+  <!-- Gold Display (top-right) -->
+  <div id="gold-display">💰 5000</div>
+
+  <!-- Top-right buttons -->
+  <div id="top-right-btns">
+    <div class="top-circle-btn" id="menu-btn">☰</div>
+    <div class="top-circle-btn" id="settings-btn">⚙</div>
+  </div>
+
+  <!-- Minimap with toggle -->
+  <div id="minimap-container">
+    <canvas id="minimap"></canvas>
+    <div id="minimap-toggle">✕</div>
+  </div>
+
+  <!-- Menu Panel -->
+  <div id="menu-panel">
+    <div class="menu-title">메뉴</div>
+    <div id="menu-grid">
+      <div class="menu-grid-btn" data-action="profile"><div class="m-icon">👤</div><div class="m-label">프로필</div></div>
+      <div class="menu-grid-btn" data-action="equipment"><div class="m-icon">⚔️</div><div class="m-label">장비</div></div>
+      <div class="menu-grid-btn" data-action="bag"><div class="m-icon">🎒</div><div class="m-label">가방</div></div>
+      <div class="menu-grid-btn" data-action="companion"><div class="m-icon">👥</div><div class="m-label">동료</div></div>
+      <div class="menu-grid-btn" data-action="town-return"><div class="m-icon">🏠</div><div class="m-label">마을귀환</div></div>
+      <div class="menu-grid-btn" data-action="quests"><div class="m-icon">📜</div><div class="m-label">퀘스트</div></div>
+      <div class="menu-grid-btn" data-action="skill"><div class="m-icon">⚡</div><div class="m-label">스킬</div></div>
+      <div class="menu-grid-btn" data-action="settings"><div class="m-icon">⚙️</div><div class="m-label">설정</div></div>
+    </div>
+    <div id="menu-close">✕</div>
+  </div>
+
+  <!-- Settings Panel -->
+  <div id="settings-panel">
+    <div class="settings-title">설정</div>
+    <div class="settings-list">
+      <div class="settings-row" data-setting="sound">
+        <span class="s-icon">🔊</span><span class="s-label">사운드</span><span class="s-toggle">ON</span>
+      </div>
+      <div class="settings-row" data-setting="music">
+        <span class="s-icon">🎵</span><span class="s-label">음악</span><span class="s-toggle">ON</span>
+      </div>
+      <div class="settings-row" data-setting="fullscreen">
+        <span class="s-icon">📱</span><span class="s-label">전체화면</span><span class="s-toggle">→</span>
+      </div>
+      <div class="settings-row" data-setting="reset">
+        <span class="s-icon">🗑️</span><span class="s-label">데이터 초기화</span><span class="s-toggle">→</span>
+      </div>
+      <div class="settings-row" data-setting="exit">
+        <span class="s-icon">🚪</span><span class="s-label">게임 종료</span><span class="s-toggle"></span>
+      </div>
+    </div>
+    <div id="settings-close">✕</div>
+  </div>
+
+  <!-- Tier promotion banner -->
+  <div id="tier-banner"></div>
+
+  <div id="area-label">마을</div>
+  <div id="levelup-banner">레벨 업!</div>
+  <div id="dungeon-clear-banner"></div>
+
+  <div id="inventory-panel">
+    <div class="inv-header">
+      <h2>장비</h2>
+      <button class="inv-close">✕</button>
+    </div>
+    <div class="equip-layout">
+      <!-- Left: Character silhouette with equipment slots -->
+      <div class="equip-character">
+        <div class="char-silhouette">
+          <div class="equip-slot" id="eq-helmet" data-slot="helmet">⛑️</div>
+          <div class="equip-slot" id="eq-weapon" data-slot="weapon">🗡️</div>
+          <div class="equip-slot" id="eq-armor" data-slot="armor">🧥</div>
+          <div class="equip-slot" id="eq-shield" data-slot="shield">🛡️</div>
+          <div class="equip-slot" id="eq-boots" data-slot="boots">👢</div>
+          <div class="equip-slot" id="eq-acc1" data-slot="accessory1">💍</div>
+          <div class="equip-slot" id="eq-acc2" data-slot="accessory2">💍</div>
+          <div class="equip-slot" id="eq-event" data-slot="event">🍀</div>
+          <!-- Silhouette body -->
+          <div class="sil-head"></div>
+          <div class="sil-body"></div>
+          <div class="sil-legs"></div>
+        </div>
+      </div>
+      <!-- Right: Item grid (icons only) -->
+      <div class="equip-bag">
+        <div class="bag-title">가방 <span id="bag-count">0</span></div>
+        <div class="bag-grid" id="bag-grid"></div>
+      </div>
+    </div>
+    <!-- Item detail popup -->
+    <div id="item-popup" style="display:none;">
+      <div class="popup-content" id="popup-content"></div>
+    </div>
+  </div>
+
+  <div id="shop-panel">
+    <div class="inv-header">
+      <h2>🏪 상점</h2>
+      <button class="inv-close" id="shop-close">✕</button>
+    </div>
+    <div class="shop-tabs">
+      <div class="shop-tab active" id="shop-tab-buy">구매</div>
+      <div class="shop-tab" id="shop-tab-sell">판매</div>
+    </div>
+    <div style="color:#f1c40f;font-size:10px;font-weight:bold;margin-bottom:4px;flex-shrink:0;">💰 보유 골드: <span id="shop-gold">0</span></div>
+    <div class="panel-scroll">
+    <div class="inv-section" id="shop-buy-section">
+      <div class="inv-items" id="shop-items-list"></div>
+    </div>
+    <div class="inv-section" id="shop-sell-section" style="display:none;">
+      <div class="inv-items" id="shop-sell-list"></div>
+    </div>
+    </div>
+  </div>
+
+  <!-- Profile Panel -->
+  <div id="profile-panel">
+    <div class="inv-header">
+      <h2>프로필</h2>
+      <button class="inv-close" id="profile-close">✕</button>
+    </div>
+    <div id="profile-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;"></div>
+  </div>
+
+  <!-- Companion Panel -->
+  <div id="companion-panel">
+    <div class="inv-header">
+      <h2>👥 동료</h2>
+      <button class="inv-close" id="companion-close">✕</button>
+    </div>
+    <div class="panel-scroll">
+    <div id="companion-content"></div>
+    </div>
+  </div>
+
+  <!-- Temple Revival Panel -->
+  <div id="temple-panel">
+    <div class="inv-header">
+      <h2>⛪ 신전 - 동료 부활</h2>
+      <button class="inv-close" id="temple-close">✕</button>
+    </div>
+    <div class="panel-scroll">
+    <div id="temple-content"></div>
+    </div>
+  </div>
+
+  <!-- Skill Panel -->
+  <div id="skill-panel">
+    <div class="inv-header">
+      <h2>⚡ 스킬</h2>
+      <button class="inv-close" id="skill-panel-close">✕</button>
+    </div>
+    <div class="panel-scroll">
+    <div id="skill-panel-content"></div>
+    </div>
+  </div>
+
+  <!-- Dialogue Panel -->
+  <div id="dialogue-panel">
+    <div class="npc-name"></div>
+    <div class="npc-text"></div>
+    <div class="dialogue-close">닫기</div>
+  </div>
+
+  <div id="pickup-prompt">터치하여 줍기</div>
+
+  <div id="joystick-zone">
+    <div id="joystick-base">
+      <div id="joystick-thumb"></div>
+    </div>
+  </div>
+
+  <div id="attack-btn">⚔️<br>공격</div>
+
+  <!-- Skill slots -->
+  <div class="skill-slot" id="skill-slot-0"></div>
+  <div class="skill-slot" id="skill-slot-1"></div>
+  <div class="skill-slot" id="skill-slot-2"></div>
+  <div class="skill-slot" id="skill-slot-3"></div>
+
+  <!-- Skill page swap button -->
+  <div id="skill-swap-btn">1/3</div>
+
+  <div id="potion-btn">🧪<br>포션</div>
+
+  <div id="rotate-notice"><div class="icon">📱↪️</div><div>화면을 가로로 회전해주세요</div></div>
+  <div id="death-screen">
+    <h1>사망</h1>
+    <p>모든 적에게 쓰러졌습니다...</p>
+    <button id="respawn-btn">부활하기</button>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+</div>
+
+<div id="fullscreen-btn"><div class="tap-icon">⚔️</div><div>터치하여 게임 시작</div><div class="sub">전체화면 모드로 전환됩니다</div></div>
+
+<script src="js/constants.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/data.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/transitions.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/companions.js"></script>
+<script src="js/rendering.js"></script>
+<script src="js/ui-controls.js"></script>
+<script src="js/ui-panels.js"></script>
+<script src="js/save.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
