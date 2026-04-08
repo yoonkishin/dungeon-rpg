@@ -12,6 +12,26 @@ const DUNGEON_INFO = [
   { id:8, name:'최종 던전',    portalX:40, portalY:3,  bossName:'마왕',        bossColor:'#d63031', bossHp:3000, bossAtk:120, companionName:'성녀',       companionColor:'#ffeaa7', recommendedLevel:24, zone:'심연의 문', layoutHint:'최종 제단', bossSkillType:'nova', bossSkillName:'파멸진', bossSkillColor:'#ff7675' },
 ];
 
+const COMPANION_PROFILES = {
+  0: { roleKey:'tank', roleLabel:'탱커', attackRange:50, preferredRange:34, attackCooldown:980, skillId:'slime_guard', skillName:'점액 방패', skillCooldown:5200, desc:'전방에서 적을 붙잡고 범위 경직을 준다.' },
+  1: { roleKey:'ranger', roleLabel:'원거리', attackRange:128, preferredRange:92, attackCooldown:1080, skillId:'arrow_barrage', skillName:'연발 사격', skillCooldown:4800, desc:'멀리서 적 둘을 동시에 압박한다.' },
+  2: { roleKey:'caster', roleLabel:'마법', attackRange:118, preferredRange:86, attackCooldown:1200, skillId:'bone_nova', skillName:'망령 폭발', skillCooldown:5600, desc:'적 무리를 광역으로 타격한다.' },
+  3: { roleKey:'bruiser', roleLabel:'브루저', attackRange:56, preferredRange:40, attackCooldown:960, skillId:'war_cleave', skillName:'전투 강타', skillCooldown:4300, desc:'근거리 적들을 시원하게 쓸어버린다.' },
+  4: { roleKey:'assassin', roleLabel:'암살', attackRange:60, preferredRange:42, attackCooldown:820, skillId:'shadow_strike', skillName:'암영 참격', skillCooldown:5000, desc:'체력이 낮은 적을 빠르게 마무리한다.' },
+  5: { roleKey:'mage', roleLabel:'화염술사', attackRange:132, preferredRange:94, attackCooldown:1220, skillId:'flame_burst', skillName:'화염 난사', skillCooldown:5200, desc:'원거리 폭발로 적 무리를 태운다.' },
+  6: { roleKey:'guardian', roleLabel:'수호', attackRange:62, preferredRange:46, attackCooldown:1040, skillId:'frost_lock', skillName:'빙결 봉쇄', skillCooldown:5400, desc:'빙결 일격으로 적을 오래 묶는다.' },
+  7: { roleKey:'paladin', roleLabel:'성기사', attackRange:64, preferredRange:48, attackCooldown:980, skillId:'dark_aegis', skillName:'암흑 수호', skillCooldown:6200, desc:'위험한 순간 아군을 보호하며 반격한다.' },
+  8: { roleKey:'support', roleLabel:'성녀', attackRange:96, preferredRange:84, attackCooldown:1300, skillId:'holy_prayer', skillName:'성역 기도', skillCooldown:5400, desc:'플레이어와 동료를 치유하며 전선을 유지한다.' },
+};
+
+const COMPANION_SYNERGIES = {
+  '0-8': { name:'수호 성역', desc:'방어 +2, 회복량 +15%', playerDefBonus:2, healMult:1.15 },
+  '1-4': { name:'암영 사냥', desc:'동료 공격 +3, 공격 주기 18% 개선', companionAtkBonus:3, cooldownMult:0.82 },
+  '2-5': { name:'비전 공명', desc:'마법 동료 피해 +4', companionAtkBonus:4 },
+  '3-6': { name:'전선 유지', desc:'플레이어 공격 +2, 방어 +1', playerAtkBonus:2, playerDefBonus:1 },
+  '7-8': { name:'성흑 균형', desc:'회복량 +20%, 동료 체력 +20', healMult:1.2, companionHpBonus:20 },
+};
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let currentMap = 'town';
 let maps = {
@@ -70,6 +90,21 @@ let deadCompanions = [];    // IDs of dead companions
 // Companion runtime states (keyed by companion ID)
 let companionStates = {};
 
+function getCompanionProfile(cId) {
+  return COMPANION_PROFILES[cId] || COMPANION_PROFILES[0];
+}
+
+function getActiveCompanionSynergy() {
+  if (activeCompanions.length !== 2) return null;
+  const key = activeCompanions.slice().sort((a, b) => a - b).join('-');
+  return COMPANION_SYNERGIES[key] || null;
+}
+
+function getHealingMultiplier() {
+  const synergy = getActiveCompanionSynergy();
+  return getVillagePotionMultiplier() * (synergy && synergy.healMult ? synergy.healMult : 1);
+}
+
 function initCompanionState(cId) {
   const maxHp = getCompanionMaxHp(cId);
   companionStates[cId] = {
@@ -78,16 +113,33 @@ function initCompanionState(cId) {
     hp: maxHp,
     maxHp: maxHp,
     attackTimer: 0,
+    skillTimer: Math.random() * 1200,
     flashTimer: 0
   };
 }
 
 function getCompanionMaxHp(cId) {
-  return 80 + cId * 30 + getVillageCompanionHpBonus();
+  const synergy = getActiveCompanionSynergy();
+  return 80 + cId * 30 + getVillageCompanionHpBonus() + (synergy && synergy.companionHpBonus ? synergy.companionHpBonus : 0);
 }
 
 function getCompanionAtk(cId) {
-  return 10 + cId * 5 + getVillageCompanionAtkBonus();
+  const synergy = getActiveCompanionSynergy();
+  return 10 + cId * 5 + getVillageCompanionAtkBonus() + (synergy && synergy.companionAtkBonus ? synergy.companionAtkBonus : 0);
+}
+
+function getCompanionAttackRange(cId) {
+  return getCompanionProfile(cId).attackRange;
+}
+
+function getCompanionPreferredRange(cId) {
+  return getCompanionProfile(cId).preferredRange;
+}
+
+function getCompanionAttackCooldown(cId) {
+  const profile = getCompanionProfile(cId);
+  const synergy = getActiveCompanionSynergy();
+  return Math.floor(profile.attackCooldown * (synergy && synergy.cooldownMult ? synergy.cooldownMult : 1));
 }
 
 // Stats tracking
@@ -571,11 +623,13 @@ function getEquipBonus() {
 }
 
 function playerAtk() {
-  return player.atk + getEquipBonus().atk + getVillageAttackBonus();
+  const synergy = getActiveCompanionSynergy();
+  return player.atk + getEquipBonus().atk + getVillageAttackBonus() + (synergy && synergy.playerAtkBonus ? synergy.playerAtkBonus : 0);
 }
 
 function playerDef() {
-  let d = player.def + getEquipBonus().def + getVillageDefenseBonus();
+  const synergy = getActiveCompanionSynergy();
+  let d = player.def + getEquipBonus().def + getVillageDefenseBonus() + (synergy && synergy.playerDefBonus ? synergy.playerDefBonus : 0);
   Object.values(skillBuffs).forEach(b => {
     if (b.defBuff && b.timer > 0) d += b.defBuff;
   });

@@ -86,7 +86,7 @@ function usePotion() {
   const itemId = inventory[useIdx];
   const item = ITEMS[itemId];
   if (!item || item.type !== 'potion') return;
-  const boostedHeal = Math.floor(item.heal * getVillagePotionMultiplier());
+  const boostedHeal = Math.floor(item.heal * getHealingMultiplier());
   const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
   player.hp = Math.min(player.hp + boostedHeal, player.maxHp);
   inventory.splice(useIdx, 1);

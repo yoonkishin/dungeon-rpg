@@ -186,9 +186,16 @@ function renderCompanionPanel() {
   countDiv.textContent = '활성 동료: ' + activeCompanions.length + '/2' + (deadCompanions.length > 0 ? ' | 사망: ' + deadCompanions.length + '명' : '');
   content.appendChild(countDiv);
 
+  const synergy = getActiveCompanionSynergy();
+  const synergyDiv = document.createElement('div');
+  synergyDiv.style.cssText = 'color:#9ad0ff;font-size:10px;margin-bottom:10px;text-align:center;';
+  synergyDiv.textContent = synergy ? ('시너지: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 조합에 따라 추가 보너스가 생긴다';
+  content.appendChild(synergyDiv);
+
   companions.forEach(cId => {
     const info = DUNGEON_INFO[cId];
     if (!info) return;
+    const profile = getCompanionProfile(cId);
     const isActive = activeCompanions.includes(cId);
     const isDead = deadCompanions.includes(cId);
     const maxHp = getCompanionMaxHp(cId);
@@ -225,6 +232,7 @@ function renderCompanionPanel() {
     div.innerHTML =
       '<div class="comp-icon" style="background:' + info.companionColor + ';">★</div>' +
       '<span class="comp-name">' + info.companionName + '</span>' +
+      '<span style="color:#aaa;font-size:10px;">' + profile.roleLabel + ' · ' + profile.skillName + '</span>' +
       '<span style="color:#aaa;font-size:10px;">ATK:' + getCompanionAtk(cId) + ' HP:' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
       hpBarHtml +
       '<button class="comp-btn" style="background:' + btnColor + ';"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>';
