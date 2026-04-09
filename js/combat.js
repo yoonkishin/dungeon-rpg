@@ -67,6 +67,7 @@ function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
     AudioSystem.stopBgm();
     if (typeof returnPlayerToTownAfterDeath === 'function') {
       returnPlayerToTownAfterDeath();
+      return;
     }
   }
   updateHUD();

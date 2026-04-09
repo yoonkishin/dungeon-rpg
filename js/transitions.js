@@ -178,4 +178,28 @@ function exitDungeon() {
   updateHUD();
 }
 
+function returnPlayerToTownAfterDeath() {
+  const deathScreen = document.getElementById('death-screen');
+  if (deathScreen) deathScreen.style.display = 'none';
+
+  activeCompanions.forEach(cId => {
+    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
+  });
+  activeCompanions = [];
+  companionStates = {};
+  player.hp = player.maxHp;
+  player.mp = player.maxMp;
+  player.dead = false;
+  player.invincible = 1000;
+
+  if (typeof closeAllPanels === 'function') {
+    closeAllPanels();
+  }
+
+  enterTown();
+  if (typeof showToast === 'function') {
+    showToast('쓰러져 마을로 돌아왔습니다');
+  }
+}
+
 // ─── Combat ───────────────────────────────────────────────────────────────────

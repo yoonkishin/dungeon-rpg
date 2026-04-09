@@ -392,28 +392,11 @@ function closeAllPanels(options = {}) {
 // ─── Death return ─────────────────────────────────────────────────────────────
 const respawnBtn = document.getElementById('respawn-btn');
 
-function returnPlayerToTownAfterDeath() {
-  const deathScreen = document.getElementById('death-screen');
-  if (deathScreen) deathScreen.style.display = 'none';
-
-  // Active companions stay dead until revived at the temple.
-  activeCompanions.forEach(cId => {
-    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-  });
-  activeCompanions = [];
-  companionStates = {};
-  player.hp = player.maxHp;
-  player.mp = player.maxMp;
-  player.dead = false;
-  player.invincible = 1000;
-  closeAllPanels();
-  enterTown();
-  showToast('쓰러져 마을로 돌아왔습니다');
-}
-
 function handleRespawn() {
   AudioSystem.sfx.respawn();
-  returnPlayerToTownAfterDeath();
+  if (typeof returnPlayerToTownAfterDeath === 'function') {
+    returnPlayerToTownAfterDeath();
+  }
 }
 
 bindTap(respawnBtn, handleRespawn, { stopPropagation: true });
