@@ -154,21 +154,36 @@ function hidePanel(el, callback) {
   }, 150);
 }
 
-document.getElementById('menu-btn').addEventListener('touchstart', (e) => { e.preventDefault(); openMenu(); }, { passive: false });
-document.getElementById('menu-btn').addEventListener('click', (e) => { e.preventDefault(); openMenu(); });
+function bindTap(el, handler, options = {}) {
+  if (!el) return;
+  const {
+    preventDefault = true,
+    stopPropagation = false,
+    touchOnly = false,
+  } = options;
+
+  const wrapped = (e) => {
+    if (preventDefault && e) e.preventDefault();
+    if (stopPropagation && e) e.stopPropagation();
+    handler(e);
+  };
+
+  el.addEventListener('touchstart', wrapped, { passive: false });
+  if (!touchOnly) el.addEventListener('click', wrapped);
+}
+
+bindTap(document.getElementById('menu-btn'), () => openMenu());
 
 // Click status bar to open profile
-document.getElementById('player-status').addEventListener('touchstart', (e) => { e.preventDefault(); if (!profileOpen) openProfile(); }, { passive: false });
-document.getElementById('player-status').addEventListener('click', (e) => { e.preventDefault(); if (!profileOpen) openProfile(); });
+bindTap(document.getElementById('player-status'), () => {
+  if (!profileOpen) openProfile();
+});
 
-document.getElementById('settings-btn').addEventListener('touchstart', (e) => { e.preventDefault(); openSettings(); }, { passive: false });
-document.getElementById('settings-btn').addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
+bindTap(document.getElementById('settings-btn'), () => openSettings());
 
-document.getElementById('menu-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeMenu(); }, { passive: false });
-document.getElementById('menu-close').addEventListener('click', closeMenu);
+bindTap(document.getElementById('menu-close'), () => closeMenu());
 
-document.getElementById('settings-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeSettings(); }, { passive: false });
-document.getElementById('settings-close').addEventListener('click', closeSettings);
+bindTap(document.getElementById('settings-close'), () => closeSettings());
 
 function openMenu() {
   if (settingsOpen) closeSettings();
@@ -196,9 +211,7 @@ function closeSettings() {
 
 // Menu grid actions
 document.querySelectorAll('.menu-grid-btn').forEach(btn => {
-  function handleAction(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  function handleAction() {
     const action = btn.getAttribute('data-action');
     if (action === 'equipment' || action === 'bag') {
       openInventory();
@@ -251,14 +264,12 @@ document.querySelectorAll('.menu-grid-btn').forEach(btn => {
       hidePanel(menuPanel);
     }
   }
-  btn.addEventListener('touchstart', handleAction, { passive: false });
-  btn.addEventListener('click', handleAction);
+  bindTap(btn, handleAction, { stopPropagation: true });
 });
 
 // Settings rows
 document.querySelectorAll('.settings-row').forEach(row => {
-  function handleSetting(e) {
-    e.preventDefault();
+  function handleSetting() {
     const setting = row.getAttribute('data-setting');
     if (setting === 'fullscreen') {
       closeSettings();
@@ -281,8 +292,7 @@ document.querySelectorAll('.settings-row').forEach(row => {
       showToast('준비 중...');
     }
   }
-  row.addEventListener('touchstart', handleSetting, { passive: false });
-  row.addEventListener('click', handleSetting);
+  bindTap(row, handleSetting);
 });
 
 // ─── Minimap Toggle ──────────────────────────────────────────────────────────
@@ -300,8 +310,7 @@ try {
   }
 } catch(ex) {}
 
-minimapToggle.addEventListener('touchstart', (e) => { e.preventDefault(); toggleMinimap(); }, { passive: false });
-minimapToggle.addEventListener('click', (e) => { e.preventDefault(); toggleMinimap(); });
+bindTap(minimapToggle, () => toggleMinimap());
 
 function toggleMinimap() {
   minimapVisible = !minimapVisible;
@@ -337,8 +346,7 @@ function advanceDialogue(e) {
   }
 }
 
-dialogueCloseBtn.addEventListener('touchstart', advanceDialogue, { passive: false });
-dialogueCloseBtn.addEventListener('click', advanceDialogue);
+bindTap(dialogueCloseBtn, advanceDialogue, { stopPropagation: true });
 
 function openDialogue(npc) {
   dialogueOpen = true;
@@ -359,11 +367,35 @@ function closeDialogue() {
 
 // Note: dialoguePanel doesn't use showPanel/hidePanel because it's bottom-anchored, not fullscreen overlay
 
+function closeAllPanels(options = {}) {
+  const { includeDialogue = true } = options;
+  [
+    closeInventory,
+    closeShop,
+    closeMenu,
+    closeSettings,
+    closeProfile,
+    closeCompanionPanel,
+    closeSkillPanel,
+    closeQuestPanel,
+    closeVillagePanel,
+    closeTemple,
+  ].forEach((closeFn) => {
+    if (typeof closeFn === 'function') closeFn();
+  });
+
+  if (includeDialogue && typeof closeDialogue === 'function') {
+    closeDialogue();
+  }
+}
 
 // ─── Respawn ──────────────────────────────────────────────────────────────────
-document.getElementById('respawn-btn').addEventListener('click', () => {
+const respawnBtn = document.getElementById('respawn-btn');
+function handleRespawn() {
   AudioSystem.sfx.respawn();
   AudioSystem.startBgm(currentMap === 'dungeon' ? 'dungeon' : currentMap);
+  document.getElementById('death-screen').style.display = 'none';
+
   // Reset companions on death
   activeCompanions.forEach(cId => {
     if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
@@ -374,14 +406,8 @@ document.getElementById('respawn-btn').addEventListener('click', () => {
   player.mp = player.maxMp;
   player.dead = false;
   player.invincible = 1000;
-  closeInventory();
-  closeShop();
-  closeMenu();
-  closeSettings();
-  closeDialogue();
-  closeProfile();
-  closeCompanionPanel();
-  closeSkillPanel();
+  closeAllPanels();
+
   if (currentMap === 'dungeon') {
     exitDungeon();
   } else if (currentMap === 'field') {
@@ -391,7 +417,7 @@ document.getElementById('respawn-btn').addEventListener('click', () => {
     player.y = 15 * TILE + TILE/2;
     spawnEnemies();
   }
-  document.getElementById('death-screen').style.display = 'none';
   updateHUD();
-});
+}
+bindTap(respawnBtn, handleRespawn, { stopPropagation: true });
 

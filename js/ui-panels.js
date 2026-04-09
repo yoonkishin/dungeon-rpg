@@ -2,8 +2,7 @@
 
 // ─── Profile Panel ───────────────────────────────────────────────────────────
 const profilePanel = document.getElementById('profile-panel');
-document.getElementById('profile-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeProfile(); }, { passive: false });
-document.getElementById('profile-close').addEventListener('click', closeProfile);
+bindTap(document.getElementById('profile-close'), () => closeProfile());
 
 function openProfile() {
   profileOpen = true;
@@ -14,27 +13,30 @@ function closeProfile() {
   profileOpen = false;
   hidePanel(profilePanel);
 }
+function buildProfileProgressDots(total, activeCheck, variant) {
+  let html = '';
+  for (let i = 0; i < total; i++) {
+    const active = activeCheck(i);
+    html += '<div class="profile-progress-dot ' + variant + (active ? ' active' : '') + '">' + (active ? '●' : '○') + '</div>';
+  }
+  return html;
+}
+
+function buildProfileMetric(label, value) {
+  return '<div class="profile-metric-item"><span class="profile-metric-label">' + label + '</span><span class="profile-metric-value">' + value + '</span></div>';
+}
+
 function renderProfile() {
   const bonus = getEquipBonus();
   const tier = getCurrentTier();
   const nextTier = getNextTier();
   const content = document.getElementById('profile-content');
-
-  // Equipment display info
-  const weaponIcon = equipped.weapon && ITEMS[equipped.weapon] ? ITEMS[equipped.weapon].icon : '';
   const armorColor = equipped.armor && ITEMS[equipped.armor] ? ITEMS[equipped.armor].color : null;
-  const helmetColor = equipped.helmet && ITEMS[equipped.helmet] ? ITEMS[equipped.helmet].color : null;
-  const helmetIcon = equipped.helmet && ITEMS[equipped.helmet] ? ITEMS[equipped.helmet].icon : '';
-
-  // Tier glow intensity
   const glowSize = Math.min(tier.tier * 4, 24);
   const glowOpacity = Math.min(tier.tier * 0.12, 0.7);
-
-  // HP/MP bar percentages
   const hpPct = Math.max(0, Math.min(100, player.hp / player.maxHp * 100));
   const mpPct = Math.max(0, Math.min(100, player.mp / player.maxMp * 100));
 
-  // Tier progress
   let tierPct = 100;
   let tierProgressText = '최고 등급 달성!';
   if (nextTier) {
@@ -44,116 +46,68 @@ function renderProfile() {
     tierProgressText = '';
   }
 
-  // Dungeon progress circles
-  let dungeonCircles = '';
-  for (let i = 0; i < 9; i++) {
-    const cleared = dungeonsCleared.includes(i);
-    dungeonCircles += '<div style="width:16px;height:16px;border-radius:50%;background:' +
-      (cleared ? '#2ecc71' : 'rgba(255,255,255,0.08)') +
-      ';border:2px solid ' + (cleared ? '#27ae60' : 'rgba(255,255,255,0.15)') +
-      ';display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:' +
-      (cleared ? '#fff' : '#555') + ';font-weight:bold;">' + (cleared ? '●' : '○') + '</div>';
-  }
-
-  // Companion circles
-  let companionCircles = '';
-  for (let i = 0; i < 9; i++) {
-    const has = companions.includes(i);
-    companionCircles += '<div style="width:16px;height:16px;border-radius:50%;background:' +
-      (has ? '#3498db' : 'rgba(255,255,255,0.08)') +
-      ';border:2px solid ' + (has ? '#2980b9' : 'rgba(255,255,255,0.15)') +
-      ';display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:' +
-      (has ? '#fff' : '#555') + ';font-weight:bold;">' + (has ? '●' : '○') + '</div>';
-  }
-
+  const dungeonCircles = buildProfileProgressDots(9, (idx) => dungeonsCleared.includes(idx), 'dungeon');
+  const companionCircles = buildProfileProgressDots(9, (idx) => companions.includes(idx), 'companion');
   const totalCrit = Math.min(30, player.critChance + (bonus.critBonus || 0));
   const totalSpeed = (player.speed + (bonus.speedBonus || 0)).toFixed(2);
+  const glowColor = `${tier.color}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')}`;
 
   content.innerHTML = `
-    <!-- Character + Stats (horizontal layout for landscape) -->
-    <div style="display:flex;gap:10px;margin-bottom:8px;">
-      <!-- Character Illustration -->
-      <div style="position:relative;width:120px;min-width:120px;background:linear-gradient(180deg, #0a0c14, #1a1c24, #0a0c14);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,0.06);padding:8px 0;">
-        <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, ${tier.color}${Math.round(glowOpacity*255).toString(16).padStart(2,'0')}, transparent 60%);"></div>
-        <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
-          <div style="position:relative;width:60px;height:60px;">
-            ${tier.tier >= 3 ? '<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,'+tier.color+'33,transparent 70%);box-shadow:0 0 '+glowSize+'px '+tier.color+'44;"></div>' : ''}
-            <img src="./character.png" alt="캐릭터" style="width:60px;height:60px;object-fit:contain;position:relative;z-index:2;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.7));" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-            <div style="display:none;width:40px;height:45px;margin:0 auto;align-items:center;justify-content:center;flex-direction:column;">
-              <div style="width:24px;height:24px;background:${armorColor || tier.bodyColor};border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,0.5);"></div>
+    <div class="profile-layout">
+      <div class="profile-character-card">
+        <div class="profile-character-glow" style="background:radial-gradient(circle at 50% 50%, ${glowColor}, transparent 60%);"></div>
+        <div class="profile-character-inner">
+          <div class="profile-character-figure">
+            ${tier.tier >= 3 ? `<div class="profile-character-aura" style="background:radial-gradient(circle, ${tier.color}33, transparent 70%); box-shadow:0 0 ${glowSize}px ${tier.color}44;"></div>` : ''}
+            <img src="./character.png" alt="캐릭터" class="profile-character-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="profile-character-fallback">
+              <div class="profile-character-body" style="background:${armorColor || tier.bodyColor};"></div>
             </div>
           </div>
-          <div style="text-align:center;margin-top:4px;">
-            <div style="color:#fff;font-size:11px;font-weight:bold;">캐릭터</div>
-            <div style="color:${tier.color};font-size:9px;font-weight:bold;margin-top:1px;">⭐ ${tier.tier}단 - ${tier.name}</div>
-            <div style="color:#aaa;font-size:9px;margin-top:1px;">Lv. ${player.level}${player.level >= 35 ? ' (MAX)' : ''}</div>
+          <div class="profile-character-meta">
+            <div class="profile-character-name">캐릭터</div>
+            <div class="profile-character-tier" style="color:${tier.color};">⭐ ${tier.tier}단 - ${tier.name}</div>
+            <div class="profile-character-level">Lv. ${player.level}${player.level >= 35 ? ' (MAX)' : ''}</div>
           </div>
         </div>
       </div>
-      <!-- Stats Section -->
-      <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;">
-        <div style="margin-bottom:4px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-            <span style="color:#e74c3c;font-size:9px;font-weight:bold;">HP</span>
-            <span style="color:#ddd;font-size:9px;">${Math.floor(player.hp)}/${player.maxHp}</span>
-          </div>
-          <div style="height:6px;background:rgba(0,0,0,0.5);border-radius:3px;overflow:hidden;">
-            <div style="width:${hpPct}%;height:100%;background:linear-gradient(90deg,#ff6b6b,#e74c3c);border-radius:3px;"></div>
-          </div>
+
+      <div class="profile-stats-card">
+        <div class="profile-resource-block">
+          <div class="profile-resource-row"><span class="profile-resource-label hp">HP</span><span class="profile-resource-value">${Math.floor(player.hp)}/${player.maxHp}</span></div>
+          <div class="profile-bar"><div class="profile-bar-fill hp" style="width:${hpPct}%;"></div></div>
         </div>
-        <div style="margin-bottom:6px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
-            <span style="color:#3498db;font-size:9px;font-weight:bold;">MP</span>
-            <span style="color:#ddd;font-size:9px;">${Math.floor(player.mp)}/${player.maxMp}</span>
-          </div>
-          <div style="height:6px;background:rgba(0,0,0,0.5);border-radius:3px;overflow:hidden;">
-            <div style="width:${mpPct}%;height:100%;background:linear-gradient(90deg,#74b9ff,#0984e3);border-radius:3px;"></div>
-          </div>
+        <div class="profile-resource-block profile-resource-gap">
+          <div class="profile-resource-row"><span class="profile-resource-label mp">MP</span><span class="profile-resource-value">${Math.floor(player.mp)}/${player.maxMp}</span></div>
+          <div class="profile-bar"><div class="profile-bar-fill mp" style="width:${mpPct}%;"></div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
-          <div style="display:flex;justify-content:space-between;padding:3px 5px;background:rgba(255,255,255,0.04);border-radius:4px;">
-            <span style="color:#aaa;font-size:9px;">공격력</span>
-            <span style="color:#f1c40f;font-size:9px;font-weight:bold;">${player.atk + bonus.atk}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 5px;background:rgba(255,255,255,0.04);border-radius:4px;">
-            <span style="color:#aaa;font-size:9px;">방어력</span>
-            <span style="color:#f1c40f;font-size:9px;font-weight:bold;">${player.def + bonus.def}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 5px;background:rgba(255,255,255,0.04);border-radius:4px;">
-            <span style="color:#aaa;font-size:9px;">크리티컬</span>
-            <span style="color:#f1c40f;font-size:9px;font-weight:bold;">${totalCrit}%</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:3px 5px;background:rgba(255,255,255,0.04);border-radius:4px;">
-            <span style="color:#aaa;font-size:9px;">이동속도</span>
-            <span style="color:#f1c40f;font-size:9px;font-weight:bold;">${totalSpeed}</span>
-          </div>
+        <div class="profile-metric-grid">
+          ${buildProfileMetric('공격력', player.atk + bonus.atk)}
+          ${buildProfileMetric('방어력', player.def + bonus.def)}
+          ${buildProfileMetric('크리티컬', totalCrit + '%')}
+          ${buildProfileMetric('이동속도', totalSpeed)}
         </div>
       </div>
     </div>
 
-    <!-- Tier Progress -->
-    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;margin-bottom:6px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-        <span style="color:#ddd;font-size:10px;">승급: <span style="color:${tier.color};font-weight:bold;">${tier.tier}단 ${tier.name}</span></span>
-        ${nextTier ? '<span style="color:#888;font-size:9px;">다음: ' + nextTier.name + ' (Lv.' + nextTier.reqLevel + ')</span>' : '<span style="color:#f1c40f;font-size:9px;">최고 등급</span>'}
+    <div class="profile-tier-card">
+      <div class="profile-tier-head">
+        <span class="profile-tier-text">승급: <span class="profile-tier-name" style="color:${tier.color};">${tier.tier}단 ${tier.name}</span></span>
+        ${nextTier ? `<span class="profile-tier-next">다음: ${nextTier.name} (Lv.${nextTier.reqLevel})</span>` : '<span class="profile-tier-next max">최고 등급</span>'}
       </div>
-      <div style="height:6px;background:rgba(0,0,0,0.5);border-radius:3px;overflow:hidden;">
-        <div style="width:${tierPct}%;height:100%;background:linear-gradient(90deg,${tier.color},${tier.bodyColor});border-radius:3px;"></div>
-      </div>
-      <div style="text-align:right;color:#aaa;font-size:8px;margin-top:2px;">${tierProgressText || tierPct + '%'}</div>
+      <div class="profile-bar profile-tier-progress"><div class="profile-bar-fill tier" style="width:${tierPct}%; background:linear-gradient(90deg, ${tier.color}, ${tier.bodyColor});"></div></div>
+      <div class="profile-tier-foot">${tierProgressText || tierPct + '%'}</div>
     </div>
 
-    <!-- Dungeon & Companions (side by side) -->
-    <div style="display:flex;gap:6px;margin-bottom:6px;">
-    <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;">
-      <div style="color:#aaa;font-size:9px;font-weight:bold;margin-bottom:4px;">던전 ${dungeonsCleared.length}/9</div>
-      <div style="display:flex;gap:3px;flex-wrap:wrap;">${dungeonCircles}</div>
-    </div>
-
-    <div style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px;">
-      <div style="color:#aaa;font-size:9px;font-weight:bold;margin-bottom:4px;">동료 ${companions.length}/9</div>
-      <div style="display:flex;gap:3px;flex-wrap:wrap;">${companionCircles}</div>
-    </div>
+    <div class="profile-progress-row">
+      <div class="profile-progress-card">
+        <div class="profile-progress-title">던전 ${dungeonsCleared.length}/9</div>
+        <div class="profile-progress-dots">${dungeonCircles}</div>
+      </div>
+      <div class="profile-progress-card">
+        <div class="profile-progress-title">동료 ${companions.length}/9</div>
+        <div class="profile-progress-dots">${companionCircles}</div>
+      </div>
     </div>
   `;
 }
@@ -191,10 +145,8 @@ const EQUIP_SLOT_META = {
   event: { icon: '🍀', label: '특수 장비' },
 };
 
-inventoryCloseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeInventory(); }, { passive: false });
-inventoryCloseBtn.addEventListener('click', closeInventory);
-shopCloseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeShop(); }, { passive: false });
-shopCloseBtn.addEventListener('click', closeShop);
+bindTap(inventoryCloseBtn, () => closeInventory());
+bindTap(shopCloseBtn, () => closeShop());
 itemPopup.addEventListener('touchstart', (e) => {
   if (e.target === itemPopup) {
     e.preventDefault();
@@ -204,10 +156,8 @@ itemPopup.addEventListener('touchstart', (e) => {
 itemPopup.addEventListener('click', (e) => {
   if (e.target === itemPopup) closeItemPopup();
 });
-shopTabBuy.addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('buy'); }, { passive: false });
-shopTabBuy.addEventListener('click', () => switchShopTab('buy'));
-shopTabSell.addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('sell'); }, { passive: false });
-shopTabSell.addEventListener('click', () => switchShopTab('sell'));
+bindTap(shopTabBuy, () => switchShopTab('buy'));
+bindTap(shopTabSell, () => switchShopTab('sell'));
 
 Object.keys(EQUIP_SLOT_META).forEach(slot => {
   const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
@@ -220,8 +170,7 @@ Object.keys(EQUIP_SLOT_META).forEach(slot => {
     if (!itemId || !ITEMS[itemId]) return;
     openItemPopup({ itemId, source: 'equipped', slot });
   }
-  slotEl.addEventListener('touchstart', handleSlotTap, { passive: false });
-  slotEl.addEventListener('click', handleSlotTap);
+  bindTap(slotEl, handleSlotTap, { stopPropagation: true });
 });
 
 function openInventory() {
@@ -532,8 +481,7 @@ function renderInventory() {
       e.stopPropagation();
       openItemPopup({ itemId: id, source: 'inventory' });
     }
-    cell.addEventListener('touchstart', handleBagTap, { passive: false });
-    cell.addEventListener('click', handleBagTap);
+    bindTap(cell, handleBagTap, { stopPropagation: true });
     bagGrid.appendChild(cell);
   });
 }
@@ -633,8 +581,7 @@ function renderShop() {
 
 // ─── Companion Panel ─────────────────────────────────────────────────────────
 const companionPanel = document.getElementById('companion-panel');
-document.getElementById('companion-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeCompanionPanel(); }, { passive: false });
-document.getElementById('companion-close').addEventListener('click', closeCompanionPanel);
+bindTap(document.getElementById('companion-close'), () => closeCompanionPanel());
 
 function openCompanionPanel() {
   companionPanelOpen = true;
@@ -791,8 +738,7 @@ function renderCompanionPanel() {
 // ─── Temple Panel UI ─────────────────────────────────────────────────────
 const templePanel = document.getElementById('temple-panel');
 let templeOpen = false;
-document.getElementById('temple-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeTemple(); }, { passive: false });
-document.getElementById('temple-close').addEventListener('click', closeTemple);
+bindTap(document.getElementById('temple-close'), () => closeTemple());
 
 function openTemple() {
   templeOpen = true;
@@ -886,8 +832,7 @@ function renderTemple() {
 
 // ─── Skill Panel UI ──────────────────────────────────────────────────────
 const skillPanel = document.getElementById('skill-panel');
-document.getElementById('skill-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeSkillPanel(); }, { passive: false });
-document.getElementById('skill-panel-close').addEventListener('click', closeSkillPanel);
+bindTap(document.getElementById('skill-panel-close'), () => closeSkillPanel());
 
 function openSkillPanel() {
   skillPanelOpen = true;
@@ -940,8 +885,7 @@ function renderSkillPanel() {
 
 // ─── Quest Panel UI ──────────────────────────────────────────────────────
 const questPanel = document.getElementById('quest-panel');
-document.getElementById('quest-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeQuestPanel(); }, { passive: false });
-document.getElementById('quest-panel-close').addEventListener('click', closeQuestPanel);
+bindTap(document.getElementById('quest-panel-close'), () => closeQuestPanel());
 
 function openQuestPanel() {
   questPanelOpen = true;
@@ -952,6 +896,109 @@ function closeQuestPanel() {
   questPanelOpen = false;
   hidePanel(questPanel);
 }
+function buildQuestRow(label, value) {
+  return '<div class="quest-row"><span class="quest-label">' + label + '</span><span class="quest-value">' + value + '</span></div>';
+}
+
+function buildQuestFocusSection({ focusTitle, focusText, focusChip, focusChipClass, currentMainStatus, readySubCount, acceptedCount, nextDungeon }) {
+  let html = '<div class="quest-card primary quest-focus-card">';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">' + focusTitle + '</div><span class="quest-chip ' + focusChipClass + '">' + focusChip + '</span></div>';
+  html += '<div class="quest-focus-text">' + focusText + '</div>';
+  html += '<div class="quest-summary-grid">';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">메인 진행</span><span class="quest-summary-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">서브 진행</span><span class="quest-summary-value">' + acceptedCount + '개</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">보고 가능</span><span class="quest-summary-value">' + ((currentMainStatus.ready ? 1 : 0) + readySubCount) + '개</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">다음 던전</span><span class="quest-summary-value">' + (nextDungeon ? nextDungeon.name : '완료') + '</span></div>';
+  html += '</div></div>';
+  return html;
+}
+
+function buildMainQuestSection(currentQuest, currentMainStatus) {
+  let html = '<div class="quest-section-title">메인 진행</div><div class="quest-card primary">';
+  html += buildQuestRow('현재 목표', currentQuest ? currentQuest.title : '모든 메인 퀘스트 완료');
+  if (currentQuest) {
+    html += buildQuestRow('의뢰 NPC', getQuestNpcName(getQuestOfferNpcId(currentQuest)));
+    html += buildQuestRow('보고 NPC', getQuestNpcName(getQuestTurnInNpcId(currentQuest)));
+    html += buildQuestRow('상태', currentMainStatus.label);
+    if (currentQuest.reward) html += buildQuestRow('보상', buildQuestRewardText(currentQuest));
+    html += '<div class="quest-desc">' + currentQuest.description + '</div>';
+    html += '<div class="quest-desc quest-desc-emphasis">' +
+      (currentMainStatus.ready
+        ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
+        : ('다음 행동: ' + (currentQuest.hint || currentQuest.description))) +
+      '</div>';
+  } else {
+    html += buildQuestRow('진행도', completedMainQuests.length + '/' + MAIN_QUESTS.length);
+    html += '<div class="quest-desc">메인 루프를 전부 완료했습니다. 동료 조합과 장비를 계속 시험해볼 수 있습니다.</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function buildDungeonProgressSection(nextDungeon) {
+  let html = '<div class="quest-section-title">던전 진행</div><div class="quest-dungeon-list">';
+  DUNGEON_INFO.forEach((info, idx) => {
+    const cleared = dungeonsCleared.includes(idx);
+    const isNext = nextDungeon && nextDungeon.id === idx;
+    html += '<div class="quest-dungeon-item ' + (cleared ? 'done' : '') + ' ' + (isNext ? 'next' : '') + '">';
+    html += '<div class="quest-dungeon-head">';
+    html += '<div><div class="quest-dungeon-name">' + info.name + '</div><div class="quest-dungeon-meta">추천 Lv ' + info.recommendedLevel + ' · 지역 ' + info.zone + '</div></div>';
+    html += '<div class="quest-chip ' + (cleared ? 'done' : isNext ? 'active' : '') + '">' + (cleared ? '완료' : isNext ? '다음 목표' : '미완료') + '</div>';
+    html += '</div>';
+    html += '<div class="quest-dungeon-boss">보스: ' + info.bossName + ' · 패턴: ' + info.bossSkillName + '</div>';
+    html += '<div class="quest-dungeon-reward">동료 보상: ' + info.companionName + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function buildSubquestStatusSection({ acceptedCount, completedCount, totalSubquests, availableSubquests, acceptedDetails }) {
+  let html = '<div class="quest-section-title">서브 퀘스트 현황</div><div class="quest-card">';
+  html += buildQuestRow('수락 중', acceptedCount);
+  html += buildQuestRow('완료', completedCount + '/' + totalSubquests);
+  html += buildQuestRow('새로 수락 가능', availableSubquests.length);
+  html += '</div>';
+
+  if (acceptedDetails.length > 0) {
+    acceptedDetails.forEach(detail => {
+      html += '<div class="quest-card">';
+      html += buildQuestRow('퀘스트', detail.quest.title);
+      html += '<div class="quest-chip-row">' +
+        '<span class="quest-chip ' + (detail.readyToTurnIn ? 'done' : 'active') + '">' + detail.statusLabel + '</span>' +
+        '<span class="quest-chip">진행도 ' + detail.progressText + '</span>' +
+      '</div>';
+      html += buildQuestRow('의뢰 NPC', detail.offerNpcName);
+      html += buildQuestRow('보고 NPC', detail.turnInNpcName);
+      html += buildQuestRow('보상', detail.rewardText || '없음');
+      html += '<div class="quest-desc">' + detail.quest.description + '</div>';
+      html += '<div class="quest-desc quest-desc-emphasis ' + (detail.readyToTurnIn ? 'ready' : 'pending') + '">' +
+        (detail.readyToTurnIn
+          ? ('목표 달성 완료. ' + detail.turnInNpcName + '에게 돌아가 보상을 수령하세요.')
+          : ('아직 진행 중입니다. 완료 후 ' + detail.turnInNpcName + '에게 보고하세요.')) +
+        '</div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="quest-card"><div class="quest-desc">현재 진행 중인 서브 퀘스트가 없습니다.</div></div>';
+  }
+
+  if (availableSubquests.length > 0) {
+    html += '<div class="quest-section-title">수락 가능한 서브 퀘스트</div>';
+    availableSubquests.forEach(quest => {
+      html += '<div class="quest-card">';
+      html += buildQuestRow('퀘스트', quest.title);
+      html += '<div class="quest-chip-row"><span class="quest-chip active">수락 가능</span></div>';
+      html += buildQuestRow('의뢰 NPC', getQuestNpcName(getQuestOfferNpcId(quest)));
+      html += buildQuestRow('보상 수령 NPC', getQuestNpcName(getQuestTurnInNpcId(quest)));
+      html += buildQuestRow('예상 보상', buildQuestRewardText(quest) || '없음');
+      html += '<div class="quest-desc">' + quest.description + '</div>';
+      html += '</div>';
+    });
+  }
+  return html;
+}
+
 function renderQuestPanel() {
   const content = document.getElementById('quest-panel-content');
   const nextDungeon = DUNGEON_INFO.find((_, idx) => !dungeonsCleared.includes(idx));
@@ -993,102 +1040,12 @@ function renderQuestPanel() {
     focusChipClass = 'done';
   }
 
-  let html = '';
-
-  html += '<div class="quest-card primary quest-focus-card">';
-  html += '<div class="quest-focus-head"><div class="quest-focus-title">' + focusTitle + '</div><span class="quest-chip ' + focusChipClass + '">' + focusChip + '</span></div>';
-  html += '<div class="quest-focus-text">' + focusText + '</div>';
-  html += '<div class="quest-summary-grid">';
-  html += '<div class="quest-summary-item"><span class="quest-summary-label">메인 진행</span><span class="quest-summary-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
-  html += '<div class="quest-summary-item"><span class="quest-summary-label">서브 진행</span><span class="quest-summary-value">' + acceptedCount + '개</span></div>';
-  html += '<div class="quest-summary-item"><span class="quest-summary-label">보고 가능</span><span class="quest-summary-value">' + ((currentMainStatus.ready ? 1 : 0) + readySubCount) + '개</span></div>';
-  html += '<div class="quest-summary-item"><span class="quest-summary-label">다음 던전</span><span class="quest-summary-value">' + (nextDungeon ? nextDungeon.name : '완료') + '</span></div>';
-  html += '</div>';
-  html += '</div>';
-
-  html += '<div class="quest-section-title">메인 진행</div>';
-  html += '<div class="quest-card primary">';
-  html += '<div class="quest-row"><span class="quest-label">현재 목표</span><span class="quest-value">' + (currentQuest ? currentQuest.title : '모든 메인 퀘스트 완료') + '</span></div>';
-  if (currentQuest) {
-    html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestOfferNpcId(currentQuest)) + '</span></div>';
-    html += '<div class="quest-row"><span class="quest-label">보고 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span></div>';
-    html += '<div class="quest-row"><span class="quest-label">상태</span><span class="quest-value">' + currentMainStatus.label + '</span></div>';
-    if (currentQuest.reward) {
-      html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + buildQuestRewardText(currentQuest) + '</span></div>';
-    }
-    html += '<div class="quest-desc">' + currentQuest.description + '</div>';
-    html += '<div class="quest-desc quest-desc-emphasis">' +
-      (currentMainStatus.ready
-        ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
-        : ('다음 행동: ' + (currentQuest.hint || currentQuest.description))) +
-      '</div>';
-  } else {
-    html += '<div class="quest-row"><span class="quest-label">진행도</span><span class="quest-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
-    html += '<div class="quest-desc">메인 루프를 전부 완료했습니다. 동료 조합과 장비를 계속 시험해볼 수 있습니다.</div>';
-  }
-  html += '</div>';
-
-  html += '<div class="quest-section-title">던전 진행</div>';
-  html += '<div class="quest-dungeon-list">';
-  DUNGEON_INFO.forEach((info, idx) => {
-    const cleared = dungeonsCleared.includes(idx);
-    const isNext = nextDungeon && nextDungeon.id === idx;
-    html += '<div class="quest-dungeon-item ' + (cleared ? 'done' : '') + ' ' + (isNext ? 'next' : '') + '">';
-    html += '<div class="quest-dungeon-head">';
-    html += '<div><div class="quest-dungeon-name">' + info.name + '</div><div class="quest-dungeon-meta">추천 Lv ' + info.recommendedLevel + ' · 지역 ' + info.zone + '</div></div>';
-    html += '<div class="quest-chip ' + (cleared ? 'done' : isNext ? 'active' : '') + '">' + (cleared ? '완료' : isNext ? '다음 목표' : '미완료') + '</div>';
-    html += '</div>';
-    html += '<div class="quest-dungeon-boss">보스: ' + info.bossName + ' · 패턴: ' + info.bossSkillName + '</div>';
-    html += '<div class="quest-dungeon-reward">동료 보상: ' + info.companionName + '</div>';
-    html += '</div>';
-  });
-  html += '</div>';
-
-  html += '<div class="quest-section-title">서브 퀘스트 현황</div>';
-  html += '<div class="quest-card">';
-  html += '<div class="quest-row"><span class="quest-label">수락 중</span><span class="quest-value">' + acceptedCount + '</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">완료</span><span class="quest-value">' + completedCount + '/' + totalSubquests + '</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">새로 수락 가능</span><span class="quest-value">' + availableSubquests.length + '</span></div>';
-  html += '</div>';
-
-  if (acceptedDetails.length > 0) {
-    acceptedDetails.forEach(detail => {
-      html += '<div class="quest-card">';
-      html += '<div class="quest-row"><span class="quest-label">퀘스트</span><span class="quest-value">' + detail.quest.title + '</span></div>';
-      html += '<div style="margin-bottom:4px;">' +
-        '<span class="quest-chip ' + (detail.readyToTurnIn ? 'done' : 'active') + '">' + detail.statusLabel + '</span>' +
-        '<span class="quest-chip">진행도 ' + detail.progressText + '</span>' +
-      '</div>';
-      html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + detail.offerNpcName + '</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">보고 NPC</span><span class="quest-value">' + detail.turnInNpcName + '</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + (detail.rewardText || '없음') + '</span></div>';
-      html += '<div class="quest-desc">' + detail.quest.description + '</div>';
-      html += '<div class="quest-desc quest-desc-emphasis" style="color:' + (detail.readyToTurnIn ? '#f1c40f' : '#9aa3b2') + ';">' +
-        (detail.readyToTurnIn
-          ? ('목표 달성 완료. ' + detail.turnInNpcName + '에게 돌아가 보상을 수령하세요.')
-          : ('아직 진행 중입니다. 완료 후 ' + detail.turnInNpcName + '에게 보고하세요.')) +
-        '</div>';
-      html += '</div>';
-    });
-  } else {
-    html += '<div class="quest-card"><div class="quest-desc">현재 진행 중인 서브 퀘스트가 없습니다.</div></div>';
-  }
-
-  if (availableSubquests.length > 0) {
-    html += '<div class="quest-section-title">수락 가능한 서브 퀘스트</div>';
-    availableSubquests.forEach(quest => {
-      html += '<div class="quest-card">';
-      html += '<div class="quest-row"><span class="quest-label">퀘스트</span><span class="quest-value">' + quest.title + '</span></div>';
-      html += '<div style="margin-bottom:4px;"><span class="quest-chip active">수락 가능</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestOfferNpcId(quest)) + '</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">보상 수령 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(quest)) + '</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">예상 보상</span><span class="quest-value">' + (buildQuestRewardText(quest) || '없음') + '</span></div>';
-      html += '<div class="quest-desc">' + quest.description + '</div>';
-      html += '</div>';
-    });
-  }
-
-  content.innerHTML = html;
+  content.innerHTML = [
+    buildQuestFocusSection({ focusTitle, focusText, focusChip, focusChipClass, currentMainStatus, readySubCount, acceptedCount, nextDungeon }),
+    buildMainQuestSection(currentQuest, currentMainStatus),
+    buildDungeonProgressSection(nextDungeon),
+    buildSubquestStatusSection({ acceptedCount, completedCount, totalSubquests, availableSubquests, acceptedDetails })
+  ].join('');
 }
 
 function getVillageUpgradeDefinitions() {
@@ -1156,8 +1113,7 @@ function upgradeVillage(key) {
 
 // ─── Village Panel UI ────────────────────────────────────────────────────
 const villagePanel = document.getElementById('village-panel');
-document.getElementById('village-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeVillagePanel(); }, { passive: false });
-document.getElementById('village-panel-close').addEventListener('click', closeVillagePanel);
+bindTap(document.getElementById('village-panel-close'), () => closeVillagePanel());
 
 function openVillagePanel() {
   villagePanelOpen = true;
