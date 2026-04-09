@@ -611,9 +611,7 @@ function buildCompanionSummaryCard(label, value, valueClass = '', extraClass = '
 
 function getCompanionActionState(cId, isActive, isDead) {
   if (isDead) {
-    return currentMap === 'town'
-      ? { label: '부활', className: 'revive', action: 'revive', disabled: false }
-      : { label: '사망', className: 'disabled', action: 'none', disabled: true };
+    return { label: '사망', className: 'disabled', action: 'none', disabled: true };
   }
   if (isActive) {
     return { label: '해제', className: 'deactivate', action: 'deactivate', disabled: false };
@@ -659,7 +657,7 @@ function buildCompanionCard(cId) {
       '<button class="comp-ai-btn companion-mini-btn" data-cid="' + cId + '" style="background:' + aiMeta.color + ';">AI: ' + aiMeta.label + '</button>' +
       '<button class="comp-btn companion-mini-btn ' + actionState.className + '" data-cid="' + cId + '" data-action="' + actionState.action + '"' + (actionState.disabled ? ' disabled' : '') + '>' + actionState.label + '</button>' +
     '</div>' +
-    (actionState.action === 'revive' ? '<div class="companion-cost-note">부활 비용: ' + getReviveCost(cId) + 'G</div>' : '') +
+    (isDead ? '<div class="companion-cost-note">신전에서 부활 가능</div>' : '') +
   '</div>';
 }
 
@@ -673,7 +671,6 @@ function handleCompanionAiTap(cId) {
 }
 
 function handleCompanionAction(cId, action) {
-  const info = DUNGEON_INFO[cId];
   if (action === 'activate') {
     if (activeCompanions.length < 2) {
       activeCompanions.push(cId);
@@ -682,18 +679,6 @@ function handleCompanionAction(cId, action) {
   } else if (action === 'deactivate') {
     activeCompanions = activeCompanions.filter(id => id !== cId);
     delete companionStates[cId];
-  } else if (action === 'revive') {
-    const reviveCost = getReviveCost(cId);
-    if (player.gold >= reviveCost) {
-      player.gold -= reviveCost;
-      deadCompanions = deadCompanions.filter(id => id !== cId);
-      updateHUD();
-      AudioSystem.sfx.heal();
-      showToast((info ? info.companionName : '동료') + ' 부활!');
-    } else {
-      showToast('골드가 부족합니다!');
-      return;
-    }
   } else {
     return;
   }

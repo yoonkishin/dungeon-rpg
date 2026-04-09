@@ -393,10 +393,10 @@ function closeAllPanels(options = {}) {
 const respawnBtn = document.getElementById('respawn-btn');
 function handleRespawn() {
   AudioSystem.sfx.respawn();
-  AudioSystem.startBgm(currentMap === 'dungeon' ? 'dungeon' : currentMap);
   document.getElementById('death-screen').style.display = 'none';
 
-  // Reset companions on death
+  // Dungeon/field death sends the player back to town.
+  // Active companions stay dead until revived at the temple.
   activeCompanions.forEach(cId => {
     if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
   });
@@ -408,16 +408,16 @@ function handleRespawn() {
   player.invincible = 1000;
   closeAllPanels();
 
-  if (currentMap === 'dungeon') {
-    exitDungeon();
-  } else if (currentMap === 'field') {
+  if (currentMap !== 'town') {
     enterTown();
+    showToast('쓰러져 마을로 돌아왔습니다');
   } else {
-    player.x = 10 * TILE + TILE/2;
+    player.x = 20 * TILE + TILE/2;
     player.y = 15 * TILE + TILE/2;
     spawnEnemies();
+    AudioSystem.startBgm('town');
+    updateHUD();
   }
-  updateHUD();
 }
 bindTap(respawnBtn, handleRespawn, { stopPropagation: true });
 
