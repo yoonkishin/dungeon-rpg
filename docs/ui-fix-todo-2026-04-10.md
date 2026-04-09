@@ -21,4 +21,9 @@
 - [x] overlay-panel 공통 클래스로 오버레이 패널 스타일을 묶기
 - [x] renderProfile의 주요 인라인 스타일을 CSS 클래스로 분리하기
 - [x] renderQuestPanel 문자열 조립을 섹션 함수로 분리하기
+- [x] renderCompanionPanel / renderTemple을 헬퍼와 공통 액션 바인딩으로 분리하기
+- [x] renderShop / renderVillagePanel을 섹션 헬퍼와 공통 액션 바인딩으로 분리하기
+- [x] renderSkillPanel을 카드 빌더 기반으로 단순화하기
+- [x] item popup 액션 버튼 생성을 공통 헬퍼로 정리하기
+- [x] bindTap 호출부의 중복 preventDefault/stopPropagation 정리하기
 - [x] 부팅 스모크 테스트로 기본 동작 확인하기

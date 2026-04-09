@@ -26,70 +26,51 @@ function buildProfileMetric(label, value) {
   return '<div class="profile-metric-item"><span class="profile-metric-label">' + label + '</span><span class="profile-metric-value">' + value + '</span></div>';
 }
 
-function renderProfile() {
-  const bonus = getEquipBonus();
-  const tier = getCurrentTier();
-  const nextTier = getNextTier();
-  const content = document.getElementById('profile-content');
-  const armorColor = equipped.armor && ITEMS[equipped.armor] ? ITEMS[equipped.armor].color : null;
-  const glowSize = Math.min(tier.tier * 4, 24);
-  const glowOpacity = Math.min(tier.tier * 0.12, 0.7);
-  const hpPct = Math.max(0, Math.min(100, player.hp / player.maxHp * 100));
-  const mpPct = Math.max(0, Math.min(100, player.mp / player.maxMp * 100));
-
-  let tierPct = 100;
-  let tierProgressText = '최고 등급 달성!';
-  if (nextTier) {
-    const prevReq = tier.reqLevel;
-    const nextReq = nextTier.reqLevel;
-    tierPct = Math.min(100, Math.floor((player.level - prevReq) / (nextReq - prevReq) * 100));
-    tierProgressText = '';
-  }
-
-  const dungeonCircles = buildProfileProgressDots(9, (idx) => dungeonsCleared.includes(idx), 'dungeon');
-  const companionCircles = buildProfileProgressDots(9, (idx) => companions.includes(idx), 'companion');
-  const totalCrit = Math.min(30, player.critChance + (bonus.critBonus || 0));
-  const totalSpeed = (player.speed + (bonus.speedBonus || 0)).toFixed(2);
-  const glowColor = `${tier.color}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')}`;
-
-  content.innerHTML = `
-    <div class="profile-layout">
-      <div class="profile-character-card">
-        <div class="profile-character-glow" style="background:radial-gradient(circle at 50% 50%, ${glowColor}, transparent 60%);"></div>
-        <div class="profile-character-inner">
-          <div class="profile-character-figure">
-            ${tier.tier >= 3 ? `<div class="profile-character-aura" style="background:radial-gradient(circle, ${tier.color}33, transparent 70%); box-shadow:0 0 ${glowSize}px ${tier.color}44;"></div>` : ''}
-            <img src="./character.png" alt="캐릭터" class="profile-character-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-            <div class="profile-character-fallback">
-              <div class="profile-character-body" style="background:${armorColor || tier.bodyColor};"></div>
-            </div>
-          </div>
-          <div class="profile-character-meta">
-            <div class="profile-character-name">캐릭터</div>
-            <div class="profile-character-tier" style="color:${tier.color};">⭐ ${tier.tier}단 - ${tier.name}</div>
-            <div class="profile-character-level">Lv. ${player.level}${player.level >= 35 ? ' (MAX)' : ''}</div>
+function buildProfileCharacterCard(tier, glowColor, glowSize, armorColor) {
+  return `
+    <div class="profile-character-card">
+      <div class="profile-character-glow" style="background:radial-gradient(circle at 50% 50%, ${glowColor}, transparent 60%);"></div>
+      <div class="profile-character-inner">
+        <div class="profile-character-figure">
+          ${tier.tier >= 3 ? `<div class="profile-character-aura" style="background:radial-gradient(circle, ${tier.color}33, transparent 70%); box-shadow:0 0 ${glowSize}px ${tier.color}44;"></div>` : ''}
+          <img src="./character.png" alt="캐릭터" class="profile-character-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <div class="profile-character-fallback">
+            <div class="profile-character-body" style="background:${armorColor || tier.bodyColor};"></div>
           </div>
         </div>
-      </div>
-
-      <div class="profile-stats-card">
-        <div class="profile-resource-block">
-          <div class="profile-resource-row"><span class="profile-resource-label hp">HP</span><span class="profile-resource-value">${Math.floor(player.hp)}/${player.maxHp}</span></div>
-          <div class="profile-bar"><div class="profile-bar-fill hp" style="width:${hpPct}%;"></div></div>
-        </div>
-        <div class="profile-resource-block profile-resource-gap">
-          <div class="profile-resource-row"><span class="profile-resource-label mp">MP</span><span class="profile-resource-value">${Math.floor(player.mp)}/${player.maxMp}</span></div>
-          <div class="profile-bar"><div class="profile-bar-fill mp" style="width:${mpPct}%;"></div></div>
-        </div>
-        <div class="profile-metric-grid">
-          ${buildProfileMetric('공격력', player.atk + bonus.atk)}
-          ${buildProfileMetric('방어력', player.def + bonus.def)}
-          ${buildProfileMetric('크리티컬', totalCrit + '%')}
-          ${buildProfileMetric('이동속도', totalSpeed)}
+        <div class="profile-character-meta">
+          <div class="profile-character-name">캐릭터</div>
+          <div class="profile-character-tier" style="color:${tier.color};">⭐ ${tier.tier}단 - ${tier.name}</div>
+          <div class="profile-character-level">Lv. ${player.level}${player.level >= 35 ? ' (MAX)' : ''}</div>
         </div>
       </div>
     </div>
+  `;
+}
 
+function buildProfileStatsCard(playerStats) {
+  return `
+    <div class="profile-stats-card">
+      <div class="profile-resource-block">
+        <div class="profile-resource-row"><span class="profile-resource-label hp">HP</span><span class="profile-resource-value">${playerStats.hpText}</span></div>
+        <div class="profile-bar"><div class="profile-bar-fill hp" style="width:${playerStats.hpPct}%;"></div></div>
+      </div>
+      <div class="profile-resource-block profile-resource-gap">
+        <div class="profile-resource-row"><span class="profile-resource-label mp">MP</span><span class="profile-resource-value">${playerStats.mpText}</span></div>
+        <div class="profile-bar"><div class="profile-bar-fill mp" style="width:${playerStats.mpPct}%;"></div></div>
+      </div>
+      <div class="profile-metric-grid">
+        ${buildProfileMetric('공격력', playerStats.atk)}
+        ${buildProfileMetric('방어력', playerStats.def)}
+        ${buildProfileMetric('크리티컬', playerStats.crit + '%')}
+        ${buildProfileMetric('이동속도', playerStats.speed)}
+      </div>
+    </div>
+  `;
+}
+
+function buildProfileTierCard(tier, nextTier, tierPct, tierProgressText) {
+  return `
     <div class="profile-tier-card">
       <div class="profile-tier-head">
         <span class="profile-tier-text">승급: <span class="profile-tier-name" style="color:${tier.color};">${tier.tier}단 ${tier.name}</span></span>
@@ -98,7 +79,11 @@ function renderProfile() {
       <div class="profile-bar profile-tier-progress"><div class="profile-bar-fill tier" style="width:${tierPct}%; background:linear-gradient(90deg, ${tier.color}, ${tier.bodyColor});"></div></div>
       <div class="profile-tier-foot">${tierProgressText || tierPct + '%'}</div>
     </div>
+  `;
+}
 
+function buildProfileProgressSection(dungeonCircles, companionCircles) {
+  return `
     <div class="profile-progress-row">
       <div class="profile-progress-card">
         <div class="profile-progress-title">던전 ${dungeonsCleared.length}/9</div>
@@ -110,6 +95,47 @@ function renderProfile() {
       </div>
     </div>
   `;
+}
+
+function renderProfile() {
+  const bonus = getEquipBonus();
+  const tier = getCurrentTier();
+  const nextTier = getNextTier();
+  const content = document.getElementById('profile-content');
+  const armorColor = equipped.armor && ITEMS[equipped.armor] ? ITEMS[equipped.armor].color : null;
+  const glowSize = Math.min(tier.tier * 4, 24);
+  const glowOpacity = Math.min(tier.tier * 0.12, 0.7);
+
+  let tierPct = 100;
+  let tierProgressText = '최고 등급 달성!';
+  if (nextTier) {
+    const prevReq = tier.reqLevel;
+    const nextReq = nextTier.reqLevel;
+    tierPct = Math.min(100, Math.floor((player.level - prevReq) / (nextReq - prevReq) * 100));
+    tierProgressText = '';
+  }
+
+  const playerStats = {
+    hpPct: Math.max(0, Math.min(100, player.hp / player.maxHp * 100)),
+    mpPct: Math.max(0, Math.min(100, player.mp / player.maxMp * 100)),
+    hpText: Math.floor(player.hp) + '/' + player.maxHp,
+    mpText: Math.floor(player.mp) + '/' + player.maxMp,
+    atk: player.atk + bonus.atk,
+    def: player.def + bonus.def,
+    crit: Math.min(30, player.critChance + (bonus.critBonus || 0)),
+    speed: (player.speed + (bonus.speedBonus || 0)).toFixed(2),
+  };
+  const dungeonCircles = buildProfileProgressDots(9, (idx) => dungeonsCleared.includes(idx), 'dungeon');
+  const companionCircles = buildProfileProgressDots(9, (idx) => companions.includes(idx), 'companion');
+  const glowColor = `${tier.color}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')}`;
+
+  content.innerHTML =
+    '<div class="profile-layout">' +
+      buildProfileCharacterCard(tier, glowColor, glowSize, armorColor) +
+      buildProfileStatsCard(playerStats) +
+    '</div>' +
+    buildProfileTierCard(tier, nextTier, tierPct, tierProgressText) +
+    buildProfileProgressSection(dungeonCircles, companionCircles);
 }
 
 // ─── Inventory / Shop UI ────────────────────────────────────────────────────
@@ -162,9 +188,7 @@ bindTap(shopTabSell, () => switchShopTab('sell'));
 Object.keys(EQUIP_SLOT_META).forEach(slot => {
   const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
   if (!slotEl) return;
-  function handleSlotTap(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  function handleSlotTap() {
     if (!invOpen) return;
     const itemId = equipped[slot];
     if (!itemId || !ITEMS[itemId]) return;
@@ -378,6 +402,14 @@ function getShopRecommendation(itemId) {
   if (!currentItem) return '첫 장비';
   return getItemScore(item) > getItemScore(currentItem) ? '업그레이드' : '';
 }
+function appendPopupActionButton(container, className, label, handler) {
+  const btn = document.createElement('button');
+  btn.className = 'popup-btn ' + className;
+  btn.textContent = label;
+  bindTap(btn, handler);
+  container.appendChild(btn);
+}
+
 function openItemPopup({ itemId, source, slot }) {
   const item = ITEMS[itemId];
   if (!item) return;
@@ -403,49 +435,29 @@ function openItemPopup({ itemId, source, slot }) {
 
   const btns = popupContent.querySelector('.popup-btns');
   if (canEquip) {
-    const equipBtn = document.createElement('button');
-    equipBtn.className = 'popup-btn equip';
-    equipBtn.textContent = '장착';
-    equipBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    appendPopupActionButton(btns, 'equip', '장착', () => {
       equipInventoryItem(itemId);
       closeItemPopup();
       renderInventory();
     });
-    btns.appendChild(equipBtn);
   }
   if (canUse) {
-    const useBtn = document.createElement('button');
-    useBtn.className = 'popup-btn use';
-    useBtn.textContent = '사용';
-    useBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    appendPopupActionButton(btns, 'use', '사용', () => {
       consumeInventoryItem(itemId);
       closeItemPopup();
       renderInventory();
     });
-    btns.appendChild(useBtn);
   }
   if (canUnequip) {
-    const unequipBtn = document.createElement('button');
-    unequipBtn.className = 'popup-btn unequip';
-    unequipBtn.textContent = '해제';
-    unequipBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    appendPopupActionButton(btns, 'unequip', '해제', () => {
       unequipSlot(slot);
       closeItemPopup();
       renderInventory();
     });
-    btns.appendChild(unequipBtn);
   }
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'popup-btn close';
-  closeBtn.textContent = '닫기';
-  closeBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+  appendPopupActionButton(btns, 'close', '닫기', () => {
     closeItemPopup();
   });
-  btns.appendChild(closeBtn);
 
   itemPopup.style.display = 'flex';
 }
@@ -476,9 +488,7 @@ function renderInventory() {
     cell.className = 'bag-cell' + (item.type === 'potion' ? ' potion-cell' : '');
     cell.innerHTML = item.icon + ((counts[id] || 0) > 1 ? '<span class="cell-count">' + counts[id] + '</span>' : '');
     cell.title = item.name;
-    function handleBagTap(e) {
-      e.preventDefault();
-      e.stopPropagation();
+    function handleBagTap() {
       openItemPopup({ itemId: id, source: 'inventory' });
     }
     bindTap(cell, handleBagTap, { stopPropagation: true });
@@ -517,66 +527,66 @@ function sellItem(itemId) {
   renderShop();
   if (invOpen) renderInventory();
 }
-function renderShop() {
-  switchShopTab(activeShopTab);
-  shopGold.textContent = player.gold;
-  shopItemsList.innerHTML = '';
-  shopSellList.innerHTML = '';
-
-  const shopItems = activeShopNpc && Array.isArray(activeShopNpc.shopItems) ? activeShopNpc.shopItems : [];
-  shopItems.forEach(itemId => {
-    const item = ITEMS[itemId];
-    if (!item) return;
-    const recommendation = getShopRecommendation(itemId);
-    const card = document.createElement('div');
-    card.className = 'shop-item' + (recommendation ? ' recommended' : '');
-    const affordable = player.gold >= item.price;
-    card.innerHTML = '' +
+function buildShopBuyCard(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return '';
+  const recommendation = getShopRecommendation(itemId);
+  const affordable = player.gold >= item.price;
+  return '' +
+    '<div class="shop-item' + (recommendation ? ' recommended' : '') + '">' +
       (recommendation ? '<div class="shop-badge">' + recommendation + '</div>' : '') +
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
       '<div class="price">💰 ' + item.price + '</div>' +
       '<div class="owned">보유 ' + getOwnedItemCount(itemId) + '</div>' +
-      '<button class="btn" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '구매' : '골드 부족') + '</button>';
-    const btn = card.querySelector('.btn');
-    if (btn && !btn.disabled) {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        buyItem(itemId);
-      });
-    }
-    shopItemsList.appendChild(card);
-  });
+      '<button class="btn" data-buy-item="' + itemId + '" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '구매' : '골드 부족') + '</button>' +
+    '</div>';
+}
 
-  const counts = getInventoryCounts();
-  const sellIds = Object.keys(counts).sort(compareInventoryItems);
-  if (sellIds.length === 0) {
-    shopSellList.innerHTML = '<div class="quest-card shop-empty-card"><div class="quest-desc">판매할 아이템이 없습니다.</div></div>';
-    return;
-  }
-
-  sellIds.forEach(itemId => {
-    const item = ITEMS[itemId];
-    if (!item) return;
-    const card = document.createElement('div');
-    card.className = 'shop-item';
-    card.innerHTML = '' +
+function buildShopSellCard(itemId, count) {
+  const item = ITEMS[itemId];
+  if (!item) return '';
+  return '' +
+    '<div class="shop-item">' +
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
       '<div class="price">판매가 💰 ' + getSellPrice(itemId) + '</div>' +
-      '<div class="owned">가방 x' + counts[itemId] + '</div>' +
-      '<button class="btn">판매</button>';
-    const btn = card.querySelector('.btn');
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      sellItem(itemId);
-    });
-    shopSellList.appendChild(card);
+      '<div class="owned">가방 x' + count + '</div>' +
+      '<button class="btn" data-sell-item="' + itemId + '">판매</button>' +
+    '</div>';
+}
+
+function bindShopActions() {
+  shopItemsList.querySelectorAll('[data-buy-item]').forEach(btn => {
+    if (btn.disabled) return;
+    bindTap(btn, () => {
+      buyItem(btn.getAttribute('data-buy-item'));
+    }, { stopPropagation: true });
   });
+
+  shopSellList.querySelectorAll('[data-sell-item]').forEach(btn => {
+    bindTap(btn, () => {
+      sellItem(btn.getAttribute('data-sell-item'));
+    }, { stopPropagation: true });
+  });
+}
+
+function renderShop() {
+  switchShopTab(activeShopTab);
+  shopGold.textContent = player.gold;
+
+  const shopItems = activeShopNpc && Array.isArray(activeShopNpc.shopItems) ? activeShopNpc.shopItems : [];
+  shopItemsList.innerHTML = shopItems.map(buildShopBuyCard).join('');
+
+  const counts = getInventoryCounts();
+  const sellIds = Object.keys(counts).sort(compareInventoryItems);
+  shopSellList.innerHTML = sellIds.length === 0
+    ? '<div class="quest-card shop-empty-card"><div class="quest-desc">판매할 아이템이 없습니다.</div></div>'
+    : sellIds.map(itemId => buildShopSellCard(itemId, counts[itemId])).join('');
+
+  bindShopActions();
 }
 
 // ─── Companion Panel ─────────────────────────────────────────────────────────
@@ -592,147 +602,142 @@ function closeCompanionPanel() {
   companionPanelOpen = false;
   hidePanel(companionPanel);
 }
+function buildCompanionSummaryCard(label, value, valueClass = '', extraClass = '') {
+  return '<div class="companion-summary-card ' + extraClass + '">' +
+    '<div class="summary-label">' + label + '</div>' +
+    '<div class="summary-value ' + valueClass + '">' + value + '</div>' +
+  '</div>';
+}
+
+function getCompanionActionState(cId, isActive, isDead) {
+  if (isDead) {
+    return currentMap === 'town'
+      ? { label: '부활', className: 'revive', action: 'revive', disabled: false }
+      : { label: '사망', className: 'disabled', action: 'none', disabled: true };
+  }
+  if (isActive) {
+    return { label: '해제', className: 'deactivate', action: 'deactivate', disabled: false };
+  }
+  if (activeCompanions.length >= 2) {
+    return { label: '만석', className: 'disabled', action: 'none', disabled: true };
+  }
+  return { label: '선택', className: 'activate', action: 'activate', disabled: false };
+}
+
+function buildCompanionCard(cId) {
+  const info = DUNGEON_INFO[cId];
+  if (!info) return '';
+  const profile = getCompanionProfile(cId);
+  const isActive = activeCompanions.includes(cId);
+  const isDead = deadCompanions.includes(cId);
+  const maxHp = getCompanionMaxHp(cId);
+  const currentHp = companionStates[cId] ? companionStates[cId].hp : maxHp;
+  const hpPct = Math.max(0, Math.min(100, currentHp / maxHp * 100));
+  const aiMode = getCompanionAIMode(cId, companionStates[cId]);
+  const aiMeta = COMPANION_AI_MODES[aiMode] || COMPANION_AI_MODES.aggressive;
+  const actionState = getCompanionActionState(cId, isActive, isDead);
+  const statusText = isDead ? '사망' : isActive ? '출전 중' : '대기';
+  const statusClass = isDead ? 'dead' : isActive ? 'active' : '';
+
+  return '<div class="companion-card' + (isActive ? ' active' : '') + (isDead ? ' dead' : '') + '">' +
+    '<div class="companion-card-top">' +
+      '<div class="companion-card-icon" style="background:' + info.companionColor + ';">★</div>' +
+      '<div class="companion-card-main">' +
+        '<div class="companion-card-name-row">' +
+          '<div class="companion-card-name">' + info.companionName + '</div>' +
+          '<div class="companion-status-badge ' + statusClass + '">' + statusText + '</div>' +
+        '</div>' +
+        '<div class="companion-card-role">' + profile.roleLabel + ' · ' + profile.skillName + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="companion-card-stats">' +
+      '<span>ATK ' + getCompanionAtk(cId) + '</span>' +
+      '<span>HP ' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
+    '</div>' +
+    '<div class="companion-hp-bar"><div class="companion-hp-fill" style="width:' + hpPct + '%;"></div></div>' +
+    '<div class="companion-card-actions">' +
+      '<button class="comp-ai-btn companion-mini-btn" data-cid="' + cId + '" style="background:' + aiMeta.color + ';">AI: ' + aiMeta.label + '</button>' +
+      '<button class="comp-btn companion-mini-btn ' + actionState.className + '" data-cid="' + cId + '" data-action="' + actionState.action + '"' + (actionState.disabled ? ' disabled' : '') + '>' + actionState.label + '</button>' +
+    '</div>' +
+    (actionState.action === 'revive' ? '<div class="companion-cost-note">부활 비용: ' + getReviveCost(cId) + 'G</div>' : '') +
+  '</div>';
+}
+
+function handleCompanionAiTap(cId) {
+  const info = DUNGEON_INFO[cId];
+  const nextMode = cycleCompanionAIMode(cId);
+  const nextMeta = COMPANION_AI_MODES[nextMode] || COMPANION_AI_MODES.aggressive;
+  showToast((info ? info.companionName : '동료') + ' AI: ' + nextMeta.label);
+  renderCompanionPanel();
+  autoSave();
+}
+
+function handleCompanionAction(cId, action) {
+  const info = DUNGEON_INFO[cId];
+  if (action === 'activate') {
+    if (activeCompanions.length < 2) {
+      activeCompanions.push(cId);
+      initCompanionState(cId);
+    }
+  } else if (action === 'deactivate') {
+    activeCompanions = activeCompanions.filter(id => id !== cId);
+    delete companionStates[cId];
+  } else if (action === 'revive') {
+    const reviveCost = getReviveCost(cId);
+    if (player.gold >= reviveCost) {
+      player.gold -= reviveCost;
+      deadCompanions = deadCompanions.filter(id => id !== cId);
+      updateHUD();
+      AudioSystem.sfx.heal();
+      showToast((info ? info.companionName : '동료') + ' 부활!');
+    } else {
+      showToast('골드가 부족합니다!');
+      return;
+    }
+  } else {
+    return;
+  }
+  renderCompanionPanel();
+  autoSave();
+}
+
+function bindCompanionPanelActions(content) {
+  content.querySelectorAll('.comp-ai-btn').forEach(btn => {
+    bindTap(btn, () => {
+      handleCompanionAiTap(parseInt(btn.getAttribute('data-cid'), 10));
+    }, { stopPropagation: true });
+  });
+
+  content.querySelectorAll('.comp-btn').forEach(btn => {
+    if (btn.disabled) return;
+    bindTap(btn, () => {
+      handleCompanionAction(
+        parseInt(btn.getAttribute('data-cid'), 10),
+        btn.getAttribute('data-action')
+      );
+    }, { stopPropagation: true });
+  });
+}
+
 function renderCompanionPanel() {
   const content = document.getElementById('companion-content');
   if (companions.length === 0) {
-    content.innerHTML = '<div style="color:#888;padding:20px;text-align:center;">아직 동료가 없습니다. 던전을 클리어하여 동료를 얻으세요!</div>';
+    content.innerHTML = '<div class="companion-empty-state">아직 동료가 없습니다. 던전을 클리어하여 동료를 얻으세요!</div>';
     return;
   }
 
   const synergy = getActiveCompanionSynergy();
   content.innerHTML =
     '<div class="companion-summary-grid">' +
-      '<div class="companion-summary-card">' +
-        '<div class="summary-label">활성 동료</div>' +
-        '<div class="summary-value">' + activeCompanions.length + '/2</div>' +
-      '</div>' +
-      '<div class="companion-summary-card">' +
-        '<div class="summary-label">수집</div>' +
-        '<div class="summary-value">' + companions.length + '/9</div>' +
-      '</div>' +
-      '<div class="companion-summary-card">' +
-        '<div class="summary-label">사망</div>' +
-        '<div class="summary-value ' + (deadCompanions.length > 0 ? 'warn' : '') + '">' + deadCompanions.length + '명</div>' +
-      '</div>' +
-      '<div class="companion-summary-card mercenary">' +
-        '<div class="summary-label">용병 슬롯</div>' +
-        '<div class="summary-value lock">잠김</div>' +
-      '</div>' +
+      buildCompanionSummaryCard('활성 동료', activeCompanions.length + '/2') +
+      buildCompanionSummaryCard('수집', companions.length + '/9') +
+      buildCompanionSummaryCard('사망', deadCompanions.length + '명', deadCompanions.length > 0 ? 'warn' : '') +
+      buildCompanionSummaryCard('용병 슬롯', '잠김', 'lock', 'mercenary') +
     '</div>' +
     '<div class="companion-synergy-banner">' + (synergy ? ('시너지: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 조합에 따라 추가 보너스가 생긴다') + '</div>' +
-    '<div class="companion-grid" id="companion-grid"></div>';
+    '<div class="companion-grid">' + companions.map(buildCompanionCard).join('') + '</div>';
 
-  const grid = document.getElementById('companion-grid');
-
-  companions.forEach(cId => {
-    const info = DUNGEON_INFO[cId];
-    if (!info) return;
-    const profile = getCompanionProfile(cId);
-    const isActive = activeCompanions.includes(cId);
-    const isDead = deadCompanions.includes(cId);
-    const maxHp = getCompanionMaxHp(cId);
-    const currentHp = companionStates[cId] ? companionStates[cId].hp : maxHp;
-    const aiMode = getCompanionAIMode(cId, companionStates[cId]);
-    const aiMeta = COMPANION_AI_MODES[aiMode] || COMPANION_AI_MODES.aggressive;
-
-    let btnLabel, btnColor, btnAction;
-    if (isDead) {
-      if (currentMap === 'town') {
-        btnLabel = '부활';
-        btnColor = '#27ae60';
-        btnAction = 'revive';
-      } else {
-        btnLabel = '사망';
-        btnColor = '#666';
-        btnAction = 'none';
-      }
-    } else if (isActive) {
-      btnLabel = '해제';
-      btnColor = '#e74c3c';
-      btnAction = 'deactivate';
-    } else {
-      btnLabel = activeCompanions.length >= 2 ? '만석' : '선택';
-      btnColor = activeCompanions.length >= 2 ? '#666' : '#2980b9';
-      btnAction = activeCompanions.length >= 2 ? 'none' : 'activate';
-    }
-
-    const card = document.createElement('div');
-    card.className = 'companion-card' + (isActive ? ' active' : '') + (isDead ? ' dead' : '');
-
-    const hpPct = Math.max(0, Math.min(100, currentHp / maxHp * 100));
-    const statusText = isDead
-      ? '사망'
-      : isActive
-        ? '출전 중'
-        : '대기';
-
-    card.innerHTML =
-      '<div class="companion-card-top">' +
-        '<div class="companion-card-icon" style="background:' + info.companionColor + ';">★</div>' +
-        '<div class="companion-card-main">' +
-          '<div class="companion-card-name-row">' +
-            '<div class="companion-card-name">' + info.companionName + '</div>' +
-            '<div class="companion-status-badge ' + (isDead ? 'dead' : isActive ? 'active' : '') + '">' + statusText + '</div>' +
-          '</div>' +
-          '<div class="companion-card-role">' + profile.roleLabel + ' · ' + profile.skillName + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="companion-card-stats">' +
-        '<span>ATK ' + getCompanionAtk(cId) + '</span>' +
-        '<span>HP ' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
-      '</div>' +
-      '<div class="companion-hp-bar"><div class="companion-hp-fill" style="width:' + hpPct + '%;"></div></div>' +
-      '<div class="companion-card-actions">' +
-        '<button class="comp-ai-btn companion-mini-btn" style="background:' + aiMeta.color + ';">AI: ' + aiMeta.label + '</button>' +
-        '<button class="comp-btn companion-mini-btn" style="background:' + btnColor + ';"' + (btnAction === 'none' ? ' disabled' : '') + '>' + btnLabel + '</button>' +
-      '</div>' +
-      (btnAction === 'revive' ? '<div class="companion-cost-note">부활 비용: ' + getReviveCost(cId) + 'G</div>' : '');
-
-    const aiBtn = card.querySelector('.comp-ai-btn');
-    if (aiBtn) {
-      aiBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const nextMode = cycleCompanionAIMode(cId);
-        const nextMeta = COMPANION_AI_MODES[nextMode] || COMPANION_AI_MODES.aggressive;
-        showToast(info.companionName + ' AI: ' + nextMeta.label);
-        renderCompanionPanel();
-        autoSave();
-      });
-    }
-
-    if (btnAction !== 'none') {
-      const actionBtn = card.querySelector('.comp-btn');
-      actionBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (btnAction === 'activate') {
-          if (activeCompanions.length < 2) {
-            activeCompanions.push(cId);
-            initCompanionState(cId);
-          }
-        } else if (btnAction === 'deactivate') {
-          activeCompanions = activeCompanions.filter(id => id !== cId);
-          delete companionStates[cId];
-        } else if (btnAction === 'revive') {
-          const reviveCost = getReviveCost(cId);
-          if (player.gold >= reviveCost) {
-            player.gold -= reviveCost;
-            deadCompanions = deadCompanions.filter(id => id !== cId);
-            updateHUD();
-            AudioSystem.sfx.heal();
-            showToast(info.companionName + ' 부활!');
-          } else {
-            showToast('골드가 부족합니다!');
-          }
-        }
-        renderCompanionPanel();
-        autoSave();
-      });
-    }
-
-    grid.appendChild(card);
-  });
+  bindCompanionPanelActions(content);
 }
 
 // ─── Temple Panel UI ─────────────────────────────────────────────────────
@@ -749,85 +754,90 @@ function closeTemple() {
   templeOpen = false;
   hidePanel(templePanel);
 }
+function buildTempleEmptyState() {
+  return '<div class="temple-empty-state">' +
+    '<div class="temple-empty-icon">✨</div>' +
+    '<div class="temple-empty-title">모든 동료가 건강합니다</div>' +
+    '<div class="temple-empty-text">부활이 필요한 동료가 없습니다.</div>' +
+  '</div>';
+}
+
+function buildTempleReviveRow(cId) {
+  const info = DUNGEON_INFO[cId];
+  if (!info) return '';
+  const cost = getReviveCost(cId);
+  const canAfford = player.gold >= cost;
+  return '<div class="temple-revive-row">' +
+    '<div class="temple-revive-icon" style="background:' + info.companionColor + ';">★</div>' +
+    '<div class="temple-revive-main">' +
+      '<div class="temple-revive-name">' + info.companionName + '</div>' +
+      '<div class="temple-revive-state">쓰러짐</div>' +
+    '</div>' +
+    '<div class="temple-revive-cost">💰 ' + cost + '</div>' +
+    '<button class="temple-revive-btn" data-cid="' + cId + '"' + (canAfford ? '' : ' disabled') + '>' + (canAfford ? '부활' : '골드 부족') + '</button>' +
+  '</div>';
+}
+
+function reviveCompanionFromTemple(cId) {
+  const cost = getReviveCost(cId);
+  if (player.gold < cost) return;
+  player.gold -= cost;
+  deadCompanions = deadCompanions.filter(id => id !== cId);
+  AudioSystem.sfx.heal();
+  const cInfo = DUNGEON_INFO[cId];
+  showToast((cInfo ? cInfo.companionName : '동료') + ' 부활!');
+  updateHUD();
+  autoSave();
+  renderTemple();
+}
+
+function reviveAllCompanionsFromTemple(totalCost) {
+  if (player.gold < totalCost) return;
+  player.gold -= totalCost;
+  deadCompanions = [];
+  AudioSystem.sfx.tierUp();
+  showToast('모든 동료가 부활했습니다!');
+  updateHUD();
+  autoSave();
+  renderTemple();
+}
+
+function bindTempleActions(content, totalCost) {
+  content.querySelectorAll('.temple-revive-btn').forEach(btn => {
+    if (btn.disabled) return;
+    bindTap(btn, () => {
+      reviveCompanionFromTemple(parseInt(btn.getAttribute('data-cid'), 10));
+    }, { stopPropagation: true });
+  });
+
+  const allBtn = document.getElementById('temple-revive-all');
+  if (allBtn && !allBtn.disabled) {
+    bindTap(allBtn, () => {
+      reviveAllCompanionsFromTemple(totalCost);
+    }, { stopPropagation: true });
+  }
+}
+
 function renderTemple() {
   const content = document.getElementById('temple-content');
 
   if (deadCompanions.length === 0) {
-    content.innerHTML = '<div style="text-align:center;padding:30px 10px;">' +
-      '<div style="font-size:32px;margin-bottom:10px;">✨</div>' +
-      '<div style="color:#2ecc71;font-size:13px;font-weight:bold;margin-bottom:6px;">모든 동료가 건강합니다</div>' +
-      '<div style="color:#888;font-size:10px;">부활이 필요한 동료가 없습니다.</div>' +
-      '</div>';
+    content.innerHTML = buildTempleEmptyState();
     return;
   }
 
-  let html = '<div style="color:#aaa;font-size:10px;margin-bottom:8px;text-align:center;">쓰러진 동료를 골드를 사용하여 부활시킬 수 있습니다.</div>';
-  html += '<div style="color:#f1c40f;font-size:11px;text-align:center;margin-bottom:10px;">💰 보유 골드: ' + player.gold + '</div>';
-
-  deadCompanions.forEach(cId => {
-    const info = DUNGEON_INFO[cId];
-    if (!info) return;
-    const cost = getReviveCost(cId);
-    const canAfford = player.gold >= cost;
-    html += '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;margin-bottom:5px;">' +
-      '<div style="width:28px;height:28px;border-radius:6px;background:' + info.companionColor + ';display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;opacity:0.5;">★</div>' +
-      '<div style="flex:1;">' +
-        '<div style="color:#ddd;font-size:11px;font-weight:bold;">' + info.companionName + '</div>' +
-        '<div style="color:#e74c3c;font-size:9px;">쓰러짐</div>' +
-      '</div>' +
-      '<div style="color:#f1c40f;font-size:10px;margin-right:6px;">💰 ' + cost + '</div>' +
-      '<button class="temple-revive-btn" data-cid="' + cId + '" style="padding:4px 10px;border:none;border-radius:6px;font-size:10px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;' +
-        (canAfford ? 'background:linear-gradient(180deg,#2ecc71,#27ae60);' : 'background:#555;cursor:not-allowed;') + '"' +
-        (canAfford ? '' : ' disabled') + '>' + (canAfford ? '부활' : '골드 부족') + '</button>' +
-      '</div>';
-  });
-
-  // Revive all button
   const totalCost = deadCompanions.reduce((sum, cId) => sum + getReviveCost(cId), 0);
   const canAffordAll = player.gold >= totalCost && deadCompanions.length > 1;
-  html += '<div style="margin-top:10px;text-align:center;">' +
-    '<button id="temple-revive-all" style="padding:6px 16px;border:none;border-radius:8px;font-size:11px;font-weight:bold;color:#fff;cursor:pointer;pointer-events:all;' +
-    (canAffordAll ? 'background:linear-gradient(180deg,#f39c12,#e67e22);' : 'background:#555;cursor:not-allowed;') + '"' +
-    (canAffordAll ? '' : ' disabled') + '>전체 부활 (💰 ' + totalCost + ')</button>' +
+
+  content.innerHTML =
+    '<div class="temple-note">쓰러진 동료를 골드를 사용하여 부활시킬 수 있습니다.</div>' +
+    '<div class="temple-gold">💰 보유 골드: ' + player.gold + '</div>' +
+    deadCompanions.map(buildTempleReviveRow).join('') +
+    '<div class="temple-actions">' +
+      '<button id="temple-revive-all" class="temple-revive-all-btn"' + (canAffordAll ? '' : ' disabled') + '>전체 부활 (💰 ' + totalCost + ')</button>' +
     '</div>';
 
-  content.innerHTML = html;
-
-  // Wire up individual revive buttons
-  content.querySelectorAll('.temple-revive-btn').forEach(btn => {
-    if (btn.disabled) return;
-    function handleRevive(e) {
-      e.preventDefault(); e.stopPropagation();
-      const cId = parseInt(btn.getAttribute('data-cid'));
-      const cost = getReviveCost(cId);
-      if (player.gold < cost) return;
-      player.gold -= cost;
-      deadCompanions = deadCompanions.filter(id => id !== cId);
-      AudioSystem.sfx.heal();
-      const cInfo = DUNGEON_INFO[cId];
-      showToast((cInfo ? cInfo.companionName : '동료') + ' 부활!');
-      updateHUD();
-      autoSave();
-      renderTemple();
-    }
-    btn.addEventListener('click', handleRevive);
-  });
-
-  // Wire up revive all button
-  const allBtn = document.getElementById('temple-revive-all');
-  if (allBtn && !allBtn.disabled) {
-    allBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (player.gold < totalCost) return;
-      player.gold -= totalCost;
-      deadCompanions = [];
-      AudioSystem.sfx.tierUp();
-      showToast('모든 동료가 부활했습니다!');
-      updateHUD();
-      autoSave();
-      renderTemple();
-    });
-  }
+  bindTempleActions(content, totalCost);
 }
 
 // ─── Skill Panel UI ──────────────────────────────────────────────────────
@@ -843,44 +853,48 @@ function closeSkillPanel() {
   skillPanelOpen = false;
   hidePanel(skillPanel);
 }
-function renderSkillPanel() {
-  const content = document.getElementById('skill-panel-content');
-  content.innerHTML = '';
-  SKILLS.forEach(skill => {
-    // Find which slot this skill is assigned to
-    let slotLabel = '';
-    for (let p = 0; p < skillPages.length; p++) {
-      for (let s = 0; s < skillPages[p].length; s++) {
-        if (skillPages[p][s] === skill.id) {
-          slotLabel = '슬롯 ' + (p+1) + '-' + (s+1) + ' 등록됨';
-        }
+const SKILL_BADGE_COLORS = {
+  projectile: '#e74c3c',
+  melee: '#e67e22',
+  self: '#2ecc71',
+  buff: '#3498db',
+  aoe: '#8e44ad',
+};
+
+function getSkillSlotLabel(skillId) {
+  for (let p = 0; p < skillPages.length; p++) {
+    for (let s = 0; s < skillPages[p].length; s++) {
+      if (skillPages[p][s] === skillId) {
+        return '슬롯 ' + (p + 1) + '-' + (s + 1) + ' 등록됨';
       }
     }
+  }
+  return '';
+}
 
-    const badgeColors = {
-      projectile: '#e74c3c',
-      melee: '#e67e22',
-      self: '#2ecc71',
-      buff: '#3498db',
-      aoe: '#8e44ad',
-    };
-
-    const card = document.createElement('div');
-    card.className = 'skill-card';
-    card.innerHTML = `
-      <div class="skill-icon-circle" style="background:${skill.iconBg || '#444'}22;border:1px solid ${skill.iconBg || '#666'}55;">${skill.icon}</div>
+function buildSkillCard(skill) {
+  const slotLabel = getSkillSlotLabel(skill.id);
+  const badgeColor = SKILL_BADGE_COLORS[skill.type] || '#555';
+  const iconBg = skill.iconBg || '#444';
+  return `
+    <div class="skill-card">
+      <div class="skill-icon-circle" style="--skill-icon-bg:${iconBg}22;--skill-icon-border:${iconBg}55;">${skill.icon}</div>
       <div class="skill-info">
-        <div class="skill-name">${skill.name} <span class="skill-type-badge" style="background:${badgeColors[skill.type] || '#555'}22;color:${badgeColors[skill.type] || '#ccc'};border:1px solid ${badgeColors[skill.type] || '#666'}44;">${skill.typeLabel || skill.type}</span></div>
+        <div class="skill-name">${skill.name} <span class="skill-type-badge" style="--skill-type-bg:${badgeColor}22;--skill-type-color:${badgeColor};--skill-type-border:${badgeColor}44;">${skill.typeLabel || skill.type}</span></div>
         <div class="skill-desc">${skill.desc}</div>
         ${slotLabel ? `<div class="skill-slot-info">${slotLabel}</div>` : ''}
       </div>
       <div class="skill-stats">
         <div class="skill-stat mp">💧 ${skill.mpCost}</div>
-        <div class="skill-stat cd">⏱ ${(skill.cooldown/1000).toFixed(1)}s</div>
+        <div class="skill-stat cd">⏱ ${(skill.cooldown / 1000).toFixed(1)}s</div>
       </div>
-    `;
-    content.appendChild(card);
-  });
+    </div>
+  `;
+}
+
+function renderSkillPanel() {
+  const content = document.getElementById('skill-panel-content');
+  content.innerHTML = SKILLS.map(buildSkillCard).join('');
 }
 
 // ─── Quest Panel UI ──────────────────────────────────────────────────────
@@ -924,7 +938,7 @@ function buildMainQuestSection(currentQuest, currentMainStatus) {
     html += '<div class="quest-desc">' + currentQuest.description + '</div>';
     html += '<div class="quest-desc quest-desc-emphasis">' +
       (currentMainStatus.ready
-        ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
+        ? ('목표 달성 완료. <span class="quest-inline-highlight">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
         : ('다음 행동: ' + (currentQuest.hint || currentQuest.description))) +
       '</div>';
   } else {
@@ -1124,19 +1138,8 @@ function closeVillagePanel() {
   villagePanelOpen = false;
   hidePanel(villagePanel);
 }
-function renderVillagePanel() {
-  const content = document.getElementById('village-panel-content');
-  const upgrades = getVillageUpgradeDefinitions();
-  const tierLabel = getVillageTierLabel();
-  const completionPct = Math.min(100, Math.round((dungeonsCleared.length / DUNGEON_INFO.length) * 100));
-  const totalUpgradeLevel = villageUpgrades.forge + villageUpgrades.guard + villageUpgrades.trade + villageUpgrades.alchemy;
-  const nextUpgrade = upgrades
-    .map(upgrade => ({ ...upgrade, currentLevel: villageUpgrades[upgrade.key] || 0 }))
-    .filter(upgrade => upgrade.currentLevel < upgrade.maxLevel)
-    .sort((a, b) => getVillageUpgradeCost(a.key) - getVillageUpgradeCost(b.key))[0];
-
-  let html = '';
-  html += '<div class="quest-card primary village-overview-card">';
+function buildVillageOverviewCard(tierLabel, completionPct, totalUpgradeLevel, nextUpgrade) {
+  let html = '<div class="quest-card primary village-overview-card">';
   html += '<div class="quest-focus-head"><div class="quest-focus-title">마을 발전 요약</div><span class="quest-chip active">' + tierLabel + '</span></div>';
   html += '<div class="quest-focus-text">던전을 돌파할수록 마을이 성장하고, 시설 강화는 전투력과 경제 보너스로 이어집니다.</div>';
   html += '<div class="village-summary-grid">';
@@ -1149,46 +1152,68 @@ function renderVillagePanel() {
     html += '<div class="village-tip-banner">다음 추천 투자: <strong>' + nextUpgrade.icon + ' ' + nextUpgrade.name + '</strong> · 비용 ' + getVillageUpgradeCost(nextUpgrade.key) + 'G</div>';
   }
   html += '</div>';
+  return html;
+}
 
-  html += '<div class="quest-section-title">시설 업그레이드</div>';
-  upgrades.forEach(upgrade => {
-    const currentLevel = villageUpgrades[upgrade.key] || 0;
-    const nextLevelInfo = upgrade.levels[currentLevel] || null;
-    const canUpgrade = canUpgradeVillage(upgrade.key);
-    const nextCost = getVillageUpgradeCost(upgrade.key);
-    html += '<div class="village-upgrade-card">';
-    html += '<div class="village-upgrade-top">';
-    html += '<div><div class="village-upgrade-name">' + upgrade.icon + ' ' + upgrade.name + '</div><div class="village-upgrade-meta">현재 레벨 ' + currentLevel + ' / ' + upgrade.maxLevel + '</div></div>';
-    html += '<div class="quest-chip ' + (currentLevel >= upgrade.maxLevel ? 'done' : 'active') + '">' + (currentLevel >= upgrade.maxLevel ? '완료' : '성장 가능') + '</div>';
-    html += '</div>';
-    html += '<div class="quest-desc">' + upgrade.description + '</div>';
-    html += '<div class="village-next-upgrade">' + (nextLevelInfo ? ('다음 단계: Lv ' + (currentLevel + 1) + ' · ' + nextLevelInfo.bonus + ' · 비용 ' + nextCost + 'G') : '최대 레벨 달성') + '</div>';
-    html += '<div class="village-upgrade-actions">';
-    html += '<div class="village-upgrade-cost">' + (currentLevel >= upgrade.maxLevel ? '최대 레벨 완료' : ('보유 골드 ' + player.gold + 'G · 필요 골드 ' + nextCost + 'G')) + '</div>';
-    html += '<button class="village-upgrade-btn" data-upgrade="' + upgrade.key + '" ' + ((currentLevel >= upgrade.maxLevel || !canUpgrade) ? 'disabled' : '') + '>' + (currentLevel >= upgrade.maxLevel ? '완료' : (canUpgrade ? '강화하기' : '골드 부족')) + '</button>';
-    html += '</div>';
-    html += '<div class="village-benefit-list">';
-    upgrade.levels.forEach((levelInfo, idx) => {
-      const reached = currentLevel > idx;
-      const current = currentLevel === idx + 1;
-      html += '<div class="village-benefit-item ' + (reached ? 'reached' : '') + ' ' + (current ? 'current' : '') + '">';
-      html += '<span class="village-benefit-label">Lv ' + (idx + 1) + '</span>';
-      html += '<span class="village-benefit-value">' + levelInfo.bonus + '</span>';
-      html += '</div>';
-    });
-    html += '</div>';
-    html += '</div>';
-  });
+function buildVillageBenefitRows(upgrade, currentLevel) {
+  return upgrade.levels.map((levelInfo, idx) => {
+    const reached = currentLevel > idx;
+    const current = currentLevel === idx + 1;
+    return '<div class="village-benefit-item ' + (reached ? 'reached' : '') + ' ' + (current ? 'current' : '') + '">' +
+      '<span class="village-benefit-label">Lv ' + (idx + 1) + '</span>' +
+      '<span class="village-benefit-value">' + levelInfo.bonus + '</span>' +
+    '</div>';
+  }).join('');
+}
 
-  content.innerHTML = html;
+function buildVillageUpgradeCard(upgrade) {
+  const currentLevel = villageUpgrades[upgrade.key] || 0;
+  const nextLevelInfo = upgrade.levels[currentLevel] || null;
+  const canUpgrade = canUpgradeVillage(upgrade.key);
+  const nextCost = getVillageUpgradeCost(upgrade.key);
+
+  let html = '<div class="village-upgrade-card">';
+  html += '<div class="village-upgrade-top">';
+  html += '<div><div class="village-upgrade-name">' + upgrade.icon + ' ' + upgrade.name + '</div><div class="village-upgrade-meta">현재 레벨 ' + currentLevel + ' / ' + upgrade.maxLevel + '</div></div>';
+  html += '<div class="quest-chip ' + (currentLevel >= upgrade.maxLevel ? 'done' : 'active') + '">' + (currentLevel >= upgrade.maxLevel ? '완료' : '성장 가능') + '</div>';
+  html += '</div>';
+  html += '<div class="quest-desc">' + upgrade.description + '</div>';
+  html += '<div class="village-next-upgrade">' + (nextLevelInfo ? ('다음 단계: Lv ' + (currentLevel + 1) + ' · ' + nextLevelInfo.bonus + ' · 비용 ' + nextCost + 'G') : '최대 레벨 달성') + '</div>';
+  html += '<div class="village-upgrade-actions">';
+  html += '<div class="village-upgrade-cost">' + (currentLevel >= upgrade.maxLevel ? '최대 레벨 완료' : ('보유 골드 ' + player.gold + 'G · 필요 골드 ' + nextCost + 'G')) + '</div>';
+  html += '<button class="village-upgrade-btn" data-upgrade="' + upgrade.key + '" ' + ((currentLevel >= upgrade.maxLevel || !canUpgrade) ? 'disabled' : '') + '>' + (currentLevel >= upgrade.maxLevel ? '완료' : (canUpgrade ? '강화하기' : '골드 부족')) + '</button>';
+  html += '</div>';
+  html += '<div class="village-benefit-list">' + buildVillageBenefitRows(upgrade, currentLevel) + '</div>';
+  html += '</div>';
+  return html;
+}
+
+function bindVillageUpgradeActions(content) {
   content.querySelectorAll('.village-upgrade-btn').forEach(btn => {
     if (btn.disabled) return;
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    bindTap(btn, () => {
       const key = btn.getAttribute('data-upgrade');
       if (!key) return;
       upgradeVillage(key);
-    });
+    }, { stopPropagation: true });
   });
+}
+
+function renderVillagePanel() {
+  const content = document.getElementById('village-panel-content');
+  const upgrades = getVillageUpgradeDefinitions();
+  const tierLabel = getVillageTierLabel();
+  const completionPct = Math.min(100, Math.round((dungeonsCleared.length / DUNGEON_INFO.length) * 100));
+  const totalUpgradeLevel = villageUpgrades.forge + villageUpgrades.guard + villageUpgrades.trade + villageUpgrades.alchemy;
+  const nextUpgrade = upgrades
+    .map(upgrade => ({ ...upgrade, currentLevel: villageUpgrades[upgrade.key] || 0 }))
+    .filter(upgrade => upgrade.currentLevel < upgrade.maxLevel)
+    .sort((a, b) => getVillageUpgradeCost(a.key) - getVillageUpgradeCost(b.key))[0];
+
+  content.innerHTML =
+    buildVillageOverviewCard(tierLabel, completionPct, totalUpgradeLevel, nextUpgrade) +
+    '<div class="quest-section-title">시설 업그레이드</div>' +
+    upgrades.map(buildVillageUpgradeCard).join('');
+
+  bindVillageUpgradeActions(content);
 }
