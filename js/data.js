@@ -406,6 +406,11 @@ function getVillageReviveDiscount() {
   return Math.min(0.5, getVillageUpgradeLevel('alchemy') * 0.1);
 }
 
+function getReviveCost(cId) {
+  const base = 50 + cId * 25;
+  return Math.max(10, Math.floor(base * (1 - getVillageReviveDiscount())));
+}
+
 const SUBQUESTS = [
   {
     id: 'guard_patrol',
