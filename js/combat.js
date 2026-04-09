@@ -65,7 +65,9 @@ function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
     player.dead = true;
     AudioSystem.sfx.death();
     AudioSystem.stopBgm();
-    document.getElementById('death-screen').style.display = 'flex';
+    if (typeof returnPlayerToTownAfterDeath === 'function') {
+      returnPlayerToTownAfterDeath();
+    }
   }
   updateHUD();
 }
