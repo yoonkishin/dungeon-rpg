@@ -158,6 +158,479 @@ function renderProfile() {
   `;
 }
 
+// ─── Inventory / Shop UI ────────────────────────────────────────────────────
+const inventoryPanel = document.getElementById('inventory-panel');
+const inventoryCloseBtn = inventoryPanel.querySelector('.inv-close');
+const bagGrid = document.getElementById('bag-grid');
+const bagCount = document.getElementById('bag-count');
+const itemPopup = document.getElementById('item-popup');
+const popupContent = document.getElementById('popup-content');
+const shopPanel = document.getElementById('shop-panel');
+const shopCloseBtn = document.getElementById('shop-close');
+const shopTabBuy = document.getElementById('shop-tab-buy');
+const shopTabSell = document.getElementById('shop-tab-sell');
+const shopBuySection = document.getElementById('shop-buy-section');
+const shopSellSection = document.getElementById('shop-sell-section');
+const shopItemsList = document.getElementById('shop-items-list');
+const shopSellList = document.getElementById('shop-sell-list');
+const shopGold = document.getElementById('shop-gold');
+const shopTitle = shopPanel.querySelector('.inv-header h2');
+let invOpen = false;
+let shopOpen = false;
+let activeShopNpc = null;
+let activeShopTab = 'buy';
+
+const EQUIP_SLOT_META = {
+  helmet: { icon: '⛑️', label: '투구' },
+  weapon: { icon: '🗡️', label: '무기' },
+  armor: { icon: '🧥', label: '갑옷' },
+  shield: { icon: '🛡️', label: '방패' },
+  boots: { icon: '👢', label: '신발' },
+  accessory1: { icon: '💍', label: '장신구 1' },
+  accessory2: { icon: '💍', label: '장신구 2' },
+  event: { icon: '🍀', label: '특수 장비' },
+};
+
+inventoryCloseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeInventory(); }, { passive: false });
+inventoryCloseBtn.addEventListener('click', closeInventory);
+shopCloseBtn.addEventListener('touchstart', (e) => { e.preventDefault(); closeShop(); }, { passive: false });
+shopCloseBtn.addEventListener('click', closeShop);
+itemPopup.addEventListener('touchstart', (e) => {
+  if (e.target === itemPopup) {
+    e.preventDefault();
+    closeItemPopup();
+  }
+}, { passive: false });
+itemPopup.addEventListener('click', (e) => {
+  if (e.target === itemPopup) closeItemPopup();
+});
+shopTabBuy.addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('buy'); }, { passive: false });
+shopTabBuy.addEventListener('click', () => switchShopTab('buy'));
+shopTabSell.addEventListener('touchstart', (e) => { e.preventDefault(); switchShopTab('sell'); }, { passive: false });
+shopTabSell.addEventListener('click', () => switchShopTab('sell'));
+
+Object.keys(EQUIP_SLOT_META).forEach(slot => {
+  const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
+  if (!slotEl) return;
+  function handleSlotTap(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!invOpen) return;
+    const itemId = equipped[slot];
+    if (!itemId || !ITEMS[itemId]) return;
+    openItemPopup({ itemId, source: 'equipped', slot });
+  }
+  slotEl.addEventListener('touchstart', handleSlotTap, { passive: false });
+  slotEl.addEventListener('click', handleSlotTap);
+});
+
+function openInventory() {
+  if (shopOpen) closeShop();
+  invOpen = true;
+  showPanel(inventoryPanel);
+  renderInventory();
+}
+function closeInventory() {
+  invOpen = false;
+  closeItemPopup();
+  hidePanel(inventoryPanel);
+}
+function openShop(npc) {
+  if (!npc) return;
+  if (invOpen) closeInventory();
+  activeShopNpc = npc;
+  activeShopTab = 'buy';
+  shopOpen = true;
+  if (shopTitle) shopTitle.textContent = '🏪 ' + npc.name;
+  showPanel(shopPanel);
+  renderShop();
+}
+function closeShop() {
+  shopOpen = false;
+  activeShopNpc = null;
+  hidePanel(shopPanel);
+}
+function switchShopTab(tab) {
+  activeShopTab = tab === 'sell' ? 'sell' : 'buy';
+  shopTabBuy.classList.toggle('active', activeShopTab === 'buy');
+  shopTabSell.classList.toggle('active', activeShopTab === 'sell');
+  shopBuySection.style.display = activeShopTab === 'buy' ? 'block' : 'none';
+  shopSellSection.style.display = activeShopTab === 'sell' ? 'block' : 'none';
+}
+function getInventoryCounts() {
+  const counts = {};
+  inventory.forEach(id => {
+    counts[id] = (counts[id] || 0) + 1;
+  });
+  return counts;
+}
+function getOwnedItemCount(itemId) {
+  let count = inventory.filter(id => id === itemId).length;
+  Object.keys(equipped).forEach(slot => {
+    if (equipped[slot] === itemId) count++;
+  });
+  return count;
+}
+function getItemTypeLabel(item) {
+  const labels = {
+    weapon: '무기',
+    armor: '갑옷',
+    helmet: '투구',
+    boots: '신발',
+    shield: '방패',
+    accessory: '장신구',
+    event: '특수',
+    potion: '포션'
+  };
+  return labels[item.type] || item.type;
+}
+function getItemSummary(item) {
+  if (!item) return '';
+  const parts = [];
+  if (item.atk) parts.push('ATK +' + item.atk);
+  if (item.def) parts.push('DEF +' + item.def);
+  if (item.speedBonus) parts.push('속도 +' + item.speedBonus.toFixed(2));
+  if (item.critBonus) parts.push('치명타 +' + item.critBonus + '%');
+  if (item.goldBonus) parts.push('골드 +' + item.goldBonus + '%');
+  if (item.heal) parts.push('회복 ' + Math.floor(item.heal * getHealingMultiplier()));
+  return parts.length ? parts.join(' · ') : '기본 효과 없음';
+}
+function compareInventoryItems(aId, bId) {
+  const a = ITEMS[aId] || null;
+  const b = ITEMS[bId] || null;
+  const typeOrder = {
+    weapon: 0,
+    armor: 1,
+    helmet: 2,
+    shield: 3,
+    boots: 4,
+    accessory: 5,
+    event: 6,
+    potion: 7,
+  };
+  const orderA = a ? (typeOrder[a.type] ?? 99) : 99;
+  const orderB = b ? (typeOrder[b.type] ?? 99) : 99;
+  if (orderA !== orderB) return orderA - orderB;
+  const priceA = a ? (a.price || 0) : 0;
+  const priceB = b ? (b.price || 0) : 0;
+  if (priceA !== priceB) return priceB - priceA;
+  return (a ? a.name : '').localeCompare(b ? b.name : '', 'ko');
+}
+function getPreferredEquipSlot(item) {
+  if (!item) return null;
+  if (item.type === 'accessory') {
+    if (!equipped.accessory1) return 'accessory1';
+    if (!equipped.accessory2) return 'accessory2';
+    const acc1 = ITEMS[equipped.accessory1] || null;
+    const acc2 = ITEMS[equipped.accessory2] || null;
+    const score = target => target ? ((target.atk || 0) + (target.def || 0) + (target.critBonus || 0) + (target.goldBonus || 0) + ((target.speedBonus || 0) * 10)) : -1;
+    return score(acc1) <= score(acc2) ? 'accessory1' : 'accessory2';
+  }
+  if (item.type === 'weapon' || item.type === 'armor' || item.type === 'helmet' || item.type === 'boots' || item.type === 'shield' || item.type === 'event') {
+    return item.type;
+  }
+  return null;
+}
+function equipInventoryItem(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return;
+  const slot = getPreferredEquipSlot(item);
+  if (!slot) return;
+  const invIdx = inventory.indexOf(itemId);
+  if (invIdx === -1) return;
+  const previous = equipped[slot];
+  inventory.splice(invIdx, 1);
+  equipped[slot] = itemId;
+  if (previous) inventory.push(previous);
+  AudioSystem.sfx.pickup();
+  showToast(item.name + ' 장착');
+  updateHUD();
+  autoSave();
+}
+function unequipSlot(slot) {
+  const itemId = equipped[slot];
+  if (!itemId) return;
+  inventory.push(itemId);
+  equipped[slot] = null;
+  AudioSystem.sfx.sell();
+  showToast((ITEMS[itemId] ? ITEMS[itemId].name : '장비') + ' 해제');
+  updateHUD();
+  autoSave();
+}
+function consumeInventoryItem(itemId) {
+  const item = ITEMS[itemId];
+  const idx = inventory.indexOf(itemId);
+  if (!item || item.type !== 'potion' || idx === -1) return;
+  if (player.hp >= player.maxHp) {
+    showToast('HP가 이미 가득합니다');
+    return;
+  }
+  const boostedHeal = Math.floor(item.heal * getHealingMultiplier());
+  const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
+  player.hp = Math.min(player.maxHp, player.hp + boostedHeal);
+  inventory.splice(idx, 1);
+  if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
+  AudioSystem.sfx.heal();
+  showToast(item.name + ' 사용');
+  updateHUD();
+  autoSave();
+}
+function getItemStatEntries(item) {
+  if (!item) return [];
+  const healValue = item.heal ? Math.floor(item.heal * getHealingMultiplier()) : 0;
+  const entries = [
+    { label: 'ATK', value: item.atk || 0, display: String(item.atk || 0) },
+    { label: 'DEF', value: item.def || 0, display: String(item.def || 0) },
+    { label: 'SPD', value: item.speedBonus || 0, display: (item.speedBonus || 0).toFixed(2) },
+    { label: '치명타', value: item.critBonus || 0, display: (item.critBonus || 0) + '%' },
+    { label: '골드', value: item.goldBonus || 0, display: (item.goldBonus || 0) + '%' },
+    { label: '회복', value: healValue, display: String(healValue) },
+  ];
+  return entries.filter(entry => entry.value > 0);
+}
+function buildItemStatRows(item) {
+  const entries = getItemStatEntries(item);
+  if (entries.length === 0) {
+    return '<div class="popup-stat-row"><span class="label">효과</span><span class="val same">없음</span></div>';
+  }
+  return entries.map(entry => '<div class="popup-stat-row"><span class="label">' + entry.label + '</span><span class="val">' + entry.display + '</span></div>').join('');
+}
+function buildItemDeltaRows(currentItem, newItem) {
+  const currentMap = new Map(getItemStatEntries(currentItem).map(entry => [entry.label, entry]));
+  const nextEntries = getItemStatEntries(newItem);
+  const labels = ['ATK', 'DEF', 'SPD', '치명타', '골드', '회복'];
+  const rows = labels.map(label => {
+    const currentValue = currentMap.has(label) ? currentMap.get(label).value : 0;
+    const nextEntry = nextEntries.find(entry => entry.label === label);
+    const nextValue = nextEntry ? nextEntry.value : 0;
+    if (currentValue === 0 && nextValue === 0) return '';
+    const diff = nextValue - currentValue;
+    const className = diff > 0 ? 'better' : diff < 0 ? 'worse' : 'same';
+    const display = diff === 0
+      ? '변화 없음'
+      : ((diff > 0 ? '+' : '') + (label === 'SPD' ? diff.toFixed(2) : diff) + (label === '치명타' || label === '골드' ? '%' : ''));
+    return '<div class="popup-stat-row popup-delta-row"><span class="label">' + label + ' 변화</span><span class="val ' + className + '">' + display + '</span></div>';
+  }).filter(Boolean);
+  return rows.length ? rows.join('') : '<div class="popup-stat-row popup-delta-row"><span class="label">비교</span><span class="val same">변화 없음</span></div>';
+}
+function getItemScore(item) {
+  if (!item) return -1;
+  return (item.atk || 0) * 3 + (item.def || 0) * 2 + (item.speedBonus || 0) * 20 + (item.critBonus || 0) * 1.5 + (item.goldBonus || 0) * 0.5 + (item.heal || 0) * 0.08;
+}
+function getShopRecommendation(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return '';
+  if (item.type === 'potion') {
+    return getOwnedItemCount(itemId) < 2 ? '보충 추천' : '';
+  }
+  const slot = getPreferredEquipSlot(item);
+  if (!slot) return '';
+  const currentItem = equipped[slot] ? ITEMS[equipped[slot]] : null;
+  if (!currentItem) return '첫 장비';
+  return getItemScore(item) > getItemScore(currentItem) ? '업그레이드' : '';
+}
+function openItemPopup({ itemId, source, slot }) {
+  const item = ITEMS[itemId];
+  if (!item) return;
+  const targetSlot = slot || getPreferredEquipSlot(item);
+  const currentItem = targetSlot && equipped[targetSlot] ? ITEMS[equipped[targetSlot]] : null;
+  const canEquip = source !== 'equipped' && !!targetSlot && item.type !== 'potion';
+  const canUse = item.type === 'potion';
+  const canUnequip = source === 'equipped';
+  popupContent.innerHTML = '' +
+    '<div class="popup-item-header">' +
+      '<div class="popup-icon">' + item.icon + '</div>' +
+      '<div>' +
+        '<div class="popup-name">' + item.name + '</div>' +
+        '<div class="popup-type">' + getItemTypeLabel(item) + (targetSlot && EQUIP_SLOT_META[targetSlot] ? ' · ' + EQUIP_SLOT_META[targetSlot].label : '') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="popup-compare">' +
+      '<div class="popup-stat-box current"><div class="popup-stat-title">현재 장비</div><div class="popup-stat-row"><span class="label">이름</span><span class="val">' + (currentItem ? currentItem.name : '없음') + '</span></div>' + buildItemStatRows(currentItem) + '</div>' +
+      '<div class="popup-stat-box new-item"><div class="popup-stat-title">선택 아이템</div><div class="popup-stat-row"><span class="label">이름</span><span class="val">' + item.name + '</span></div>' + buildItemStatRows(item) + '</div>' +
+    '</div>' +
+    '<div class="popup-stat-box popup-delta-box"><div class="popup-stat-title">장비 비교</div>' + buildItemDeltaRows(currentItem, item) + '</div>' +
+    '<div class="popup-btns"></div>';
+
+  const btns = popupContent.querySelector('.popup-btns');
+  if (canEquip) {
+    const equipBtn = document.createElement('button');
+    equipBtn.className = 'popup-btn equip';
+    equipBtn.textContent = '장착';
+    equipBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      equipInventoryItem(itemId);
+      closeItemPopup();
+      renderInventory();
+    });
+    btns.appendChild(equipBtn);
+  }
+  if (canUse) {
+    const useBtn = document.createElement('button');
+    useBtn.className = 'popup-btn use';
+    useBtn.textContent = '사용';
+    useBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      consumeInventoryItem(itemId);
+      closeItemPopup();
+      renderInventory();
+    });
+    btns.appendChild(useBtn);
+  }
+  if (canUnequip) {
+    const unequipBtn = document.createElement('button');
+    unequipBtn.className = 'popup-btn unequip';
+    unequipBtn.textContent = '해제';
+    unequipBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      unequipSlot(slot);
+      closeItemPopup();
+      renderInventory();
+    });
+    btns.appendChild(unequipBtn);
+  }
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'popup-btn close';
+  closeBtn.textContent = '닫기';
+  closeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeItemPopup();
+  });
+  btns.appendChild(closeBtn);
+
+  itemPopup.style.display = 'flex';
+}
+function closeItemPopup() {
+  itemPopup.style.display = 'none';
+  popupContent.innerHTML = '';
+}
+function renderInventory() {
+  const counts = getInventoryCounts();
+  bagCount.textContent = inventory.length;
+
+  Object.keys(EQUIP_SLOT_META).forEach(slot => {
+    const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
+    if (!slotEl) return;
+    const itemId = equipped[slot];
+    const item = itemId ? ITEMS[itemId] : null;
+    slotEl.classList.toggle('equipped', !!item);
+    slotEl.innerHTML = item ? item.icon : EQUIP_SLOT_META[slot].icon;
+    slotEl.title = item ? (EQUIP_SLOT_META[slot].label + ': ' + item.name) : EQUIP_SLOT_META[slot].label;
+  });
+
+  const sortedIds = Object.keys(counts).sort(compareInventoryItems);
+  bagGrid.innerHTML = '';
+  sortedIds.forEach(id => {
+    const item = ITEMS[id];
+    if (!item) return;
+    const cell = document.createElement('button');
+    cell.className = 'bag-cell' + (item.type === 'potion' ? ' potion-cell' : '');
+    cell.innerHTML = item.icon + ((counts[id] || 0) > 1 ? '<span class="cell-count">' + counts[id] + '</span>' : '');
+    cell.title = item.name;
+    function handleBagTap(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openItemPopup({ itemId: id, source: 'inventory' });
+    }
+    cell.addEventListener('touchstart', handleBagTap, { passive: false });
+    cell.addEventListener('click', handleBagTap);
+    bagGrid.appendChild(cell);
+  });
+}
+function buyItem(itemId) {
+  const item = ITEMS[itemId];
+  if (!item || player.gold < item.price) {
+    showToast('골드가 부족합니다');
+    return;
+  }
+  player.gold -= item.price;
+  inventory.push(itemId);
+  AudioSystem.sfx.buy();
+  showToast(item.name + ' 구매');
+  updateHUD();
+  autoSave();
+  renderShop();
+}
+function getSellPrice(itemId) {
+  const item = ITEMS[itemId];
+  if (!item) return 0;
+  return Math.max(1, Math.floor((item.price || 0) * 0.5));
+}
+function sellItem(itemId) {
+  const idx = inventory.indexOf(itemId);
+  if (idx === -1) return;
+  const item = ITEMS[itemId];
+  inventory.splice(idx, 1);
+  player.gold += getSellPrice(itemId);
+  AudioSystem.sfx.sell();
+  showToast((item ? item.name : '아이템') + ' 판매');
+  updateHUD();
+  autoSave();
+  renderShop();
+  if (invOpen) renderInventory();
+}
+function renderShop() {
+  switchShopTab(activeShopTab);
+  shopGold.textContent = player.gold;
+  shopItemsList.innerHTML = '';
+  shopSellList.innerHTML = '';
+
+  const shopItems = activeShopNpc && Array.isArray(activeShopNpc.shopItems) ? activeShopNpc.shopItems : [];
+  shopItems.forEach(itemId => {
+    const item = ITEMS[itemId];
+    if (!item) return;
+    const recommendation = getShopRecommendation(itemId);
+    const card = document.createElement('div');
+    card.className = 'shop-item' + (recommendation ? ' recommended' : '');
+    const affordable = player.gold >= item.price;
+    card.innerHTML = '' +
+      (recommendation ? '<div class="shop-badge">' + recommendation + '</div>' : '') +
+      '<div class="icon">' + item.icon + '</div>' +
+      '<div class="name">' + item.name + '</div>' +
+      '<div class="stat">' + getItemSummary(item) + '</div>' +
+      '<div class="price">💰 ' + item.price + '</div>' +
+      '<div class="owned">보유 ' + getOwnedItemCount(itemId) + '</div>' +
+      '<button class="btn" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '구매' : '골드 부족') + '</button>';
+    const btn = card.querySelector('.btn');
+    if (btn && !btn.disabled) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        buyItem(itemId);
+      });
+    }
+    shopItemsList.appendChild(card);
+  });
+
+  const counts = getInventoryCounts();
+  const sellIds = Object.keys(counts).sort(compareInventoryItems);
+  if (sellIds.length === 0) {
+    shopSellList.innerHTML = '<div class="quest-card shop-empty-card"><div class="quest-desc">판매할 아이템이 없습니다.</div></div>';
+    return;
+  }
+
+  sellIds.forEach(itemId => {
+    const item = ITEMS[itemId];
+    if (!item) return;
+    const card = document.createElement('div');
+    card.className = 'shop-item';
+    card.innerHTML = '' +
+      '<div class="icon">' + item.icon + '</div>' +
+      '<div class="name">' + item.name + '</div>' +
+      '<div class="stat">' + getItemSummary(item) + '</div>' +
+      '<div class="price">판매가 💰 ' + getSellPrice(itemId) + '</div>' +
+      '<div class="owned">가방 x' + counts[itemId] + '</div>' +
+      '<button class="btn">판매</button>';
+    const btn = card.querySelector('.btn');
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      sellItem(itemId);
+    });
+    shopSellList.appendChild(card);
+  });
+}
+
 // ─── Companion Panel ─────────────────────────────────────────────────────────
 const companionPanel = document.getElementById('companion-panel');
 document.getElementById('companion-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeCompanionPanel(); }, { passive: false });
@@ -488,26 +961,67 @@ function renderQuestPanel() {
   const acceptedCount = acceptedSubquests.length;
   const completedCount = completedSubquests.length;
   const availableSubquests = getAvailableSubquests();
-  const acceptedDetails = getAcceptedSubquestsDetailed();
+  const acceptedDetails = getAcceptedSubquestsDetailed().slice().sort((a, b) => {
+    if (a.readyToTurnIn !== b.readyToTurnIn) return a.readyToTurnIn ? -1 : 1;
+    return a.quest.title.localeCompare(b.quest.title, 'ko');
+  });
+  const readySubCount = acceptedDetails.filter(detail => detail.readyToTurnIn).length;
+
+  let focusTitle = '지금 할 일';
+  let focusText = '다음 퀘스트를 확인해 진행을 이어가세요.';
+  let focusChip = '진행 중';
+  let focusChipClass = 'active';
+
+  if (currentQuest && currentMainStatus.ready) {
+    focusText = getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '에게 가서 메인 퀘스트 보상을 받으세요.';
+    focusChip = '메인 보고 가능';
+    focusChipClass = 'done';
+  } else if (readySubCount > 0) {
+    focusText = '서브 퀘스트 ' + readySubCount + '개를 바로 보고할 수 있습니다.';
+    focusChip = '서브 보고 가능';
+    focusChipClass = 'done';
+  } else if (currentQuest) {
+    focusText = currentQuest.hint || currentQuest.description;
+    focusChip = currentMainStatus.label;
+  } else if (availableSubquests.length > 0) {
+    focusText = '마을 NPC와 대화해 새 서브 퀘스트를 받아보세요.';
+    focusChip = '수락 가능';
+  } else {
+    focusTitle = '현재 상태';
+    focusText = '메인 루프를 완료했습니다. 장비와 동료 조합을 다듬으며 계속 성장할 수 있습니다.';
+    focusChip = '완료';
+    focusChipClass = 'done';
+  }
 
   let html = '';
+
+  html += '<div class="quest-card primary quest-focus-card">';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">' + focusTitle + '</div><span class="quest-chip ' + focusChipClass + '">' + focusChip + '</span></div>';
+  html += '<div class="quest-focus-text">' + focusText + '</div>';
+  html += '<div class="quest-summary-grid">';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">메인 진행</span><span class="quest-summary-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">서브 진행</span><span class="quest-summary-value">' + acceptedCount + '개</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">보고 가능</span><span class="quest-summary-value">' + ((currentMainStatus.ready ? 1 : 0) + readySubCount) + '개</span></div>';
+  html += '<div class="quest-summary-item"><span class="quest-summary-label">다음 던전</span><span class="quest-summary-value">' + (nextDungeon ? nextDungeon.name : '완료') + '</span></div>';
+  html += '</div>';
+  html += '</div>';
 
   html += '<div class="quest-section-title">메인 진행</div>';
   html += '<div class="quest-card primary">';
   html += '<div class="quest-row"><span class="quest-label">현재 목표</span><span class="quest-value">' + (currentQuest ? currentQuest.title : '모든 메인 퀘스트 완료') + '</span></div>';
   if (currentQuest) {
     html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestOfferNpcId(currentQuest)) + '</span></div>';
-    html += '<div class="quest-row"><span class="quest-label">보고 / 보상 수령 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span></div>';
+    html += '<div class="quest-row"><span class="quest-label">보고 NPC</span><span class="quest-value">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span></div>';
     html += '<div class="quest-row"><span class="quest-label">상태</span><span class="quest-value">' + currentMainStatus.label + '</span></div>';
-    html += '<div class="quest-row"><span class="quest-label">설명</span><span class="quest-value">' + currentQuest.description + '</span></div>';
     if (currentQuest.reward) {
       html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + buildQuestRewardText(currentQuest) + '</span></div>';
     }
-    html += '<div class="quest-desc">';
-    html += currentMainStatus.ready
-      ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
-      : ('다음 행동: ' + (currentQuest.hint || currentQuest.description));
-    html += '</div>';
+    html += '<div class="quest-desc">' + currentQuest.description + '</div>';
+    html += '<div class="quest-desc quest-desc-emphasis">' +
+      (currentMainStatus.ready
+        ? ('목표 달성 완료. <span style="color:#f1c40f;font-weight:bold;">' + getQuestNpcName(getQuestTurnInNpcId(currentQuest)) + '</span>에게 돌아가 보상을 수령하세요.')
+        : ('다음 행동: ' + (currentQuest.hint || currentQuest.description))) +
+      '</div>';
   } else {
     html += '<div class="quest-row"><span class="quest-label">진행도</span><span class="quest-value">' + completedMainQuests.length + '/' + MAIN_QUESTS.length + '</span></div>';
     html += '<div class="quest-desc">메인 루프를 전부 완료했습니다. 동료 조합과 장비를 계속 시험해볼 수 있습니다.</div>';
@@ -530,11 +1044,11 @@ function renderQuestPanel() {
   });
   html += '</div>';
 
-  html += '<div class="quest-section-title">진행 중인 서브 퀘스트</div>';
+  html += '<div class="quest-section-title">서브 퀘스트 현황</div>';
   html += '<div class="quest-card">';
   html += '<div class="quest-row"><span class="quest-label">수락 중</span><span class="quest-value">' + acceptedCount + '</span></div>';
   html += '<div class="quest-row"><span class="quest-label">완료</span><span class="quest-value">' + completedCount + '/' + totalSubquests + '</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">현재 수락 가능</span><span class="quest-value">' + availableSubquests.length + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">새로 수락 가능</span><span class="quest-value">' + availableSubquests.length + '</span></div>';
   html += '</div>';
 
   if (acceptedDetails.length > 0) {
@@ -546,10 +1060,10 @@ function renderQuestPanel() {
         '<span class="quest-chip">진행도 ' + detail.progressText + '</span>' +
       '</div>';
       html += '<div class="quest-row"><span class="quest-label">의뢰 NPC</span><span class="quest-value">' + detail.offerNpcName + '</span></div>';
-      html += '<div class="quest-row"><span class="quest-label">보고 / 보상 수령 NPC</span><span class="quest-value">' + detail.turnInNpcName + '</span></div>';
+      html += '<div class="quest-row"><span class="quest-label">보고 NPC</span><span class="quest-value">' + detail.turnInNpcName + '</span></div>';
       html += '<div class="quest-row"><span class="quest-label">보상</span><span class="quest-value">' + (detail.rewardText || '없음') + '</span></div>';
       html += '<div class="quest-desc">' + detail.quest.description + '</div>';
-      html += '<div class="quest-desc" style="margin-top:4px;color:' + (detail.readyToTurnIn ? '#f1c40f' : '#9aa3b2') + ';">' +
+      html += '<div class="quest-desc quest-desc-emphasis" style="color:' + (detail.readyToTurnIn ? '#f1c40f' : '#9aa3b2') + ';">' +
         (detail.readyToTurnIn
           ? ('목표 달성 완료. ' + detail.turnInNpcName + '에게 돌아가 보상을 수령하세요.')
           : ('아직 진행 중입니다. 완료 후 ' + detail.turnInNpcName + '에게 보고하세요.')) +
@@ -577,6 +1091,69 @@ function renderQuestPanel() {
   content.innerHTML = html;
 }
 
+function getVillageUpgradeDefinitions() {
+  return Object.keys(TOWN_UPGRADES).map(key => {
+    const def = TOWN_UPGRADES[key];
+    return {
+      key,
+      icon: def.icon,
+      name: def.name,
+      maxLevel: def.maxLevel,
+      description: def.bonusText,
+      nextCost: getVillageUpgradeCost(key),
+      levels: Array.from({ length: def.maxLevel }, (_, idx) => ({
+        level: idx + 1,
+        bonus: key === 'forge'
+          ? ('공격력 +' + ((idx + 1) * 2) + ' / 동료 공격 +' + (idx + 1))
+          : key === 'guard'
+            ? ('방어력 +' + (idx + 1) + ' / 동료 체력 +' + ((idx + 1) * 10))
+            : key === 'trade'
+              ? ('골드 획득 +' + ((idx + 1) * 12) + '%')
+              : ('포션 효율 +' + ((idx + 1) * 15) + '% / 부활비 할인 ' + Math.min(50, (idx + 1) * 10) + '%')
+      }))
+    };
+  });
+}
+
+function getVillageTierLabel() {
+  const cleared = dungeonsCleared.length;
+  const totalUpgradeLevel = villageUpgrades.forge + villageUpgrades.guard + villageUpgrades.trade + villageUpgrades.alchemy;
+  const score = cleared * 2 + totalUpgradeLevel;
+  if (score >= 24) return '영웅의 도시';
+  if (score >= 18) return '요새화된 거점';
+  if (score >= 12) return '활기찬 정착지';
+  if (score >= 6) return '성장하는 마을';
+  return '개척 마을';
+}
+function canUpgradeVillage(key) {
+  const def = TOWN_UPGRADES[key];
+  if (!def) return false;
+  const currentLevel = villageUpgrades[key] || 0;
+  if (currentLevel >= def.maxLevel) return false;
+  return player.gold >= getVillageUpgradeCost(key);
+}
+function upgradeVillage(key) {
+  const def = TOWN_UPGRADES[key];
+  if (!def) return;
+  const currentLevel = villageUpgrades[key] || 0;
+  if (currentLevel >= def.maxLevel) {
+    showToast(def.name + '은 이미 최대 레벨입니다');
+    return;
+  }
+  const cost = getVillageUpgradeCost(key);
+  if (player.gold < cost) {
+    showToast('골드가 부족합니다');
+    return;
+  }
+  player.gold -= cost;
+  villageUpgrades[key] = currentLevel + 1;
+  AudioSystem.sfx.buy();
+  showToast(def.name + ' 강화 Lv ' + villageUpgrades[key]);
+  updateHUD();
+  autoSave();
+  renderVillagePanel();
+}
+
 // ─── Village Panel UI ────────────────────────────────────────────────────
 const villagePanel = document.getElementById('village-panel');
 document.getElementById('village-panel-close').addEventListener('touchstart', (e) => { e.preventDefault(); closeVillagePanel(); }, { passive: false });
@@ -597,29 +1174,48 @@ function renderVillagePanel() {
   const tierLabel = getVillageTierLabel();
   const completionPct = Math.min(100, Math.round((dungeonsCleared.length / DUNGEON_INFO.length) * 100));
   const totalUpgradeLevel = villageUpgrades.forge + villageUpgrades.guard + villageUpgrades.trade + villageUpgrades.alchemy;
+  const nextUpgrade = upgrades
+    .map(upgrade => ({ ...upgrade, currentLevel: villageUpgrades[upgrade.key] || 0 }))
+    .filter(upgrade => upgrade.currentLevel < upgrade.maxLevel)
+    .sort((a, b) => getVillageUpgradeCost(a.key) - getVillageUpgradeCost(b.key))[0];
 
   let html = '';
-  html += '<div class="quest-section-title">마을 상태</div>';
-  html += '<div class="quest-card primary">';
-  html += '<div class="quest-row"><span class="quest-label">현재 단계</span><span class="quest-value">' + tierLabel + '</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">던전 확보율</span><span class="quest-value">' + dungeonsCleared.length + '/' + DUNGEON_INFO.length + ' (' + completionPct + '%)</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">총 업그레이드</span><span class="quest-value">Lv 합계 ' + totalUpgradeLevel + '</span></div>';
-  html += '<div class="quest-desc">던전을 돌파할수록 마을이 성장하고, 각 시설 강화는 전투와 경제 보너스로 이어집니다.</div>';
+  html += '<div class="quest-card primary village-overview-card">';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">마을 발전 요약</div><span class="quest-chip active">' + tierLabel + '</span></div>';
+  html += '<div class="quest-focus-text">던전을 돌파할수록 마을이 성장하고, 시설 강화는 전투력과 경제 보너스로 이어집니다.</div>';
+  html += '<div class="village-summary-grid">';
+  html += '<div class="village-summary-item"><span class="village-summary-label">던전 확보율</span><span class="village-summary-value">' + dungeonsCleared.length + '/' + DUNGEON_INFO.length + '</span></div>';
+  html += '<div class="village-summary-item"><span class="village-summary-label">성장률</span><span class="village-summary-value">' + completionPct + '%</span></div>';
+  html += '<div class="village-summary-item"><span class="village-summary-label">총 업그레이드</span><span class="village-summary-value">Lv ' + totalUpgradeLevel + '</span></div>';
+  html += '<div class="village-summary-item"><span class="village-summary-label">다음 투자</span><span class="village-summary-value">' + (nextUpgrade ? nextUpgrade.name : '완료') + '</span></div>';
+  html += '</div>';
+  if (nextUpgrade) {
+    html += '<div class="village-tip-banner">다음 추천 투자: <strong>' + nextUpgrade.icon + ' ' + nextUpgrade.name + '</strong> · 비용 ' + getVillageUpgradeCost(nextUpgrade.key) + 'G</div>';
+  }
   html += '</div>';
 
   html += '<div class="quest-section-title">시설 업그레이드</div>';
   upgrades.forEach(upgrade => {
     const currentLevel = villageUpgrades[upgrade.key] || 0;
+    const nextLevelInfo = upgrade.levels[currentLevel] || null;
+    const canUpgrade = canUpgradeVillage(upgrade.key);
+    const nextCost = getVillageUpgradeCost(upgrade.key);
     html += '<div class="village-upgrade-card">';
     html += '<div class="village-upgrade-top">';
     html += '<div><div class="village-upgrade-name">' + upgrade.icon + ' ' + upgrade.name + '</div><div class="village-upgrade-meta">현재 레벨 ' + currentLevel + ' / ' + upgrade.maxLevel + '</div></div>';
-    html += '<div class="quest-chip ' + (currentLevel >= upgrade.maxLevel ? 'done' : 'active') + '">' + (currentLevel >= upgrade.maxLevel ? '완료' : '진행 가능') + '</div>';
+    html += '<div class="quest-chip ' + (currentLevel >= upgrade.maxLevel ? 'done' : 'active') + '">' + (currentLevel >= upgrade.maxLevel ? '완료' : '성장 가능') + '</div>';
     html += '</div>';
     html += '<div class="quest-desc">' + upgrade.description + '</div>';
+    html += '<div class="village-next-upgrade">' + (nextLevelInfo ? ('다음 단계: Lv ' + (currentLevel + 1) + ' · ' + nextLevelInfo.bonus + ' · 비용 ' + nextCost + 'G') : '최대 레벨 달성') + '</div>';
+    html += '<div class="village-upgrade-actions">';
+    html += '<div class="village-upgrade-cost">' + (currentLevel >= upgrade.maxLevel ? '최대 레벨 완료' : ('보유 골드 ' + player.gold + 'G · 필요 골드 ' + nextCost + 'G')) + '</div>';
+    html += '<button class="village-upgrade-btn" data-upgrade="' + upgrade.key + '" ' + ((currentLevel >= upgrade.maxLevel || !canUpgrade) ? 'disabled' : '') + '>' + (currentLevel >= upgrade.maxLevel ? '완료' : (canUpgrade ? '강화하기' : '골드 부족')) + '</button>';
+    html += '</div>';
     html += '<div class="village-benefit-list">';
     upgrade.levels.forEach((levelInfo, idx) => {
       const reached = currentLevel > idx;
-      html += '<div class="village-benefit-item ' + (reached ? 'reached' : '') + '">';
+      const current = currentLevel === idx + 1;
+      html += '<div class="village-benefit-item ' + (reached ? 'reached' : '') + ' ' + (current ? 'current' : '') + '">';
       html += '<span class="village-benefit-label">Lv ' + (idx + 1) + '</span>';
       html += '<span class="village-benefit-value">' + levelInfo.bonus + '</span>';
       html += '</div>';
@@ -629,4 +1225,14 @@ function renderVillagePanel() {
   });
 
   content.innerHTML = html;
+  content.querySelectorAll('.village-upgrade-btn').forEach(btn => {
+    if (btn.disabled) return;
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = btn.getAttribute('data-upgrade');
+      if (!key) return;
+      upgradeVillage(key);
+    });
+  });
 }

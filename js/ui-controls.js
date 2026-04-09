@@ -23,9 +23,15 @@ joyZone.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 document.addEventListener('touchmove', (e) => {
-  e.preventDefault();
+  let handled = false;
   for (let t of e.changedTouches) {
-    if (t.identifier === joyId) updateJoy(t);
+    if (t.identifier === joyId) {
+      if (!handled) {
+        e.preventDefault();
+        handled = true;
+      }
+      updateJoy(t);
+    }
   }
 }, { passive: false });
 
@@ -33,7 +39,20 @@ document.addEventListener('touchend', (e) => {
   for (let t of e.changedTouches) {
     if (t.identifier === joyId) {
       joyActive = false;
+      joyId = -1;
       joyDx = 0; joyDy = 0;
+      joyThumb.style.transform = 'translate(-50%, -50%)';
+    }
+  }
+});
+
+document.addEventListener('touchcancel', (e) => {
+  for (let t of e.changedTouches) {
+    if (t.identifier === joyId) {
+      joyActive = false;
+      joyId = -1;
+      joyDx = 0;
+      joyDy = 0;
       joyThumb.style.transform = 'translate(-50%, -50%)';
     }
   }
@@ -203,12 +222,15 @@ document.querySelectorAll('.menu-grid-btn').forEach(btn => {
       menuOpen = false;
       hidePanel(menuPanel);
     } else if (action === 'town-return') {
-      menuOpen = false;
-      hidePanel(menuPanel);
       if (currentMap === 'town') {
+        menuOpen = false;
+        hidePanel(menuPanel);
         openVillagePanel();
       } else {
         if (currentMap === 'dungeon') {
+          const shouldReturn = confirm('지금 마을로 귀환하면 출전 중인 동료가 쓰러진 상태로 처리됩니다. 정말 귀환할까요?');
+          if (!shouldReturn) return;
+
           // Companions die when leaving dungeon early
           activeCompanions.forEach(cId => {
             if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
@@ -216,6 +238,8 @@ document.querySelectorAll('.menu-grid-btn').forEach(btn => {
           activeCompanions = [];
           companionStates = {};
         }
+        menuOpen = false;
+        hidePanel(menuPanel);
         enterTown();
         showToast('마을로 귀환했습니다');
         AudioSystem.sfx.portal();
@@ -315,8 +339,6 @@ function advanceDialogue(e) {
 
 dialogueCloseBtn.addEventListener('touchstart', advanceDialogue, { passive: false });
 dialogueCloseBtn.addEventListener('click', advanceDialogue);
-dialoguePanel.addEventListener('touchstart', advanceDialogue, { passive: false });
-dialoguePanel.addEventListener('click', advanceDialogue);
 
 function openDialogue(npc) {
   dialogueOpen = true;
