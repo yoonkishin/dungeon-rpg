@@ -6,9 +6,10 @@
 
 - [x] `state.js` runtime state module is present and loaded by `index.html`.
 - [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.
+- [x] Companion roster, AI, and synergy helpers are split into `data-companions.js`.
 - [x] Town NPCs and village upgrade helpers are split into `data-town.js`.
 - [x] Quest definitions and quest flow helpers are split into `data-quests.js`.
-- [x] Core game data is split across `data.js`, `data-growth.js`, `data-town.js`, and `data-quests.js`.
+- [x] Core game data is split across `data.js`, `data-companions.js`, `data-growth.js`, `data-town.js`, and `data-quests.js`.
 
 ## Companion System
 
@@ -37,6 +38,7 @@
 - `index.html`
 - `css/styles.css`
 - `js/data.js`
+- `js/data-companions.js`
 - `js/data-growth.js`
 - `js/data-town.js`
 - `js/data-quests.js`

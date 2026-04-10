@@ -8,6 +8,7 @@ const files = [
   'js/audio.js',
   'js/maps.js',
   'js/data.js',
+  'js/data-companions.js',
   'js/data-growth.js',
   'js/data-town.js',
   'js/data-quests.js',
