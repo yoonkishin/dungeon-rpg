@@ -122,10 +122,12 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 <!-- AUTO-SNAPSHOT:START -->
 - Authoritative implemented status lives in `docs/implemented-state.md` (auto-generated).
 - 런타임 가변 상태는 `state.js`로 분리되어 있고 `index.html`에서 직접 로드된다.
+- 플레이어 성장 상태(`classLine`, `classRank`, `promotionPending`)와 save/load 연동이 감지됐다.
 - 동료 시스템은 10명 roster / 10개 병종 프로필 구조로 감지됐다: 보병, 비병, 기병, 수병, 창병, 궁병, 승려, 신관, 법사, 사교.
 - 동료 AI 모드는 `aggressive`, `defensive`, `support` 로 감지됐다고 save/load 연동도 확인됐다.
 - 미니맵 컨테이너는 HUD 우측 상단 슬롯(top 56px, right 12px)으로 감지됐다고 표시 상태는 localStorage에 저장된다.
 - HUD quick action 버튼은 6개 감지됐다: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- 수련의 방 패널과 승급 패널 진입점이 감지됐다.
 - pre-push 훅은 `scripts/check-boot.js`를 실행해 부팅 스모크 테스트를 강제한다.
 - pre-commit 훅은 `scripts/sync-doc-state.js --write`를 실행해 문서 스냅샷을 자동 갱신한다.
 - pre-push 훅은 문서 스냅샷 sync 여부도 검사한다.

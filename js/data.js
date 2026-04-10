@@ -296,6 +296,13 @@ function getNextRank(lineId, level) {
   return null;
 }
 
+function getNextRankFromCurrentRank(lineId, currentRank) {
+  const line = getGrowthLine(lineId);
+  const currentIndex = line.ranks.findIndex(entry => entry.rank === currentRank);
+  if (currentIndex < 0 || currentIndex >= line.ranks.length - 1) return null;
+  return line.ranks[currentIndex + 1];
+}
+
 function getLevelGrowthForRank(lineId, rank) {
   const line = getGrowthLine(lineId);
   const rankInfo = getRankInfo(lineId, rank);
@@ -312,12 +319,15 @@ function getLevelGrowthForRank(lineId, rank) {
 
 function syncPlayerGrowthState() {
   player.classLine = player.classLine || 'infantry';
-  const availableRank = getRankForLevel(player.classLine, player.level);
-  player.classRank = availableRank.rank;
-  player.promotionPending = false;
+  const line = getGrowthLine(player.classLine);
+  const highestRank = line.ranks[line.ranks.length - 1].rank;
+  const derivedRank = getRankForLevel(player.classLine, player.level).rank;
+  player.classRank = Math.max(1, Math.min(player.classRank || derivedRank, highestRank));
+  const nextRank = getNextRankFromCurrentRank(player.classLine, player.classRank);
+  player.promotionPending = !!(nextRank && player.level >= nextRank.reqLevel);
   player.tier = player.classRank;
   player.xpNext = getXpToNextLevel(player.level);
-  return availableRank;
+  return getRankInfo(player.classLine, player.classRank);
 }
 
 // ─── Class Tier System (player growth line compat) ─────────────────────────
@@ -342,9 +352,31 @@ function getCurrentTier() {
 }
 
 function getNextTier() {
-  const next = getNextRank(player.classLine || 'infantry', player.level);
+  const next = getNextRankFromCurrentRank(player.classLine || 'infantry', player.classRank || 1);
   if (!next) return null;
   return toTierDisplay(next);
+}
+
+function getPlayerPromotionTarget() {
+  const next = getNextRankFromCurrentRank(player.classLine || 'infantry', player.classRank || 1);
+  if (!next) return null;
+  return player.level >= next.reqLevel ? toTierDisplay(next) : null;
+}
+
+function getPlayerPromotionGrowthDelta() {
+  const currentRank = player.classRank || 1;
+  const target = getPlayerPromotionTarget();
+  if (!target) return null;
+  const currentGrowth = getLevelGrowthForRank(player.classLine || 'infantry', currentRank);
+  const targetGrowth = getLevelGrowthForRank(player.classLine || 'infantry', target.rank);
+  return {
+    maxHp: targetGrowth.maxHp - currentGrowth.maxHp,
+    maxMp: targetGrowth.maxMp - currentGrowth.maxMp,
+    atk: targetGrowth.atk - currentGrowth.atk,
+    def: targetGrowth.def - currentGrowth.def,
+    speed: targetGrowth.speed - currentGrowth.speed,
+    critChance: targetGrowth.critChance - currentGrowth.critChance,
+  };
 }
 
 const skillPages = [
@@ -417,6 +449,8 @@ const TOWN_NPCS = [
     dialogue:['마을 밖은 위험합니다. 장비를 잘 챙기세요.','동쪽으로 가면 필드로 나갈 수 있습니다.','몬스터가 점점 강해지니 조심하십시오.'] },
   { id:'temple', name:'⛪ 신전', x:5*40+20, y:10*40+20, color:'#ffeaa7', hat:'#fdcb6e', isTemple:true,
     dialogue:['쓰러진 동료들을 이곳에서 부활시킬 수 있습니다.'] },
+  { id:'training', name:'🏯 수련의 방', x:14*40+20, y:10*40+20, color:'#f8c471', hat:'#8e5a2b', isTrainingRoom:true,
+    dialogue:['승급 자격이 생기면 이곳에서 클래스를 올릴 수 있습니다.'] },
 ];
 const MAIN_QUESTS = [
   {

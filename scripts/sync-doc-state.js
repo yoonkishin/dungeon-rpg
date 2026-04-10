@@ -25,9 +25,11 @@ function requireMatch(text, regex, label) {
 
 const dataJs = read('js/data.js');
 const saveJs = read('js/save.js');
+const stateJs = read('js/state.js');
 const indexHtml = read('index.html');
 const stylesCss = read('css/styles.css');
 const uiControlsJs = read('js/ui-controls.js');
+const uiPanelsJs = read('js/ui-panels.js');
 const prePush = exists('.githooks/pre-push') ? read('.githooks/pre-push') : '';
 const preCommit = exists('.githooks/pre-commit') ? read('.githooks/pre-commit') : '';
 
@@ -44,6 +46,8 @@ const minimapTop = (minimapBlock.match(/top:\s*([^;]+);/) || [null, 'unknown'])[
 const minimapRight = (minimapBlock.match(/right:\s*([^;]+);/) || [null, 'unknown'])[1].trim();
 const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
+const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
+const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
 const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiControlsJs);
 const bootHook = /node scripts\/check-boot\.js/.test(prePush);
 const docSyncHook = /node scripts\/sync-doc-state\.js --write/.test(preCommit);
@@ -54,10 +58,16 @@ const snapshotBullets = [
   stateLoaded
     ? '- 런타임 가변 상태는 `state.js`로 분리되어 있고 `index.html`에서 직접 로드된다.'
     : '- 런타임 상태 분리 여부를 자동 감지하지 못했다.',
+  growthStateDetected
+    ? '- 플레이어 성장 상태(`classLine`, `classRank`, `promotionPending`)와 save/load 연동이 감지됐다.'
+    : '- 플레이어 성장 상태 구조는 자동 감지되지 않았다.',
   `- 동료 시스템은 ${rosterCount}명 roster / ${classNames.length}개 병종 프로필 구조로 감지됐다: ${classNames.join(', ')}.`,
   `- 동료 AI 모드는 ${aiModes.map(m => `\`${m}\``).join(', ')} 로 감지됐다${aiSaveLoad ? '고 save/load 연동도 확인됐다' : '지만 save/load 연동은 확인되지 않았다'}.`,
   `- 미니맵 컨테이너는 HUD 우측 상단 슬롯(top ${minimapTop}, right ${minimapRight})으로 감지됐다${minimapTogglePersist ? '고 표시 상태는 localStorage에 저장된다' : ''}.`,
   `- HUD quick action 버튼은 ${hudActions.length}개 감지됐다: ${hudActions.map(a => `\`${a}\``).join(', ')}.`,
+  trainingRoomDetected
+    ? '- 수련의 방 패널과 승급 패널 진입점이 감지됐다.'
+    : '- 수련의 방 패널은 아직 감지되지 않았다.',
   bootHook
     ? '- pre-push 훅은 `scripts/check-boot.js`를 실행해 부팅 스모크 테스트를 강제한다.'
     : '- pre-push 훅에서 부팅 스모크 테스트를 감지하지 못했다.',
@@ -85,6 +95,9 @@ const implementedStateDoc = [
   stateLoaded
     ? '- [x] `state.js` runtime state module is present and loaded by `index.html`.'
     : '- [ ] `state.js` runtime state module could not be confirmed from `index.html`.',
+  growthStateDetected
+    ? '- [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.'
+    : '- [ ] Player growth runtime fields could not be fully detected.',
   '- [x] `data.js` remains the authoritative source for immutable game data tables.',
   '',
   '## Companion System',
@@ -103,6 +116,9 @@ const implementedStateDoc = [
     ? '- [x] Minimap visibility persistence detected via `localStorage`.'
     : '- [ ] Minimap visibility persistence was not detected.',
   `- [x] HUD quick actions detected: ${hudActions.map(a => `\`${a}\``).join(', ')}.`,
+  trainingRoomDetected
+    ? '- [x] Training room / promotion panel detected.'
+    : '- [ ] Training room / promotion panel was not detected.',
   '',
   '## Automation',
   '',
@@ -121,8 +137,10 @@ const implementedStateDoc = [
   '- `index.html`',
   '- `css/styles.css`',
   '- `js/data.js`',
+  '- `js/state.js`',
   '- `js/save.js`',
   '- `js/ui-controls.js`',
+  '- `js/ui-panels.js`',
   '- `.githooks/pre-commit`',
   '- `.githooks/pre-push`',
   '',

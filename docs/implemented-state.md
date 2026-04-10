@@ -5,6 +5,7 @@
 ## Runtime / Structure
 
 - [x] `state.js` runtime state module is present and loaded by `index.html`.
+- [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.
 - [x] `data.js` remains the authoritative source for immutable game data tables.
 
 ## Companion System
@@ -19,6 +20,7 @@
 - [x] Minimap HUD slot detected at **top 56px / right 12px**.
 - [x] Minimap visibility persistence detected via `localStorage`.
 - [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- [x] Training room / promotion panel detected.
 
 ## Automation
 
@@ -31,7 +33,9 @@
 - `index.html`
 - `css/styles.css`
 - `js/data.js`
+- `js/state.js`
 - `js/save.js`
 - `js/ui-controls.js`
+- `js/ui-panels.js`
 - `.githooks/pre-commit`
 - `.githooks/pre-push`

@@ -11,13 +11,14 @@ function updateHUD() {
   const tier = getCurrentTier();
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const nextTier = getNextTier();
+  const promotionTarget = getPlayerPromotionTarget();
   const statusClassLineEl = document.getElementById('status-class-line');
   const statusClassNextEl = document.getElementById('status-class-next');
   if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
   if (statusClassNextEl) {
-    statusClassNextEl.textContent = nextTier
-      ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}`
-      : '최종 승급 완료';
+    statusClassNextEl.textContent = promotionTarget
+      ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
+      : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
   }
 
   // XP bar in status panel
@@ -67,8 +68,7 @@ function gainXP(amount) {
     player.xp -= player.xpNext;
     player.level++;
 
-    const availableRank = getRankForLevel(player.classLine || 'infantry', player.level);
-    const growth = getLevelGrowthForRank(player.classLine || 'infantry', availableRank.rank);
+    const growth = getLevelGrowthForRank(player.classLine || 'infantry', player.classRank || 1);
     player.xpNext = getXpToNextLevel(player.level);
     player.maxHp += growth.maxHp;
     player.hp = player.maxHp;
@@ -82,13 +82,12 @@ function gainXP(amount) {
     addParticles(player.x, player.y, '#f1c40f', 20);
     leveled = true;
 
-    const oldRank = player.classRank || 1;
-    if (availableRank.rank > oldRank) {
-      player.classRank = availableRank.rank;
-      player.tier = availableRank.rank;
-      player.promotionPending = false;
-      showTierBanner({ name: availableRank.className, color: availableRank.color });
-      addParticles(player.x, player.y, availableRank.color, 25);
+    const wasPending = !!player.promotionPending;
+    syncPlayerGrowthState();
+    const promotionTarget = getPlayerPromotionTarget();
+    if (!wasPending && promotionTarget) {
+      showToast('승급 가능! 수련의 방으로 가자');
+      addParticles(player.x, player.y, promotionTarget.color, 25);
     }
 
     if (player.level >= PLAYER_LEVEL_CAP) {

@@ -1841,6 +1841,62 @@ canvas {
   border-color: #2980b9;
 }
 
+.training-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.training-summary-item {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.training-summary-label {
+  font-size: 10px;
+  color: #9fb0d1;
+}
+.training-summary-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f5f7fb;
+}
+.training-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.training-delta-badge {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(241,196,15,0.12);
+  border: 1px solid rgba(241,196,15,0.22);
+  color: #f6d46b;
+  font-size: 10px;
+  font-weight: 700;
+}
+.training-action-row {
+  margin-top: 12px;
+}
+.training-promote-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 12px;
+}
+.training-promote-btn:disabled {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.4);
+}
+
 /* ── Companion grid ── */
 #companion-panel {
   touch-action: pan-y;

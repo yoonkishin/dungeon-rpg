@@ -83,7 +83,7 @@ function ch() { return Math.round(canvas.height / dpr); }
 
 function update(dt) {
   if (player.dead) return;
-  if (invOpen || shopOpen || menuOpen || settingsOpen || dialogueOpen || profileOpen || companionPanelOpen || skillPanelOpen || questPanelOpen || villagePanelOpen) return;
+  if (invOpen || shopOpen || menuOpen || settingsOpen || dialogueOpen || profileOpen || companionPanelOpen || skillPanelOpen || questPanelOpen || villagePanelOpen || trainingPanelOpen) return;
 
   // Day/night cycle
   // Day/night cycle disabled - always daytime
@@ -208,6 +208,8 @@ function update(dt) {
           if (nd < 50) {
             if (npc.isTemple) {
               openTemple();
+            } else if (npc.isTrainingRoom) {
+              openTrainingPanel();
             } else {
               openDialogue(npc);
             }

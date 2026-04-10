@@ -2,6 +2,11 @@
 
 `dungeon-rpg`에 `lightsaber_test` 문서 감각을 참고한 **성장/전직 1차 적용안**.
 
+> 구현 현황 메모 (2026-04-10)
+> - Phase A 완료: XP 커브, infantry 성장 라인, save/load 호환 적용
+> - Phase B 완료: HUD/프로필 클래스명 표시 정리
+> - Phase C 완료: 수련의 방 패널과 수동 승급 확정 플로우 적용
+
 ---
 
 ## 1. 목표
