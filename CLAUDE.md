@@ -1,6 +1,6 @@
-# AGENTS.md - dungeon-rpg
+# CLAUDE.md
 
-이 파일은 이 저장소에서 작업하는 AI 에이전트(Claude Code, Codex 등)를 위한 가이드다.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 # dungeon-rpg 에이전트 가이드
 
