@@ -3,5 +3,8 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
+echo "[pre-push] Checking implementation docs are synced..."
+node scripts/sync-doc-state.js --check
+
 echo "[pre-push] Running dungeon-rpg boot smoke test..."
 node scripts/check-boot.js

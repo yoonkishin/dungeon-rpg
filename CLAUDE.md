@@ -51,8 +51,9 @@ python3 -m http.server 8000
 # 부팅 스모크 테스트 (검은 화면급 부팅 실패 사전 검출)
 node scripts/check-boot.js
 
-# pre-push 훅이 자동으로 check-boot.js를 실행함 (.githooks/pre-push)
-# 훅이 막으면 원인을 고친 뒤 push
+# pre-push 훅이 문서 sync 검사 + check-boot.js를 실행함 (.githooks/pre-push)
+# pre-commit 훅이 scripts/sync-doc-state.js로 구현 스냅샷 문서를 자동 갱신함
+# 훅이 막으면 원인을 고친 뒤 commit/push
 ```
 
 테스트 프레임워크나 린터는 없다. 검증은 브라우저에서 직접 확인한다.
@@ -116,14 +117,19 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 - dungeon → field: `TILE_EXIT` → `exitDungeon()` → `enterField()`
 - 모든 전환 시 `player.hp = maxHp` (풀힐) + `spawnEnemies()` + BGM 변경
 
-### Current Implemented Snapshot (2026-04-10)
+### Current Implemented Snapshot (auto-synced)
 
-- 런타임 가변 상태는 `state.js`로 분리되었고, `data.js`는 불변 게임 데이터 중심으로 본다.
-- 동료 시스템은 `COMPANION_ROSTER` + `COMPANION_CLASS_PROFILES` 기반의 10병종 roster를 사용한다.
-- 동료 AI 모드 (`aggressive`, `defensive`, `support`)와 save/load 연동은 이미 구현되어 있다.
-- 미니맵 기준 위치는 좌측 상단이 아니라, HUD 우측 상단 슬롯(`#minimap-container`)이다.
-- 주요 메뉴 패널은 HUD quick action 버튼에서도 바로 열 수 있다.
-- 문서와 코드가 충돌하면 현재 코드를 먼저 확인하고, 작업 종료 전에 관련 문서를 함께 갱신한다.
+<!-- AUTO-SNAPSHOT:START -->
+- Authoritative implemented status lives in `docs/implemented-state.md` (auto-generated).
+- 런타임 가변 상태는 `state.js`로 분리되어 있고 `index.html`에서 직접 로드된다.
+- 동료 시스템은 10명 roster / 10개 병종 프로필 구조로 감지됐다: 보병, 비병, 기병, 수병, 창병, 궁병, 승려, 신관, 법사, 사교.
+- 동료 AI 모드는 `aggressive`, `defensive`, `support` 로 감지됐다고 save/load 연동도 확인됐다.
+- 미니맵 컨테이너는 HUD 우측 상단 슬롯(top 56px, right 12px)으로 감지됐다고 표시 상태는 localStorage에 저장된다.
+- HUD quick action 버튼은 6개 감지됐다: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- pre-push 훅은 `scripts/check-boot.js`를 실행해 부팅 스모크 테스트를 강제한다.
+- pre-commit 훅은 `scripts/sync-doc-state.js --write`를 실행해 문서 스냅샷을 자동 갱신한다.
+- pre-push 훅은 문서 스냅샷 sync 여부도 검사한다.
+<!-- AUTO-SNAPSHOT:END -->
 
 ---
 

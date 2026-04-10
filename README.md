@@ -70,6 +70,19 @@ js/audio.js
 
 ---
 
+## 문서 자동 동기화
+
+구현 상태 문서가 코드보다 뒤처지지 않도록, 이 repo는 자동 동기화 장치를 둔다.
+
+- `node scripts/sync-doc-state.js --write` : 코드 기준으로 문서 스냅샷 갱신
+- `docs/implemented-state.md` : 자동 생성되는 현재 구현 상태 문서
+- `.githooks/pre-commit` : commit 전에 문서 스냅샷 자동 갱신 + stage
+- `.githooks/pre-push` : push 전에 문서 sync 여부와 부팅 스모크 테스트를 검사
+
+즉, 앞으로 기능 구현이 끝난 상태로 commit하면, 최소한 구현 스냅샷 문서는 자동으로 따라오게 한다.
+
+---
+
 ## 부팅 스모크 테스트
 
 검은 화면급 부팅 실패를 줄이기 위해, 이 repo에는 **Node 기반 부팅 스모크 테스트**가 포함되어 있다.

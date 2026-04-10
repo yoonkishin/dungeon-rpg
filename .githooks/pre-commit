@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "[pre-commit] Syncing implementation docs..."
+node scripts/sync-doc-state.js --write
+
+git add AGENTS.md CLAUDE.md docs/implemented-state.md
