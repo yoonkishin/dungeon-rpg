@@ -13,6 +13,7 @@ function autoSave() {
         mp: player.mp, maxMp: player.maxMp,
         level: player.level, xp: player.xp, xpNext: player.xpNext,
         tier: player.tier,
+        classLine: player.classLine, classRank: player.classRank, promotionPending: player.promotionPending,
         gold: player.gold, atk: player.atk, def: player.def, speed: player.speed, critChance: player.critChance,
       },
       inventory: inventory.slice(),
@@ -56,13 +57,17 @@ function loadSave() {
     player.maxMp = p.maxMp || player.maxMp;
     player.level = p.level || player.level;
     player.xp = p.xp || 0;
-    player.xpNext = p.xpNext || player.xpNext;
     player.gold = (p.gold !== undefined) ? p.gold : 0;
     player.tier = p.tier || 1;
+    player.classLine = p.classLine || 'infantry';
+    player.classRank = p.classRank || p.tier || getRankForLevel(player.classLine, player.level).rank;
+    player.promotionPending = !!p.promotionPending;
+    player.xpNext = getXpToNextLevel(player.level);
     player.atk = p.atk || player.atk;
     player.def = p.def || player.def;
     player.speed = p.speed || player.speed;
     player.critChance = p.critChance !== undefined ? p.critChance : 10;
+    syncPlayerGrowthState();
 
     // Restore inventory
     inventory.length = 0;

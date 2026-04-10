@@ -371,10 +371,10 @@ function update(dt) {
 
 const loaded = loadSave();
 if (loaded) {
-  // Recalculate tier from level in case save is from before tier system
-  const calcTier = getCurrentTier();
-  if (calcTier.tier > player.tier) player.tier = calcTier.tier;
+  syncPlayerGrowthState();
   // data loaded silently
+} else {
+  syncPlayerGrowthState();
 }
 
 spawnEnemies();

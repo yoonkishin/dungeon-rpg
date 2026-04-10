@@ -30,7 +30,7 @@ const player = {
   hp: 100, maxHp: 100,
   mp: 50, maxMp: 50,
   level: 1,
-  xp: 0, xpNext: 30,
+  xp: 0, xpNext: getXpToNextLevel(1),
   gold: 5000,
   tier: 1,
   atk: 15,
@@ -47,6 +47,9 @@ const player = {
   dead: false,
   vx: 0, vy: 0,
   critChance: 10,
+  classLine: 'infantry',
+  classRank: 1,
+  promotionPending: false,
 };
 
 let dungeonsCleared = [];

@@ -233,30 +233,118 @@ const SKILLS = [
   { id:'drain',      name:'흡혈',       icon:'🩸', mpCost:12, cooldown:4000, damage:15, heal:15, range:55, type:'melee', desc:'적의 생명력을 흡수하여 15 피해 + 15 회복합니다', typeLabel:'근접', iconBg:'#e67e22' },
 ];
 
-// ─── Class Tier System ───────────────────────────────────────────────────────
-const CLASS_TIERS = [
-  { tier:1, name:'수련생',      reqLevel:1,  color:'#bdc3c7', bodyColor:'#8e8e8e' },
-  { tier:2, name:'모험가',      reqLevel:6,  color:'#3498db', bodyColor:'#2980b9' },
-  { tier:3, name:'전사',        reqLevel:11, color:'#2ecc71', bodyColor:'#27ae60' },
-  { tier:4, name:'정예 전사',   reqLevel:16, color:'#e74c3c', bodyColor:'#c0392b' },
-  { tier:5, name:'영웅',        reqLevel:21, color:'#f1c40f', bodyColor:'#f39c12' },
-  { tier:6, name:'전설의 영웅', reqLevel:26, color:'#9b59b6', bodyColor:'#8e44ad' },
-  { tier:7, name:'신화 영웅',   reqLevel:31, color:'#e74c3c', bodyColor:'#ff6b6b' },
-];
+// ─── Player Growth Lines ────────────────────────────────────────────────────
+const PLAYER_LEVEL_CAP = 35;
+
+const PLAYER_GROWTH_LINES = {
+  infantry: {
+    lineId: 'infantry',
+    unitType: 'Infantry',
+    lineName: '보병',
+    levelGrowth: {
+      maxHp: 18,
+      maxMp: 8,
+      atk: 4,
+      def: 1,
+      speed: 0.03,
+      critChance: 0.5,
+    },
+    ranks: [
+      { rank: 1, className: '견습보병',     reqLevel: 1,  color: '#bdc3c7', bodyColor: '#8e8e8e', levelGrowthBonus: { maxHp: 0, atk: 0, def: 0, critChance: 0.0 } },
+      { rank: 2, className: '글라디에이터', reqLevel: 6,  color: '#3498db', bodyColor: '#2980b9', levelGrowthBonus: { maxHp: 1, atk: 0, def: 0, critChance: 0.05 } },
+      { rank: 3, className: '소드맨',       reqLevel: 11, color: '#2ecc71', bodyColor: '#27ae60', levelGrowthBonus: { maxHp: 2, atk: 1, def: 0, critChance: 0.1 } },
+      { rank: 4, className: '파이터',       reqLevel: 16, color: '#e74c3c', bodyColor: '#c0392b', levelGrowthBonus: { maxHp: 3, atk: 1, def: 0, critChance: 0.15 } },
+      { rank: 5, className: '로열파이터',   reqLevel: 21, color: '#f1c40f', bodyColor: '#f39c12', levelGrowthBonus: { maxHp: 4, atk: 1, def: 1, critChance: 0.2 } },
+      { rank: 6, className: '제네럴',       reqLevel: 26, color: '#9b59b6', bodyColor: '#8e44ad', levelGrowthBonus: { maxHp: 5, atk: 2, def: 1, critChance: 0.25 } },
+      { rank: 7, className: '로열가드',     reqLevel: 31, color: '#e74c3c', bodyColor: '#ff6b6b', levelGrowthBonus: { maxHp: 6, atk: 2, def: 1, critChance: 0.3 } },
+    ],
+  }
+};
+
+function getXpToNextLevel(level) {
+  if (level >= PLAYER_LEVEL_CAP) return 0;
+  return 100 + (50 * level) + (10 * level * level);
+}
+
+function xpForLevel(level) {
+  return getXpToNextLevel(level);
+}
+
+function getGrowthLine(lineId) {
+  return PLAYER_GROWTH_LINES[lineId] || PLAYER_GROWTH_LINES.infantry;
+}
+
+function getRankForLevel(lineId, level) {
+  const line = getGrowthLine(lineId);
+  let result = line.ranks[0];
+  for (const r of line.ranks) {
+    if (level >= r.reqLevel) result = r;
+  }
+  return result;
+}
+
+function getRankInfo(lineId, rank) {
+  const line = getGrowthLine(lineId);
+  return line.ranks.find(entry => entry.rank === rank) || line.ranks[0];
+}
+
+function getNextRank(lineId, level) {
+  const line = getGrowthLine(lineId);
+  for (const r of line.ranks) {
+    if (r.reqLevel > level) return r;
+  }
+  return null;
+}
+
+function getLevelGrowthForRank(lineId, rank) {
+  const line = getGrowthLine(lineId);
+  const rankInfo = getRankInfo(lineId, rank);
+  const bonus = rankInfo.levelGrowthBonus || {};
+  return {
+    maxHp: line.levelGrowth.maxHp + (bonus.maxHp || 0),
+    maxMp: line.levelGrowth.maxMp + (bonus.maxMp || 0),
+    atk: line.levelGrowth.atk + (bonus.atk || 0),
+    def: line.levelGrowth.def + (bonus.def || 0),
+    speed: line.levelGrowth.speed + (bonus.speed || 0),
+    critChance: line.levelGrowth.critChance + (bonus.critChance || 0),
+  };
+}
+
+function syncPlayerGrowthState() {
+  player.classLine = player.classLine || 'infantry';
+  const availableRank = getRankForLevel(player.classLine, player.level);
+  player.classRank = availableRank.rank;
+  player.promotionPending = false;
+  player.tier = player.classRank;
+  player.xpNext = getXpToNextLevel(player.level);
+  return availableRank;
+}
+
+// ─── Class Tier System (player growth line compat) ─────────────────────────
+const CLASS_TIERS = PLAYER_GROWTH_LINES.infantry.ranks.map(rank => ({
+  tier: rank.rank,
+  name: rank.className,
+  reqLevel: rank.reqLevel,
+  color: rank.color,
+  bodyColor: rank.bodyColor,
+}));
+
+function toTierDisplay(rankInfo) {
+  return {
+    ...rankInfo,
+    tier: rankInfo.rank,
+    name: rankInfo.className,
+  };
+}
 
 function getCurrentTier() {
-  let t = CLASS_TIERS[0];
-  for (const tier of CLASS_TIERS) {
-    if (player.level >= tier.reqLevel) t = tier;
-  }
-  return t;
+  return toTierDisplay(getRankInfo(player.classLine || 'infantry', player.classRank || 1));
 }
 
 function getNextTier() {
-  for (const tier of CLASS_TIERS) {
-    if (tier.reqLevel > player.level) return tier;
-  }
-  return null;
+  const next = getNextRank(player.classLine || 'infantry', player.level);
+  if (!next) return null;
+  return toTierDisplay(next);
 }
 
 const skillPages = [

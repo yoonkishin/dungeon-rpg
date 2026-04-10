@@ -26,7 +26,7 @@ function buildProfileMetric(label, value) {
   return '<div class="profile-metric-item"><span class="profile-metric-label">' + label + '</span><span class="profile-metric-value">' + value + '</span></div>';
 }
 
-function buildProfileCharacterCard(tier, glowColor, glowSize, armorColor) {
+function buildProfileCharacterCard(tier, lineName, glowColor, glowSize, armorColor) {
   return `
     <div class="profile-character-card">
       <div class="profile-character-glow" style="background:radial-gradient(circle at 50% 50%, ${glowColor}, transparent 60%);"></div>
@@ -39,9 +39,9 @@ function buildProfileCharacterCard(tier, glowColor, glowSize, armorColor) {
           </div>
         </div>
         <div class="profile-character-meta">
-          <div class="profile-character-name">캐릭터</div>
+          <div class="profile-character-name">${lineName} 라인</div>
           <div class="profile-character-tier" style="color:${tier.color};">⭐ ${tier.tier}단 - ${tier.name}</div>
-          <div class="profile-character-level">Lv. ${player.level}${player.level >= 35 ? ' (MAX)' : ''}</div>
+          <div class="profile-character-level">Lv. ${player.level}${player.level >= PLAYER_LEVEL_CAP ? ' (MAX)' : ''}</div>
         </div>
       </div>
     </div>
@@ -69,15 +69,15 @@ function buildProfileStatsCard(playerStats) {
   `;
 }
 
-function buildProfileTierCard(tier, nextTier, tierPct, tierProgressText) {
+function buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, lineName) {
   return `
     <div class="profile-tier-card">
       <div class="profile-tier-head">
-        <span class="profile-tier-text">승급: <span class="profile-tier-name" style="color:${tier.color};">${tier.tier}단 ${tier.name}</span></span>
-        ${nextTier ? `<span class="profile-tier-next">다음: ${nextTier.name} (Lv.${nextTier.reqLevel})</span>` : '<span class="profile-tier-next max">최고 등급</span>'}
+        <span class="profile-tier-text">클래스: <span class="profile-tier-name" style="color:${tier.color};">${tier.tier}단 ${tier.name}</span></span>
+        ${nextTier ? `<span class="profile-tier-next">다음 승급: ${nextTier.name} (Lv.${nextTier.reqLevel})</span>` : '<span class="profile-tier-next max">현재 최종 승급</span>'}
       </div>
       <div class="profile-bar profile-tier-progress"><div class="profile-bar-fill tier" style="width:${tierPct}%; background:linear-gradient(90deg, ${tier.color}, ${tier.bodyColor});"></div></div>
-      <div class="profile-tier-foot">${tierProgressText || tierPct + '%'}</div>
+      <div class="profile-tier-foot">${tierProgressText || `${lineName} 라인 진행 ${tierPct}%`}</div>
     </div>
   `;
 }
@@ -101,6 +101,7 @@ function renderProfile() {
   const bonus = getEquipBonus();
   const tier = getCurrentTier();
   const nextTier = getNextTier();
+  const growthLine = getGrowthLine(player.classLine || 'infantry');
   const content = document.getElementById('profile-content');
   const armorColor = equipped.armor && ITEMS[equipped.armor] ? ITEMS[equipped.armor].color : null;
   const glowSize = Math.min(tier.tier * 4, 24);
@@ -131,10 +132,10 @@ function renderProfile() {
 
   content.innerHTML =
     '<div class="profile-layout">' +
-      buildProfileCharacterCard(tier, glowColor, glowSize, armorColor) +
+      buildProfileCharacterCard(tier, growthLine.lineName, glowColor, glowSize, armorColor) +
       buildProfileStatsCard(playerStats) +
     '</div>' +
-    buildProfileTierCard(tier, nextTier, tierPct, tierProgressText) +
+    buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, growthLine.lineName) +
     buildProfileProgressSection(dungeonCircles, companionCircles);
 }
 

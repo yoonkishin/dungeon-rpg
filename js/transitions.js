@@ -40,7 +40,7 @@ function showAreaLabel(text) {
 // ─── Level Up ─────────────────────────────────────────────────────────────────
 let maxLevelToastShown = false;
 function gainXP(amount) {
-  if (player.level >= 35) {
+  if (player.level >= PLAYER_LEVEL_CAP) {
     player.xp = 0;
     if (!maxLevelToastShown) {
       showToast('최대 레벨');
@@ -51,33 +51,37 @@ function gainXP(amount) {
   }
   player.xp += amount;
   let leveled = false;
-  while (player.xp >= player.xpNext && player.level < 35) {
+  while (player.xp >= player.xpNext && player.level < PLAYER_LEVEL_CAP) {
     player.xp -= player.xpNext;
     player.level++;
-    player.xpNext = Math.floor(player.xpNext * 1.4);
-    player.maxHp += 20;
+
+    const availableRank = getRankForLevel(player.classLine || 'infantry', player.level);
+    const growth = getLevelGrowthForRank(player.classLine || 'infantry', availableRank.rank);
+    player.xpNext = getXpToNextLevel(player.level);
+    player.maxHp += growth.maxHp;
     player.hp = player.maxHp;
-    player.maxMp += 10;
+    player.maxMp += growth.maxMp;
     player.mp = player.maxMp;
-    player.atk += 5;
-    player.def += 1;
-    player.speed += 0.05;
-    player.critChance = Math.min(30, player.critChance + 1);
+    player.atk += growth.atk;
+    player.def += growth.def;
+    player.speed += growth.speed;
+    player.critChance = Math.min(30, player.critChance + growth.critChance);
     showLevelup();
     addParticles(player.x, player.y, '#f1c40f', 20);
     leveled = true;
 
-    // Check tier promotion
-    const oldTier = player.tier;
-    const newTier = getCurrentTier();
-    if (newTier.tier > oldTier) {
-      player.tier = newTier.tier;
-      showTierBanner(newTier);
-      addParticles(player.x, player.y, newTier.color, 25);
+    const oldRank = player.classRank || 1;
+    if (availableRank.rank > oldRank) {
+      player.classRank = availableRank.rank;
+      player.tier = availableRank.rank;
+      player.promotionPending = false;
+      showTierBanner({ name: availableRank.className, color: availableRank.color });
+      addParticles(player.x, player.y, availableRank.color, 25);
     }
 
-    if (player.level >= 35) {
+    if (player.level >= PLAYER_LEVEL_CAP) {
       player.xp = 0;
+      player.xpNext = 0;
       break;
     }
   }
