@@ -6,7 +6,8 @@
 
 - [x] `state.js` runtime state module is present and loaded by `index.html`.
 - [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.
-- [x] Core game data is split across `data.js` and `data-growth.js`.
+- [x] Quest definitions and quest flow helpers are split into `data-quests.js`.
+- [x] Core game data is split across `data.js`, `data-growth.js`, and `data-quests.js`.
 
 ## Companion System
 
@@ -36,6 +37,7 @@
 - `css/styles.css`
 - `js/data.js`
 - `js/data-growth.js`
+- `js/data-quests.js`
 - `js/state.js`
 - `js/save.js`
 - `js/enemies.js`
