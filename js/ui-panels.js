@@ -90,7 +90,7 @@ function buildProfileProgressSection(dungeonCircles, companionCircles) {
         <div class="profile-progress-dots">${dungeonCircles}</div>
       </div>
       <div class="profile-progress-card">
-        <div class="profile-progress-title">동료 ${companions.length}/9</div>
+        <div class="profile-progress-title">동료 ${companions.length}/${getTotalCompanionCount()}</div>
         <div class="profile-progress-dots">${companionCircles}</div>
       </div>
     </div>
@@ -126,7 +126,7 @@ function renderProfile() {
     speed: (player.speed + (bonus.speedBonus || 0)).toFixed(2),
   };
   const dungeonCircles = buildProfileProgressDots(9, (idx) => dungeonsCleared.includes(idx), 'dungeon');
-  const companionCircles = buildProfileProgressDots(9, (idx) => companions.includes(idx), 'companion');
+  const companionCircles = buildProfileProgressDots(getTotalCompanionCount(), (idx) => companions.includes(idx), 'companion');
   const glowColor = `${tier.color}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')}`;
 
   content.innerHTML =
@@ -623,9 +623,9 @@ function getCompanionActionState(cId, isActive, isDead) {
 }
 
 function buildCompanionCard(cId) {
-  const info = DUNGEON_INFO[cId];
-  if (!info) return '';
   const profile = getCompanionProfile(cId);
+  const info = getCompanionRoster(cId);
+  if (!info || !profile) return '';
   const isActive = activeCompanions.includes(cId);
   const isDead = deadCompanions.includes(cId);
   const maxHp = getCompanionMaxHp(cId);
@@ -639,13 +639,14 @@ function buildCompanionCard(cId) {
 
   return '<div class="companion-card' + (isActive ? ' active' : '') + (isDead ? ' dead' : '') + '">' +
     '<div class="companion-card-top">' +
-      '<div class="companion-card-icon" style="background:' + info.companionColor + ';">★</div>' +
+      '<div class="companion-card-icon" style="background:' + info.color + ';">' + (info.portraitIcon || '★') + '</div>' +
       '<div class="companion-card-main">' +
         '<div class="companion-card-name-row">' +
-          '<div class="companion-card-name">' + info.companionName + '</div>' +
+          '<div class="companion-card-name">' + info.name + '</div>' +
           '<div class="companion-status-badge ' + statusClass + '">' + statusText + '</div>' +
         '</div>' +
-        '<div class="companion-card-role">' + profile.roleLabel + ' · ' + profile.skillName + '</div>' +
+        '<div class="companion-card-role">' + profile.className + ' · ' + profile.roleLabel + '</div>' +
+        '<div class="companion-card-skill">' + profile.skillName + '</div>' +
       '</div>' +
     '</div>' +
     '<div class="companion-card-stats">' +
@@ -662,10 +663,10 @@ function buildCompanionCard(cId) {
 }
 
 function handleCompanionAiTap(cId) {
-  const info = DUNGEON_INFO[cId];
+  const info = getCompanionRoster(cId);
   const nextMode = cycleCompanionAIMode(cId);
   const nextMeta = COMPANION_AI_MODES[nextMode] || COMPANION_AI_MODES.aggressive;
-  showToast((info ? info.companionName : '동료') + ' AI: ' + nextMeta.label);
+  showToast((info ? info.name : '동료') + ' AI: ' + nextMeta.label);
   renderCompanionPanel();
   autoSave();
 }
@@ -715,7 +716,7 @@ function renderCompanionPanel() {
   content.innerHTML =
     '<div class="companion-summary-grid">' +
       buildCompanionSummaryCard('활성 동료', activeCompanions.length + '/2') +
-      buildCompanionSummaryCard('수집', companions.length + '/9') +
+      buildCompanionSummaryCard('수집', companions.length + '/' + getTotalCompanionCount()) +
       buildCompanionSummaryCard('사망', deadCompanions.length + '명', deadCompanions.length > 0 ? 'warn' : '') +
       buildCompanionSummaryCard('용병 슬롯', '잠김', 'lock', 'mercenary') +
     '</div>' +
@@ -748,14 +749,14 @@ function buildTempleEmptyState() {
 }
 
 function buildTempleReviveRow(cId) {
-  const info = DUNGEON_INFO[cId];
+  const info = getCompanionRoster(cId);
   if (!info) return '';
   const cost = getReviveCost(cId);
   const canAfford = player.gold >= cost;
   return '<div class="temple-revive-row">' +
-    '<div class="temple-revive-icon" style="background:' + info.companionColor + ';">★</div>' +
+    '<div class="temple-revive-icon" style="background:' + info.color + ';">' + (info.portraitIcon || '★') + '</div>' +
     '<div class="temple-revive-main">' +
-      '<div class="temple-revive-name">' + info.companionName + '</div>' +
+      '<div class="temple-revive-name">' + info.name + '</div>' +
       '<div class="temple-revive-state">쓰러짐</div>' +
     '</div>' +
     '<div class="temple-revive-cost">💰 ' + cost + '</div>' +
@@ -769,8 +770,8 @@ function reviveCompanionFromTemple(cId) {
   player.gold -= cost;
   deadCompanions = deadCompanions.filter(id => id !== cId);
   AudioSystem.sfx.heal();
-  const cInfo = DUNGEON_INFO[cId];
-  showToast((cInfo ? cInfo.companionName : '동료') + ' 부활!');
+  const cInfo = getCompanionRoster(cId);
+  showToast((cInfo ? cInfo.name : '동료') + ' 부활!');
   updateHUD();
   autoSave();
   renderTemple();

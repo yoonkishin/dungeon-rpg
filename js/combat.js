@@ -84,8 +84,8 @@ function damageCompanionById(cId, dmg, hitX, hitY) {
     cs.hp = 0;
     if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
     activeCompanions = activeCompanions.filter(id => id !== cId);
-    const cInfo = DUNGEON_INFO[cId];
-    showToast((cInfo ? cInfo.companionName : '동료') + ' 쓰러짐!');
+    const cInfo = getCompanionRoster(cId);
+    showToast((cInfo ? cInfo.name : '동료') + ' 쓰러짐!');
     addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 15);
   }
   return true;

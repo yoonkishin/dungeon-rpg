@@ -5,31 +5,44 @@ const DUNGEON_INFO = [
   { id:1, name:'고블린 소굴',  portalX:55, portalY:50, bossName:'고블린 왕',    bossColor:'#e67e22', bossHp:500,  bossAtk:30,  companionName:'고블린 궁수', companionColor:'#e67e22', recommendedLevel:3,  zone:'동쪽 야영지', layoutHint:'갈림길 굴', bossSkillType:'bolt', bossSkillName:'왕의 화살', bossSkillColor:'#f39c12' },
   { id:2, name:'해골 무덤',    portalX:12, portalY:35, bossName:'해골 군주',    bossColor:'#bdc3c7', bossHp:600,  bossAtk:35,  companionName:'해골 마법사', companionColor:'#bdc3c7', recommendedLevel:5,  zone:'폐허 묘지', layoutHint:'묘지 복도형', bossSkillType:'nova', bossSkillName:'망자의 파동', bossSkillColor:'#ecf0f1' },
   { id:3, name:'오크 요새',    portalX:65, portalY:30, bossName:'오크 대장',    bossColor:'#8e44ad', bossHp:800,  bossAtk:45,  companionName:'오크 전사',  companionColor:'#8e44ad', recommendedLevel:7,  zone:'북부 요새길', layoutHint:'요새 십자형', bossSkillType:'charge', bossSkillName:'전쟁 돌진', bossSkillColor:'#9b59b6' },
-  { id:4, name:'어둠의 숲',    portalX:10, portalY:15, bossName:'그림자 군주',   bossColor:'#2c3e50', bossHp:1000, bossAtk:55,  companionName:'그림자 암살자', companionColor:'#2c3e50', recommendedLevel:10, zone:'그늘 숲', layoutHint:'미궁 숲길', bossSkillType:'bolt', bossSkillName:'그림자 창', bossSkillColor:'#34495e' },
+  { id:4, name:'어둠의 숲',    portalX:10, portalY:15, bossName:'그림자 군주',   bossColor:'#2c3e50', bossHp:1000, bossAtk:55,  companionName:'그림자 비익', companionColor:'#2c3e50', recommendedLevel:10, zone:'그늘 숲', layoutHint:'미궁 숲길', bossSkillType:'bolt', bossSkillName:'그림자 창', bossSkillColor:'#34495e' },
   { id:5, name:'용암 동굴',    portalX:50, portalY:20, bossName:'화염 골렘',    bossColor:'#e74c3c', bossHp:1200, bossAtk:65,  companionName:'화염 마도사', companionColor:'#e74c3c', recommendedLevel:13, zone:'화산 협곡', layoutHint:'용암 균열형', bossSkillType:'nova', bossSkillName:'화염 폭발', bossSkillColor:'#ff6b6b' },
   { id:6, name:'얼음 성채',    portalX:30, portalY:8,  bossName:'빙결 여왕',    bossColor:'#74b9ff', bossHp:1500, bossAtk:75,  companionName:'빙결 수호자', companionColor:'#74b9ff', recommendedLevel:16, zone:'빙설 고원', layoutHint:'빙결 회랑', bossSkillType:'bolt', bossSkillName:'빙결 파편', bossSkillColor:'#74b9ff' },
   { id:7, name:'마왕의 탑',    portalX:70, portalY:10, bossName:'암흑 기사',    bossColor:'#636e72', bossHp:2000, bossAtk:90,  companionName:'암흑 성기사', companionColor:'#636e72', recommendedLevel:20, zone:'검은 탑', layoutHint:'탑의 3차선', bossSkillType:'charge', bossSkillName:'암흑 돌격', bossSkillColor:'#95a5a6' },
   { id:8, name:'최종 던전',    portalX:40, portalY:3,  bossName:'마왕',        bossColor:'#d63031', bossHp:3000, bossAtk:120, companionName:'성녀',       companionColor:'#ffeaa7', recommendedLevel:24, zone:'심연의 문', layoutHint:'최종 제단', bossSkillType:'nova', bossSkillName:'파멸진', bossSkillColor:'#ff7675' },
 ];
 
-const COMPANION_PROFILES = {
-  0: { roleKey:'tank', roleLabel:'탱커', attackRange:50, preferredRange:34, attackCooldown:980, skillId:'slime_guard', skillName:'점액 방패', skillCooldown:5200, desc:'전방에서 적을 붙잡고 범위 경직을 준다.' },
-  1: { roleKey:'ranger', roleLabel:'원거리', attackRange:128, preferredRange:92, attackCooldown:1080, skillId:'arrow_barrage', skillName:'연발 사격', skillCooldown:4800, desc:'멀리서 적 둘을 동시에 압박한다.' },
-  2: { roleKey:'caster', roleLabel:'마법', attackRange:118, preferredRange:86, attackCooldown:1200, skillId:'bone_nova', skillName:'망령 폭발', skillCooldown:5600, desc:'적 무리를 광역으로 타격한다.' },
-  3: { roleKey:'bruiser', roleLabel:'브루저', attackRange:56, preferredRange:40, attackCooldown:960, skillId:'war_cleave', skillName:'전투 강타', skillCooldown:4300, desc:'근거리 적들을 시원하게 쓸어버린다.' },
-  4: { roleKey:'assassin', roleLabel:'암살', attackRange:60, preferredRange:42, attackCooldown:820, skillId:'shadow_strike', skillName:'암영 참격', skillCooldown:5000, desc:'체력이 낮은 적을 빠르게 마무리한다.' },
-  5: { roleKey:'mage', roleLabel:'화염술사', attackRange:132, preferredRange:94, attackCooldown:1220, skillId:'flame_burst', skillName:'화염 난사', skillCooldown:5200, desc:'원거리 폭발로 적 무리를 태운다.' },
-  6: { roleKey:'guardian', roleLabel:'수호', attackRange:62, preferredRange:46, attackCooldown:1040, skillId:'frost_lock', skillName:'빙결 봉쇄', skillCooldown:5400, desc:'빙결 일격으로 적을 오래 묶는다.' },
-  7: { roleKey:'paladin', roleLabel:'성기사', attackRange:64, preferredRange:48, attackCooldown:980, skillId:'dark_aegis', skillName:'암흑 수호', skillCooldown:6200, desc:'위험한 순간 아군을 보호하며 반격한다.' },
-  8: { roleKey:'support', roleLabel:'성녀', attackRange:96, preferredRange:84, attackCooldown:1300, skillId:'holy_prayer', skillName:'성역 기도', skillCooldown:5400, desc:'플레이어와 동료를 치유하며 전선을 유지한다.' },
+const COMPANION_ROSTER = {
+  0: { id:0, key:'slime_knight', name:'슬라임 기사', classId:101, unlockType:'dungeonClear', unlockRef:0, color:'#27ae60', portraitIcon:'🛡️', desc:'전방에서 적을 붙잡는 보병 동료.' },
+  1: { id:1, key:'goblin_archer', name:'고블린 궁수', classId:106, unlockType:'dungeonClear', unlockRef:1, color:'#e67e22', portraitIcon:'🏹', desc:'안정적으로 원거리 화력을 넣는 궁병.' },
+  2: { id:2, key:'skeleton_mage', name:'해골 마법사', classId:109, unlockType:'dungeonClear', unlockRef:2, color:'#bdc3c7', portraitIcon:'🔮', desc:'광역 마법 화력을 담당하는 법사.' },
+  3: { id:3, key:'orc_lancer', name:'오크 전사', classId:105, unlockType:'dungeonClear', unlockRef:3, color:'#8e44ad', portraitIcon:'🗡️', desc:'중거리 물리 압박이 강한 창병.' },
+  4: { id:4, key:'shadow_flier', name:'그림자 비익', classId:102, unlockType:'dungeonClear', unlockRef:4, color:'#2c3e50', portraitIcon:'🪽', desc:'고기동으로 후열을 파고드는 비병.' },
+  5: { id:5, key:'flame_cultist', name:'화염 마도사', classId:110, unlockType:'dungeonClear', unlockRef:5, color:'#e74c3c', portraitIcon:'🔥', desc:'화염과 약화 효과를 다루는 사교.' },
+  6: { id:6, key:'frost_guard', name:'빙결 수호자', classId:104, unlockType:'dungeonClear', unlockRef:6, color:'#74b9ff', portraitIcon:'❄️', desc:'빙결 제어와 버티기가 좋은 수병.' },
+  7: { id:7, key:'dark_paladin', name:'암흑 성기사', classId:103, unlockType:'dungeonClear', unlockRef:7, color:'#636e72', portraitIcon:'🐎', desc:'돌격과 진형 붕괴에 강한 기병.' },
+  8: { id:8, key:'saintess', name:'성녀', classId:108, unlockType:'dungeonClear', unlockRef:8, color:'#ffeaa7', portraitIcon:'✨', desc:'파티 유지력의 핵심인 신관.' },
+  9: { id:9, key:'radiant_monk', name:'백광 수도승', classId:107, unlockType:'subquestReward', unlockRef:'sage_survey', color:'#f1c40f', portraitIcon:'📿', desc:'보조와 공격을 겸하는 승려.' },
 };
 
-const COMPANION_SYNERGIES = {
-  '0-8': { name:'수호 성역', desc:'방어 +2, 회복량 +15%', playerDefBonus:2, healMult:1.15 },
-  '1-4': { name:'암영 사냥', desc:'동료 공격 +3, 공격 주기 18% 개선', companionAtkBonus:3, cooldownMult:0.82 },
-  '2-5': { name:'비전 공명', desc:'마법 동료 피해 +4', companionAtkBonus:4 },
-  '3-6': { name:'전선 유지', desc:'플레이어 공격 +2, 방어 +1', playerAtkBonus:2, playerDefBonus:1 },
-  '7-8': { name:'성흑 균형', desc:'회복량 +20%, 동료 체력 +20', healMult:1.2, companionHpBonus:20 },
+const COMPANION_CLASS_PROFILES = {
+  101: { classId:101, className:'보병', unitType:'Infantry', roleKey:'tank', roleLabel:'전방 탱커', attackRange:50, preferredRange:34, attackCooldown:980, skillId:'slime_guard', skillName:'점액 방패', skillCooldown:5200, aiDefault:'defensive' },
+  102: { classId:102, className:'비병', unitType:'FlyingKnight', roleKey:'assassin', roleLabel:'고기동 추격', attackRange:60, preferredRange:42, attackCooldown:820, skillId:'shadow_strike', skillName:'암영 참격', skillCooldown:5000, aiDefault:'aggressive' },
+  103: { classId:103, className:'기병', unitType:'Cavalry', roleKey:'paladin', roleLabel:'돌격 딜러', attackRange:64, preferredRange:48, attackCooldown:980, skillId:'dark_aegis', skillName:'암흑 수호', skillCooldown:6200, aiDefault:'defensive' },
+  104: { classId:104, className:'수병', unitType:'NavalUnit', roleKey:'guardian', roleLabel:'빙결 제어', attackRange:62, preferredRange:46, attackCooldown:1040, skillId:'frost_lock', skillName:'빙결 봉쇄', skillCooldown:5400, aiDefault:'defensive' },
+  105: { classId:105, className:'창병', unitType:'Lancer', roleKey:'bruiser', roleLabel:'중거리 물리', attackRange:56, preferredRange:40, attackCooldown:960, skillId:'war_cleave', skillName:'전투 강타', skillCooldown:4300, aiDefault:'aggressive' },
+  106: { classId:106, className:'궁병', unitType:'Archer', roleKey:'ranger', roleLabel:'원거리 딜러', attackRange:128, preferredRange:92, attackCooldown:1080, skillId:'arrow_barrage', skillName:'연발 사격', skillCooldown:4800, aiDefault:'aggressive' },
+  107: { classId:107, className:'승려', unitType:'Monk', roleKey:'support', roleLabel:'전투 서포트', attackRange:104, preferredRange:80, attackCooldown:1180, skillId:'holy_prayer', skillName:'백광 기도', skillCooldown:5800, aiDefault:'support' },
+  108: { classId:108, className:'신관', unitType:'Priest', roleKey:'support', roleLabel:'힐러/버퍼', attackRange:96, preferredRange:84, attackCooldown:1300, skillId:'holy_prayer', skillName:'성역 기도', skillCooldown:5400, aiDefault:'support' },
+  109: { classId:109, className:'법사', unitType:'Mage', roleKey:'caster', roleLabel:'광역 마법', attackRange:118, preferredRange:86, attackCooldown:1200, skillId:'bone_nova', skillName:'망령 폭발', skillCooldown:5600, aiDefault:'aggressive' },
+  110: { classId:110, className:'사교', unitType:'DarkPriest', roleKey:'mage', roleLabel:'약화 마도', attackRange:132, preferredRange:94, attackCooldown:1220, skillId:'flame_burst', skillName:'화염 난사', skillCooldown:5200, aiDefault:'aggressive' },
+};
+
+const COMPANION_CLASS_SYNERGIES = {
+  '101-108': { name:'성역 방진', desc:'플레이어 방어 +2, 회복량 +15%', playerDefBonus:2, healMult:1.15 },
+  '102-103': { name:'기동 추격', desc:'동료 공격 +3, 공격 주기 18% 개선', companionAtkBonus:3, cooldownMult:0.82 },
+  '105-106': { name:'견제 사선', desc:'플레이어 공격 +2, 방어 +1', playerAtkBonus:2, playerDefBonus:1 },
+  '109-110': { name:'심연 공명', desc:'마법 동료 피해 +4', companionAtkBonus:4 },
 };
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -97,18 +110,80 @@ const COMPANION_AI_MODES = {
   support: { key:'support', label:'서포트', color:'#2ecc71' },
 };
 
+function getTotalCompanionCount() {
+  return Object.keys(COMPANION_ROSTER).length;
+}
+
+function isValidCompanionId(cId) {
+  return !!COMPANION_ROSTER[cId];
+}
+
+function getCompanionRoster(cId) {
+  return COMPANION_ROSTER[cId] || COMPANION_ROSTER[0];
+}
+
+function getCompanionClassProfile(classId) {
+  return COMPANION_CLASS_PROFILES[classId] || COMPANION_CLASS_PROFILES[101];
+}
+
+function getCompanionName(cId) {
+  return getCompanionRoster(cId).name;
+}
+
+function getCompanionColor(cId) {
+  return getCompanionRoster(cId).color;
+}
+
 function getCompanionProfile(cId) {
-  return COMPANION_PROFILES[cId] || COMPANION_PROFILES[0];
+  const roster = getCompanionRoster(cId);
+  const classProfile = getCompanionClassProfile(roster.classId);
+  return {
+    ...classProfile,
+    ...roster,
+    companionName: roster.name,
+    companionColor: roster.color,
+  };
 }
 
 function normalizeCompanionAIMode(mode) {
   return COMPANION_AI_MODES[mode] ? mode : 'aggressive';
 }
 
+function getCompanionUnitType(profileOrId) {
+  const profile = typeof profileOrId === 'number' ? getCompanionProfile(profileOrId) : profileOrId;
+  return profile && profile.unitType ? profile.unitType : 'Infantry';
+}
+
+function isCompanionSupportProfile(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType === 'Monk' || unitType === 'Priest';
+}
+
+function isCompanionRangedProfile(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType === 'Archer' || unitType === 'Mage' || unitType === 'DarkPriest' || unitType === 'Monk' || unitType === 'Priest';
+}
+
+function isCompanionMagicProfile(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType === 'Mage' || unitType === 'DarkPriest' || unitType === 'Monk' || unitType === 'Priest' || unitType === 'NavalUnit';
+}
+
+function isCompanionFrontlineProfile(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType === 'Infantry' || unitType === 'Cavalry' || unitType === 'NavalUnit' || unitType === 'Lancer';
+}
+
+function isCompanionFlankerProfile(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType === 'FlyingKnight' || unitType === 'Cavalry';
+}
+
 function getDefaultCompanionAIMode(cId) {
-  const roleKey = getCompanionProfile(cId).roleKey;
-  if (roleKey === 'support') return 'support';
-  if (roleKey === 'tank' || roleKey === 'guardian' || roleKey === 'paladin') return 'defensive';
+  const profile = getCompanionProfile(cId);
+  if (profile.aiDefault && COMPANION_AI_MODES[profile.aiDefault]) return profile.aiDefault;
+  if (isCompanionSupportProfile(profile)) return 'support';
+  if (isCompanionFrontlineProfile(profile)) return 'defensive';
   return 'aggressive';
 }
 
@@ -137,8 +212,11 @@ function cycleCompanionAIMode(cId) {
 
 function getActiveCompanionSynergy() {
   if (activeCompanions.length !== 2) return null;
-  const key = activeCompanions.slice().sort((a, b) => a - b).join('-');
-  return COMPANION_SYNERGIES[key] || null;
+  const classIds = activeCompanions
+    .map(cId => getCompanionProfile(cId).classId)
+    .sort((a, b) => a - b);
+  const key = classIds.join('-');
+  return COMPANION_CLASS_SYNERGIES[key] || null;
 }
 
 function getHealingMultiplier() {
@@ -435,8 +513,8 @@ const SUBQUESTS = [
     description: '새로운 던전 2곳을 정리하고 현자에게 지도를 갱신받자.',
     offerLines: ['던전의 흐름을 더 정확히 알고 싶군.', '앞으로 2개의 던전을 더 정리해주면 내 기록을 보강해 주지.'],
     progressLines: ['기록은 아직 완성되지 않았네.', '새로운 던전을 더 정리하고 돌아오게.'],
-    completionLines: ['좋군. 던전의 패턴이 훨씬 또렷해졌어.', '이제 더 깊은 곳도 대비할 수 있겠네.'],
-    reward: { gold: 180, items: ['ring_atk'] }
+    completionLines: ['좋군. 던전의 패턴이 훨씬 또렷해졌어.', '백광 수도승도 자네 원정대에 합류하겠다고 하더군.'],
+    reward: { gold: 180, items: ['ring_atk'], companions: [9] }
   },
   {
     id: 'chief_companions',
@@ -591,6 +669,16 @@ function isMainQuestObjectiveMet(quest, npcId) {
   return false;
 }
 
+function unlockCompanion(cId, options = {}) {
+  if (!isValidCompanionId(cId) || companions.includes(cId)) return false;
+  companions.push(cId);
+  if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);
+  if (!options.silent && typeof showToast === 'function') {
+    showToast(getCompanionName(cId) + ' 합류!');
+  }
+  return true;
+}
+
 function buildQuestRewardText(quest) {
   if (!quest || !quest.reward) return '';
   const chunks = [];
@@ -598,6 +686,11 @@ function buildQuestRewardText(quest) {
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) chunks.push(ITEMS[id].icon + ' ' + ITEMS[id].name);
+    });
+  }
+  if (Array.isArray(quest.reward.companions)) {
+    quest.reward.companions.forEach(cId => {
+      if (isValidCompanionId(cId)) chunks.push((getCompanionRoster(cId).portraitIcon || '★') + ' ' + getCompanionName(cId));
     });
   }
   return chunks.join(', ');
@@ -610,6 +703,9 @@ function grantMainQuestReward(quest) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) inventory.push(id);
     });
+  }
+  if (Array.isArray(quest.reward.companions)) {
+    quest.reward.companions.forEach(cId => unlockCompanion(cId, { silent: true }));
   }
 }
 
@@ -685,6 +781,9 @@ function grantSubquestReward(quest) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) inventory.push(id);
     });
+  }
+  if (Array.isArray(quest.reward.companions)) {
+    quest.reward.companions.forEach(cId => unlockCompanion(cId, { silent: true }));
   }
 }
 

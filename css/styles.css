@@ -1877,6 +1877,14 @@ canvas {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.companion-card-skill {
+  color: #7dd3fc;
+  font-size: 8px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .companion-status-badge {
   flex-shrink: 0;
   padding: 2px 6px;

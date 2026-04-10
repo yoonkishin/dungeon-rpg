@@ -102,17 +102,17 @@ function loadSave() {
       dungeonsCleared = data.dungeonsCleared.slice();
     }
     if (Array.isArray(data.companions)) {
-      companions = data.companions.slice();
+      companions = data.companions.filter(isValidCompanionId);
     }
     // Support old single-companion saves
     if (Array.isArray(data.activeCompanions)) {
-      activeCompanions = data.activeCompanions.slice();
+      activeCompanions = data.activeCompanions.filter(isValidCompanionId);
     } else if (data.activeCompanion !== undefined && data.activeCompanion !== null) {
-      activeCompanions = [data.activeCompanion];
+      activeCompanions = isValidCompanionId(data.activeCompanion) ? [data.activeCompanion] : [];
     } else {
       activeCompanions = [];
     }
-    deadCompanions = Array.isArray(data.deadCompanions) ? data.deadCompanions.slice() : [];
+    deadCompanions = Array.isArray(data.deadCompanions) ? data.deadCompanions.filter(isValidCompanionId) : [];
     companionAIModes = data.companionAIModes && typeof data.companionAIModes === 'object' ? { ...data.companionAIModes } : {};
     companions.forEach(cId => {
       if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);

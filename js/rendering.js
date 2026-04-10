@@ -451,7 +451,7 @@ function draw() {
       if (cs) {
         entities.push({ y: cs.y, draw: () => {
           // draw individual companion inline
-          const info = DUNGEON_INFO[cId];
+          const info = getCompanionRoster(cId);
           if (!info) return;
           const sx = cs.x - cameraX + screenShake.x;
           const sy = cs.y - cameraY + screenShake.y;
@@ -460,7 +460,7 @@ function draw() {
           ctx.ellipse(sx, sy + 10, 10, 4, 0, 0, Math.PI*2);
           ctx.fill();
           if (cs.flashTimer > 0 && cs.flashTimer % 4 < 2) ctx.fillStyle = '#fff';
-          else ctx.fillStyle = info.companionColor;
+          else ctx.fillStyle = info.color;
           ctx.fillRect(sx - 10, sy - 10, 20, 20);
           ctx.fillStyle = '#fff';
           ctx.fillRect(sx - 4, sy - 6, 3, 3);
@@ -477,12 +477,12 @@ function draw() {
           ctx.fillRect(sx - 12, sy - 22, 24, 3);
           ctx.fillStyle = hpPct > 0.3 ? '#2ecc71' : '#e74c3c';
           ctx.fillRect(sx - 12, sy - 22, 24 * hpPct, 3);
-          const labelW = info.companionName.length * 7 + 8;
+          const labelW = info.name.length * 7 + 8;
           ctx.fillStyle = 'rgba(0,0,0,0.6)';
           ctx.fillRect(sx - labelW/2, sy - 32, labelW, 12);
           ctx.fillStyle = '#7dd3fc';
           ctx.font = '8px sans-serif';
-          ctx.fillText(info.companionName, sx, sy - 23);
+          ctx.fillText(info.name, sx, sy - 23);
         }});
       }
     });

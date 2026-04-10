@@ -4,12 +4,16 @@ function getCompanionFollowPoint(cId, idx, profile, cs) {
   const mode = getCompanionAIMode(cId, cs);
   const offsetAngle = idx === 0 ? -Math.PI / 3 : Math.PI / 3;
   const dirAngle = player.dir === 0 ? 0 : player.dir === 1 ? Math.PI : player.dir === 2 ? -Math.PI / 2 : Math.PI / 2;
-  const ranged = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
-  let baseDist = profile.roleKey === 'support' ? 46 : (ranged ? 54 : 34);
+  const ranged = isCompanionRangedProfile(profile);
+  const supportRole = isCompanionSupportProfile(profile);
+  let baseDist = supportRole ? 46 : (ranged ? 54 : 34);
 
   if (mode === 'aggressive') baseDist += ranged ? -6 : -8;
-  else if (mode === 'defensive') baseDist += ranged || profile.roleKey === 'support' ? 10 : 6;
-  else if (mode === 'support') baseDist += ranged || profile.roleKey === 'support' ? 18 : 10;
+  else if (mode === 'defensive') baseDist += ranged || supportRole ? 10 : 6;
+  else if (mode === 'support') baseDist += ranged || supportRole ? 18 : 10;
+
+  if (profile.unitType === 'FlyingKnight') baseDist += 4;
+  if (profile.unitType === 'Lancer') baseDist += 6;
 
   return {
     x: player.x - baseDist * Math.cos(dirAngle + offsetAngle),
@@ -19,8 +23,8 @@ function getCompanionFollowPoint(cId, idx, profile, cs) {
 
 function getCompanionModeBehavior(cId, cs, profile) {
   const mode = getCompanionAIMode(cId, cs);
-  const ranged = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
-  const supportRole = profile.roleKey === 'support';
+  const ranged = isCompanionRangedProfile(profile);
+  const supportRole = isCompanionSupportProfile(profile);
 
   const behavior = {
     mode,
@@ -52,7 +56,7 @@ function getCompanionModeBehavior(cId, cs, profile) {
     behavior.skillTickMult = supportRole ? 1.05 : 1.20;
     behavior.supportHealThreshold = 0.76;
     behavior.protectThreshold = 0.52;
-    behavior.finishOffBonus = 22;
+    behavior.finishOffBonus += 22;
   } else if (mode === 'defensive') {
     behavior.engageRadius = 160;
     behavior.leashRadius = 58;
@@ -81,6 +85,42 @@ function getCompanionModeBehavior(cId, cs, profile) {
     behavior.keepTighterFormation = true;
   }
 
+  if (profile.unitType === 'FlyingKnight') {
+    behavior.engageRadius += 15;
+    behavior.chaseSpeed += 0.08;
+    behavior.leashRadius += 10;
+    behavior.finishOffBonus += 18;
+  }
+  if (profile.unitType === 'Cavalry') {
+    behavior.chaseSpeed += 0.12;
+    behavior.guardRadius += 8;
+    behavior.protectThreshold += 0.03;
+  }
+  if (profile.unitType === 'NavalUnit') {
+    behavior.guardRadius += 10;
+    behavior.keepTighterFormation = true;
+  }
+  if (profile.unitType === 'Lancer') {
+    behavior.preferredRange += 10;
+    behavior.attackRange += 8;
+  }
+  if (profile.unitType === 'Archer') {
+    behavior.engageRadius += 28;
+    behavior.preferredRange += 8;
+  }
+  if (profile.unitType === 'Monk') {
+    behavior.skillTickMult += 0.08;
+    behavior.supportHealThreshold += 0.04;
+  }
+  if (profile.unitType === 'Priest') {
+    behavior.supportHealThreshold += 0.08;
+    behavior.guardRadius += 10;
+  }
+  if (profile.unitType === 'Mage' || profile.unitType === 'DarkPriest') {
+    behavior.engageRadius += 18;
+    behavior.preferredRange += 6;
+  }
+
   return behavior;
 }
 
@@ -97,9 +137,9 @@ function getCompanionPriorityEnemy(cId, cs, behavior) {
     const dPlayer = Math.sqrt((player.x - e.x) ** 2 + (player.y - e.y) ** 2);
     let score = 200 - d;
 
-    if (profile.roleKey === 'assassin') score += (e.maxHp - e.hp) * 0.8;
-    if (profile.roleKey === 'tank' || profile.roleKey === 'bruiser' || profile.roleKey === 'guardian' || profile.roleKey === 'paladin') score += d < 70 ? 40 : 0;
-    if (profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster') score += d > 60 ? 15 : 0;
+    if (profile.unitType === 'FlyingKnight') score += (e.maxHp - e.hp) * 0.8;
+    if (isCompanionFrontlineProfile(profile)) score += d < 70 ? 40 : 0;
+    if (isCompanionRangedProfile(profile)) score += d > 60 ? 15 : 0;
     if (e.isBoss) score += behavior.mode === 'defensive' || behavior.mode === 'support' ? 40 : 25;
 
     if (behavior.prioritizePlayerThreat && dPlayer < behavior.guardRadius) score += 80 - dPlayer * 0.3;
@@ -110,7 +150,7 @@ function getCompanionPriorityEnemy(cId, cs, behavior) {
       score -= 55;
     }
 
-    if (profile.roleKey === 'support') {
+    if (isCompanionSupportProfile(profile)) {
       score += dPlayer < behavior.guardRadius ? 28 : -30;
     }
 
@@ -137,6 +177,7 @@ function moveCompanionToward(cs, tx, ty, speedMul = 1) {
 function useCompanionSkill(cId, cs, target, behavior) {
   const profile = getCompanionProfile(cId);
   const modeBehavior = behavior || getCompanionModeBehavior(cId, cs, profile);
+  const effectColor = profile.companionColor || '#7dd3fc';
   if (cs.skillTimer > 0) return false;
 
   const skillReady = () => { cs.skillTimer = profile.skillCooldown; };
@@ -169,13 +210,13 @@ function useCompanionSkill(cId, cs, target, behavior) {
     const healAmt = Math.floor((22 + cId * 3) * getHealingMultiplier());
     player.hp = Math.min(player.maxHp, player.hp + Math.floor(healAmt * 0.8));
     addDamageNumber(player.x, player.y, Math.floor(healAmt * 0.8), 'heal');
-    addParticles(player.x, player.y, DUNGEON_INFO[cId].companionColor, 10);
+    addParticles(player.x, player.y, effectColor, 10);
     if (lowest.kind !== 'player') {
       const ally = companionStates[lowest.kind];
       if (ally) {
         ally.hp = Math.min(ally.maxHp, ally.hp + healAmt);
         addDamageNumber(ally.x, ally.y, healAmt, 'heal');
-        addParticles(ally.x, ally.y, DUNGEON_INFO[cId].companionColor, 8);
+        addParticles(ally.x, ally.y, effectColor, 8);
       }
     }
     showToast(profile.skillName + '!');
@@ -188,7 +229,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
 
   if (profile.skillId === 'slime_guard') {
     if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 72) return false;
-    if (splashHit(cs.x, cs.y, 62, Math.floor(getCompanionAtk(cId) * 0.9), DUNGEON_INFO[cId].companionColor, 280)) {
+    if (splashHit(cs.x, cs.y, 62, Math.floor(getCompanionAtk(cId) * 0.9), effectColor, 280)) {
       triggerShake(8);
       showToast(profile.skillName + '!');
       skillReady();
@@ -205,7 +246,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
       e.hp -= dmg;
       e.flashTimer = 10;
       addDamageNumber(e.x, e.y, dmg, 'normal');
-      addParticles(e.x, e.y, DUNGEON_INFO[cId].companionColor, 5);
+      addParticles(e.x, e.y, effectColor, 5);
       if (e.hp <= 0) killEnemy(e);
     });
     showToast(profile.skillName + '!');
@@ -214,7 +255,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
   }
 
   if (profile.skillId === 'bone_nova') {
-    if (splashHit(target.x, target.y, 58, Math.floor(getCompanionAtk(cId) * 1.1), DUNGEON_INFO[cId].companionColor, 120)) {
+    if (splashHit(target.x, target.y, 58, Math.floor(getCompanionAtk(cId) * 1.1), effectColor, 120)) {
       showToast(profile.skillName + '!');
       skillReady();
       return true;
@@ -223,7 +264,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
 
   if (profile.skillId === 'war_cleave') {
     if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 76) return false;
-    if (splashHit(target.x, target.y, 48, Math.floor(getCompanionAtk(cId) * 1.2), DUNGEON_INFO[cId].companionColor)) {
+    if (splashHit(target.x, target.y, 48, Math.floor(getCompanionAtk(cId) * 1.2), effectColor)) {
       triggerShake(7);
       showToast(profile.skillName + '!');
       skillReady();
@@ -241,7 +282,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
     target.flashTimer = 12;
     target.hitStun = Math.max(target.hitStun || 0, 180);
     addDamageNumber(target.x, target.y, dmg, 'critical');
-    addParticles(target.x, target.y, DUNGEON_INFO[cId].companionColor, 10);
+    addParticles(target.x, target.y, effectColor, 10);
     if (target.hp <= 0) killEnemy(target);
     showToast(profile.skillName + '!');
     skillReady();
@@ -249,7 +290,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
   }
 
   if (profile.skillId === 'flame_burst') {
-    if (splashHit(target.x, target.y, 44, Math.floor(getCompanionAtk(cId) * 1.25), DUNGEON_INFO[cId].companionColor)) {
+    if (splashHit(target.x, target.y, 44, Math.floor(getCompanionAtk(cId) * 1.25), effectColor)) {
       showToast(profile.skillName + '!');
       skillReady();
       return true;
@@ -263,7 +304,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
     target.flashTimer = 12;
     target.hitStun = Math.max(target.hitStun || 0, 360);
     addDamageNumber(target.x, target.y, dmg, 'magic');
-    addParticles(target.x, target.y, DUNGEON_INFO[cId].companionColor, 9);
+    addParticles(target.x, target.y, effectColor, 9);
     if (target.hp <= 0) killEnemy(target);
     showToast(profile.skillName + '!');
     skillReady();
@@ -276,7 +317,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
     player.hp = Math.min(player.maxHp, player.hp + healAmt);
     player.invincible = Math.max(player.invincible, 500);
     addDamageNumber(player.x, player.y, healAmt, 'heal');
-    addParticles(player.x, player.y, DUNGEON_INFO[cId].companionColor, 10);
+    addParticles(player.x, player.y, effectColor, 10);
     if (target && Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) < 70) {
       const dmg = Math.floor(getCompanionAtk(cId) * 1.15);
       target.hp -= dmg;
@@ -316,10 +357,11 @@ function updateCompanion(dt) {
       const d = Math.sqrt((cs.x - target.x) ** 2 + (cs.y - target.y) ** 2);
       const targetPlayerDist = Math.sqrt((player.x - target.x) ** 2 + (player.y - target.y) ** 2);
       const lowHp = cs.hp / cs.maxHp < (behavior.mode === 'aggressive' ? 0.25 : 0.40);
-      const rangedRole = profile.roleKey === 'ranger' || profile.roleKey === 'mage' || profile.roleKey === 'caster';
+      const rangedRole = isCompanionRangedProfile(profile);
+      const supportRole = isCompanionSupportProfile(profile);
       const shouldHoldLine = behavior.keepTighterFormation && dist(cs, followPoint) > behavior.leashRadius && targetPlayerDist > behavior.guardRadius && !target.isBoss;
 
-      if (profile.roleKey === 'support') {
+      if (supportRole) {
         moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
         if (d < preferredRange - 10) {
           moveCompanionToward(cs, cs.x - (target.x - cs.x), cs.y - (target.y - cs.y), behavior.retreatSpeed);
@@ -343,11 +385,11 @@ function updateCompanion(dt) {
         const dmg = getCompanionAtk(cId);
         target.hp -= dmg;
         target.flashTimer = 8;
-        if (profile.roleKey === 'tank' || profile.roleKey === 'guardian') {
+        if (profile.unitType === 'Infantry' || profile.unitType === 'NavalUnit') {
           target.hitStun = Math.max(target.hitStun || 0, 120);
         }
-        addDamageNumber(target.x, target.y, dmg, profile.roleKey === 'caster' || profile.roleKey === 'mage' ? 'magic' : 'normal');
-        addParticles(target.x, target.y, DUNGEON_INFO[cId].companionColor, 5);
+        addDamageNumber(target.x, target.y, dmg, isCompanionMagicProfile(profile) ? 'magic' : 'normal');
+        addParticles(target.x, target.y, profile.companionColor || '#7dd3fc', 5);
         if (target.hp <= 0) killEnemy(target);
       }
     } else {
