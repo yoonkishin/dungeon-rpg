@@ -185,13 +185,17 @@ bindTap(document.getElementById('menu-close'), () => closeMenu());
 
 bindTap(document.getElementById('settings-close'), () => closeSettings());
 
-function openMenu() {
-  if (settingsOpen) closeSettings();
+function refreshTownActionLabel() {
   const townActionBtn = document.getElementById('town-action-btn');
   if (townActionBtn) {
     const labelEl = townActionBtn.querySelector('.m-label');
     if (labelEl) labelEl.textContent = currentMap === 'town' ? '마을발전' : '마을귀환';
   }
+}
+
+function openMenu() {
+  if (settingsOpen) closeSettings();
+  refreshTownActionLabel();
   menuOpen = true;
   showPanel(menuPanel);
 }
@@ -209,60 +213,60 @@ function closeSettings() {
   hidePanel(settingsPanel);
 }
 
-// Menu grid actions
-document.querySelectorAll('.menu-grid-btn').forEach(btn => {
+function closeMenuIfOpen() {
+  if (!menuOpen) return;
+  menuOpen = false;
+  hidePanel(menuPanel);
+}
+
+function handleHudAction(action) {
+  if (action === 'equipment' || action === 'bag') {
+    closeMenuIfOpen();
+    openInventory();
+  } else if (action === 'settings') {
+    closeMenuIfOpen();
+    showPanel(settingsPanel);
+    settingsOpen = true;
+  } else if (action === 'profile') {
+    closeMenuIfOpen();
+    openProfile();
+  } else if (action === 'companion') {
+    closeMenuIfOpen();
+    openCompanionPanel();
+  } else if (action === 'skill') {
+    closeMenuIfOpen();
+    openSkillPanel();
+  } else if (action === 'town-return') {
+    closeMenuIfOpen();
+    if (currentMap === 'town') {
+      openVillagePanel();
+    } else {
+      if (currentMap === 'dungeon') {
+        const shouldReturn = confirm('지금 마을로 귀환하면 출전 중인 동료가 쓰러진 상태로 처리됩니다. 정말 귀환할까요?');
+        if (!shouldReturn) return;
+
+        // Companions die when leaving dungeon early
+        activeCompanions.forEach(cId => {
+          if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
+        });
+        activeCompanions = [];
+        companionStates = {};
+      }
+      enterTown();
+      showToast('마을로 귀환했습니다');
+      AudioSystem.sfx.portal();
+      autoSave();
+    }
+  } else if (action === 'quests') {
+    closeMenuIfOpen();
+    openQuestPanel();
+  }
+}
+
+document.querySelectorAll('.menu-grid-btn, .hud-quick-btn').forEach(btn => {
   function handleAction() {
     const action = btn.getAttribute('data-action');
-    if (action === 'equipment' || action === 'bag') {
-      openInventory();
-      menuOpen = false;
-      hidePanel(menuPanel);
-    } else if (action === 'settings') {
-      showPanel(settingsPanel);
-      settingsOpen = true;
-      menuOpen = false;
-      hidePanel(menuPanel);
-    } else if (action === 'profile') {
-      openProfile();
-      menuOpen = false;
-      hidePanel(menuPanel);
-    } else if (action === 'companion') {
-      openCompanionPanel();
-      menuOpen = false;
-      hidePanel(menuPanel);
-    } else if (action === 'skill') {
-      openSkillPanel();
-      menuOpen = false;
-      hidePanel(menuPanel);
-    } else if (action === 'town-return') {
-      if (currentMap === 'town') {
-        menuOpen = false;
-        hidePanel(menuPanel);
-        openVillagePanel();
-      } else {
-        if (currentMap === 'dungeon') {
-          const shouldReturn = confirm('지금 마을로 귀환하면 출전 중인 동료가 쓰러진 상태로 처리됩니다. 정말 귀환할까요?');
-          if (!shouldReturn) return;
-
-          // Companions die when leaving dungeon early
-          activeCompanions.forEach(cId => {
-            if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-          });
-          activeCompanions = [];
-          companionStates = {};
-        }
-        menuOpen = false;
-        hidePanel(menuPanel);
-        enterTown();
-        showToast('마을로 귀환했습니다');
-        AudioSystem.sfx.portal();
-        autoSave();
-      }
-    } else if (action === 'quests') {
-      openQuestPanel();
-      menuOpen = false;
-      hidePanel(menuPanel);
-    }
+    handleHudAction(action);
   }
   bindTap(btn, handleAction, { stopPropagation: true });
 });

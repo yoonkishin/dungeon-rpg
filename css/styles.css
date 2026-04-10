@@ -519,6 +519,9 @@ canvas {
   gap: 8px;
   pointer-events: all;
 }
+#menu-btn {
+  display: none;
+}
 .top-circle-btn {
   width: 36px; height: 36px;
   border-radius: 50%;
@@ -725,6 +728,49 @@ canvas {
   transition: width 0.3s ease;
   width: 0%;
   box-shadow: 0 0 6px rgba(253,203,110,0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+#hud-quick-actions {
+  position: absolute;
+  top: 56px;
+  right: 96px;
+  width: 184px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  pointer-events: all;
+  z-index: 55;
+}
+.hud-quick-btn {
+  min-width: 0;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: rgba(10,12,20,0.92);
+  border: 1px solid rgba(241,196,15,0.18);
+  color: #eef2ff;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+}
+.hud-quick-btn:active {
+  transform: scale(0.96);
+  background: rgba(241,196,15,0.14);
+}
+.hud-quick-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.hud-quick-label {
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.15;
+  word-break: keep-all;
 }
 
 /* ── Minimap (HUD widget) ── */
