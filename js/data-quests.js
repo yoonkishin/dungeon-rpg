@@ -346,7 +346,16 @@ function isSubquestAvailable(quest) {
 }
 
 function getNpcSubquest(npcId) {
-  return SUBQUESTS.find(q => q.npcId === npcId && isSubquestAvailable(q)) || null;
+  const npcSubquests = SUBQUESTS.filter(q => q.npcId === npcId && isSubquestAvailable(q));
+  if (npcSubquests.length === 0) return null;
+
+  const acceptedReady = npcSubquests.find(q => isSubquestAccepted(q.id) && isSubquestObjectiveMet(q));
+  if (acceptedReady) return acceptedReady;
+
+  const unaccepted = npcSubquests.find(q => !isSubquestAccepted(q.id));
+  if (unaccepted) return unaccepted;
+
+  return npcSubquests.find(q => isSubquestAccepted(q.id)) || null;
 }
 
 function acceptSubquest(quest) {

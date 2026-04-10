@@ -463,6 +463,7 @@ function draw() {
   ];
   if (activeCompanions.length > 0 && currentMap === 'dungeon') {
     activeCompanions.forEach(cId => {
+      if (deadCompanions.includes(cId)) return;
       const cs = companionStates[cId];
       if (cs) {
         entities.push({ y: cs.y, draw: () => {

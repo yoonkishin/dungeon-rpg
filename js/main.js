@@ -130,7 +130,7 @@ function update(dt) {
     }
   });
 
-  renderSkillSlots();
+  if (skillSlotsDirty) renderSkillSlots();
 
   // Movement
   let moveX = 0, moveY = 0;
@@ -369,7 +369,7 @@ function update(dt) {
   damageNumbers = damageNumbers.filter(dn => dn.timer > 0);
 
   if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
-  updateHUD();
+  if (hudDirty) updateHUD();
 }
 
 // ─── Companion Update ────────────────────────────────────────────────────────

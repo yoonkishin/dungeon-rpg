@@ -149,6 +149,8 @@ function loadSave() {
     companions.forEach(cId => {
       if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);
     });
+    activeCompanions = activeCompanions.filter(cId => !deadCompanions.includes(cId));
+    companionStates = {};
     activeCompanions.forEach(cId => initCompanionState(cId));
 
     totalGoldEarned = readValue(data, 'totalGoldEarned', 0);

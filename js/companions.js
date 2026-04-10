@@ -335,6 +335,7 @@ function updateCompanion(dt) {
   if (activeCompanions.length === 0 || currentMap !== 'dungeon') return;
 
   activeCompanions.forEach((cId, idx) => {
+    if (deadCompanions.includes(cId)) return;
     const cs = companionStates[cId];
     if (!cs) return;
     const profile = getCompanionProfile(cId);
