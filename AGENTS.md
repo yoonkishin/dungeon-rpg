@@ -129,7 +129,7 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 - 동료 시스템은 10명 roster / 10개 병종 프로필 구조로 감지됐다: 보병, 비병, 기병, 수병, 창병, 궁병, 승려, 신관, 법사, 사교.
 - 동료 AI 모드는 `aggressive`, `defensive`, `support` 로 감지됐다고 save/load 연동도 확인됐다.
 - 미니맵 컨테이너는 HUD 우측 상단 슬롯(top 56px, right 12px)으로 감지됐다고 표시 상태는 localStorage에 저장된다.
-- HUD quick action 버튼은 6개 감지됐다: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- HUD quick action 버튼은 0개 감지됐다: .
 - 수련의 방 패널과 승급 패널 진입점이 감지됐다.
 - 문장의방 패널과 문장 데이터 뼈대가 감지됐다.
 - 던전 정예 몬스터와 보스 페이즈 기믹 로직이 감지됐다.

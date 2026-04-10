@@ -22,7 +22,7 @@
 
 - [x] Minimap HUD slot detected at **top 56px / right 12px**.
 - [x] Minimap visibility persistence detected via `localStorage`.
-- [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- [x] HUD quick actions detected: .
 - [x] Training room / promotion panel detected.
 - [x] Emblem room panel and emblem data foundations detected.
 - [x] Dungeon elite enemies and boss phase gimmicks detected.
