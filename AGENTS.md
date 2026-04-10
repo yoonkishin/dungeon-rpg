@@ -123,6 +123,7 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 - Authoritative implemented status lives in `docs/implemented-state.md` (auto-generated).
 - 런타임 가변 상태는 `state.js`로 분리되어 있고 `index.html`에서 직접 로드된다.
 - 플레이어 성장 상태(`classLine`, `classRank`, `promotionPending`)와 save/load 연동이 감지됐다.
+- 마을 NPC와 시설 업그레이드 로직이 `data-town.js`로 분리된 것이 감지됐다.
 - 퀘스트 정의와 퀘스트 흐름 헬퍼가 `data-quests.js`로 분리된 것이 감지됐다.
 - 동료 시스템은 10명 roster / 10개 병종 프로필 구조로 감지됐다: 보병, 비병, 기병, 수병, 창병, 궁병, 승려, 신관, 법사, 사교.
 - 동료 AI 모드는 `aggressive`, `defensive`, `support` 로 감지됐다고 save/load 연동도 확인됐다.

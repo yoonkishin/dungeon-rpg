@@ -9,6 +9,7 @@ const files = [
   'js/maps.js',
   'js/data.js',
   'js/data-growth.js',
+  'js/data-town.js',
   'js/data-quests.js',
   'js/state.js',
   'js/helpers.js',

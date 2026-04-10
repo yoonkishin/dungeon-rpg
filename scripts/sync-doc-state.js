@@ -25,6 +25,7 @@ function requireMatch(text, regex, label) {
 
 const dataJs = read('js/data.js');
 const dataGrowthJs = exists('js/data-growth.js') ? read('js/data-growth.js') : '';
+const dataTownJs = exists('js/data-town.js') ? read('js/data-town.js') : '';
 const dataQuestsJs = exists('js/data-quests.js') ? read('js/data-quests.js') : '';
 const saveJs = read('js/save.js');
 const stateJs = read('js/state.js');
@@ -52,6 +53,7 @@ const minimapRight = (minimapBlock.match(/right:\s*([^;]+);/) || [null, 'unknown
 const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
 const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
+const townModuleDetected = /const TOWN_NPCS = \[/.test(dataTownJs) && /const TOWN_UPGRADES = \{/.test(dataTownJs) && /getVillageUpgradeCost\(/.test(dataTownJs);
 const questModuleDetected = /const MAIN_QUESTS = \[/.test(dataQuestsJs) && /const SUBQUESTS = \[/.test(dataQuestsJs) && /getNpcInteractionLines\(/.test(dataQuestsJs);
 const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
 const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\(/.test(uiPanelsJs) && (/EMBLEM_DEFS/.test(dataJs) || /EMBLEM_DEFS/.test(dataGrowthJs));
@@ -69,6 +71,9 @@ const snapshotBullets = [
   growthStateDetected
     ? '- 플레이어 성장 상태(`classLine`, `classRank`, `promotionPending`)와 save/load 연동이 감지됐다.'
     : '- 플레이어 성장 상태 구조는 자동 감지되지 않았다.',
+  townModuleDetected
+    ? '- 마을 NPC와 시설 업그레이드 로직이 `data-town.js`로 분리된 것이 감지됐다.'
+    : '- 마을 NPC / 시설 업그레이드 분리 여부를 자동 감지하지 못했다.',
   questModuleDetected
     ? '- 퀘스트 정의와 퀘스트 흐름 헬퍼가 `data-quests.js`로 분리된 것이 감지됐다.'
     : '- 퀘스트 정의 / 흐름 헬퍼 분리 여부를 자동 감지하지 못했다.',
@@ -115,10 +120,13 @@ const implementedStateDoc = [
   growthStateDetected
     ? '- [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.'
     : '- [ ] Player growth runtime fields could not be fully detected.',
+  townModuleDetected
+    ? '- [x] Town NPCs and village upgrade helpers are split into `data-town.js`.'
+    : '- [ ] Town NPC / village upgrade helper split could not be fully detected.',
   questModuleDetected
     ? '- [x] Quest definitions and quest flow helpers are split into `data-quests.js`.'
     : '- [ ] Quest definitions / quest flow helper split could not be fully detected.',
-  '- [x] Core game data is split across `data.js`, `data-growth.js`, and `data-quests.js`.',
+  '- [x] Core game data is split across `data.js`, `data-growth.js`, `data-town.js`, and `data-quests.js`.',
   '',
   '## Companion System',
   '',
@@ -164,6 +172,7 @@ const implementedStateDoc = [
   '- `css/styles.css`',
   '- `js/data.js`',
   '- `js/data-growth.js`',
+  '- `js/data-town.js`',
   '- `js/data-quests.js`',
   '- `js/state.js`',
   '- `js/save.js`',
