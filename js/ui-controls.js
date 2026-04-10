@@ -139,6 +139,24 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => { toastEl.style.opacity = '0'; }, 1500);
 }
 
+function isAnyPanelOpen() {
+  return !!(
+    invOpen ||
+    shopOpen ||
+    menuOpen ||
+    settingsOpen ||
+    dialogueOpen ||
+    profileOpen ||
+    companionPanelOpen ||
+    skillPanelOpen ||
+    questPanelOpen ||
+    villagePanelOpen ||
+    trainingPanelOpen ||
+    emblemRoomPanelOpen ||
+    (typeof templeOpen !== 'undefined' && templeOpen)
+  );
+}
+
 // ─── Panel show/hide helpers (flicker-free transitions) ─────────────────────
 function showPanel(el) {
   el.style.display = 'flex';

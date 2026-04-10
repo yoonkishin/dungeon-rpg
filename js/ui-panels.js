@@ -387,11 +387,11 @@ function buildItemStatRows(item) {
   return entries.map(entry => '<div class="popup-stat-row"><span class="label">' + entry.label + '</span><span class="val">' + entry.display + '</span></div>').join('');
 }
 function buildItemDeltaRows(currentItem, newItem) {
-  const currentMap = new Map(getItemStatEntries(currentItem).map(entry => [entry.label, entry]));
+  const currentStatMap = new Map(getItemStatEntries(currentItem).map(entry => [entry.label, entry]));
   const nextEntries = getItemStatEntries(newItem);
   const labels = ['ATK', 'DEF', 'SPD', '치명타', '골드', '회복'];
   const rows = labels.map(label => {
-    const currentValue = currentMap.has(label) ? currentMap.get(label).value : 0;
+    const currentValue = currentStatMap.has(label) ? currentStatMap.get(label).value : 0;
     const nextEntry = nextEntries.find(entry => entry.label === label);
     const nextValue = nextEntry ? nextEntry.value : 0;
     if (currentValue === 0 && nextValue === 0) return '';

@@ -4,6 +4,14 @@
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
+function hasOwn(obj, key) {
+  return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function readValue(obj, key, fallback) {
+  return hasOwn(obj, key) ? obj[key] : fallback;
+}
+
 function autoSave() {
   try {
     const saveData = {
@@ -56,31 +64,31 @@ function loadSave() {
 
     // Restore player
     const p = data.player;
-    player.x = p.x || player.x;
-    player.y = p.y || player.y;
-    player.hp = p.hp || player.hp;
-    player.maxHp = p.maxHp || player.maxHp;
-    player.mp = p.mp || player.mp;
-    player.maxMp = p.maxMp || player.maxMp;
-    player.level = p.level || player.level;
-    player.xp = p.xp || 0;
-    player.gold = (p.gold !== undefined) ? p.gold : 0;
-    player.tier = p.tier || 1;
-    player.classLine = p.classLine || 'infantry';
-    player.classRank = p.classRank || p.tier || getRankForLevel(player.classLine, player.level).rank;
-    player.currentClassKey = p.currentClassKey || `${player.classLine}_rank${player.classRank}`;
+    player.x = readValue(p, 'x', player.x);
+    player.y = readValue(p, 'y', player.y);
+    player.hp = readValue(p, 'hp', player.hp);
+    player.maxHp = readValue(p, 'maxHp', player.maxHp);
+    player.mp = readValue(p, 'mp', player.mp);
+    player.maxMp = readValue(p, 'maxMp', player.maxMp);
+    player.level = readValue(p, 'level', player.level);
+    player.xp = readValue(p, 'xp', 0);
+    player.gold = readValue(p, 'gold', 0);
+    player.tier = readValue(p, 'tier', 1);
+    player.classLine = readValue(p, 'classLine', 'infantry');
+    player.classRank = hasOwn(p, 'classRank') ? p.classRank : (hasOwn(p, 'tier') ? p.tier : getRankForLevel(player.classLine, player.level).rank);
+    player.currentClassKey = readValue(p, 'currentClassKey', `${player.classLine}_rank${player.classRank}`);
     player.classHistory = Array.isArray(p.classHistory) && p.classHistory.length ? p.classHistory.slice() : [player.currentClassKey];
     player.emblemIds = Array.isArray(p.emblemIds) ? p.emblemIds.filter(id => !!getEmblemDef(id)) : [];
     player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
     player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
     player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
-    player.promotionPending = !!p.promotionPending;
-    player.promotionBonusRankApplied = p.promotionBonusRankApplied || 1;
+    player.promotionPending = !!readValue(p, 'promotionPending', false);
+    player.promotionBonusRankApplied = readValue(p, 'promotionBonusRankApplied', 1);
     player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
-    player.atk = p.atk || player.atk;
-    player.def = p.def || player.def;
-    player.speed = p.speed || player.speed;
-    player.critChance = p.critChance !== undefined ? p.critChance : 10;
+    player.atk = readValue(p, 'atk', player.atk);
+    player.def = readValue(p, 'def', player.def);
+    player.speed = readValue(p, 'speed', player.speed);
+    player.critChance = readValue(p, 'critChance', 10);
     if (p.promotionBonusRankApplied === undefined && player.classRank > 1) {
       applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
       player.promotionBonusRankApplied = player.classRank;
@@ -96,18 +104,18 @@ function loadSave() {
 
     // Restore equipped (backward compatible with old 3-slot saves)
     if (data.equipped) {
-      equipped.weapon = data.equipped.weapon || null;
-      equipped.armor = data.equipped.armor || null;
-      equipped.helmet = data.equipped.helmet || null;
-      equipped.boots = data.equipped.boots || null;
-      equipped.shield = data.equipped.shield || null;
-      equipped.event = data.equipped.event || null;
+      equipped.weapon = readValue(data.equipped, 'weapon', null);
+      equipped.armor = readValue(data.equipped, 'armor', null);
+      equipped.helmet = readValue(data.equipped, 'helmet', null);
+      equipped.boots = readValue(data.equipped, 'boots', null);
+      equipped.shield = readValue(data.equipped, 'shield', null);
+      equipped.event = readValue(data.equipped, 'event', null);
       // Backward compat: old 'accessory' -> accessory1
-      if (data.equipped.accessory1 !== undefined) {
-        equipped.accessory1 = data.equipped.accessory1 || null;
-        equipped.accessory2 = data.equipped.accessory2 || null;
+      if (hasOwn(data.equipped, 'accessory1')) {
+        equipped.accessory1 = readValue(data.equipped, 'accessory1', null);
+        equipped.accessory2 = readValue(data.equipped, 'accessory2', null);
       } else {
-        equipped.accessory1 = data.equipped.accessory || null;
+        equipped.accessory1 = readValue(data.equipped, 'accessory', null);
         equipped.accessory2 = null;
       }
     }
@@ -143,8 +151,8 @@ function loadSave() {
     });
     activeCompanions.forEach(cId => initCompanionState(cId));
 
-    totalGoldEarned = data.totalGoldEarned || 0;
-    totalEnemiesKilled = data.totalEnemiesKilled || 0;
+    totalGoldEarned = readValue(data, 'totalGoldEarned', 0);
+    totalEnemiesKilled = readValue(data, 'totalEnemiesKilled', 0);
     currentDungeonId = data.currentDungeonId !== undefined ? data.currentDungeonId : -1;
     currentEmblemTrial = data.currentEmblemTrial && data.currentEmblemTrial.emblemId && getEmblemDef(data.currentEmblemTrial.emblemId)
       ? { emblemId: data.currentEmblemTrial.emblemId }
@@ -153,10 +161,10 @@ function loadSave() {
     completedMainQuests = Array.isArray(data.completedMainQuests) ? data.completedMainQuests.slice() : [];
     if (data.villageUpgrades && typeof data.villageUpgrades === 'object') {
       villageUpgrades = {
-        forge: data.villageUpgrades.forge || 0,
-        guard: data.villageUpgrades.guard || 0,
-        trade: data.villageUpgrades.trade || 0,
-        alchemy: data.villageUpgrades.alchemy || 0,
+        forge: readValue(data.villageUpgrades, 'forge', 0),
+        guard: readValue(data.villageUpgrades, 'guard', 0),
+        trade: readValue(data.villageUpgrades, 'trade', 0),
+        alchemy: readValue(data.villageUpgrades, 'alchemy', 0),
       };
     }
     acceptedSubquests = Array.isArray(data.acceptedSubquests) ? data.acceptedSubquests.slice() : [];
