@@ -176,6 +176,7 @@ function moveCompanionToward(cs, tx, ty, speedMul = 1) {
 
 function useCompanionSkill(cId, cs, target, behavior) {
   const profile = getCompanionProfile(cId);
+  if (!profile) return false;
   const modeBehavior = behavior || getCompanionModeBehavior(cId, cs, profile);
   const effectColor = profile.companionColor || '#7dd3fc';
   if (cs.skillTimer > 0) return false;
@@ -198,6 +199,17 @@ function useCompanionSkill(cId, cs, target, behavior) {
     });
     return hit;
   };
+  const directHit = (enemy, dmg, type = 'normal', stun = 0) => {
+    if (!enemy || enemy.dead) return false;
+    enemy.hp -= dmg;
+    enemy.flashTimer = 12;
+    if (stun) enemy.hitStun = Math.max(enemy.hitStun || 0, stun);
+    addDamageNumber(enemy.x, enemy.y, dmg, type);
+    addParticles(enemy.x, enemy.y, effectColor, 10);
+    if (enemy.hp <= 0) killEnemy(enemy);
+    return true;
+  };
+  const distanceToTarget = () => target ? Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) : Infinity;
 
   if (profile.skillId === 'holy_prayer') {
     const allies = [{ kind: 'player', hp: player.hp, maxHp: player.maxHp }];
@@ -228,7 +240,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
   if (!target) return false;
 
   if (profile.skillId === 'slime_guard') {
-    if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 72) return false;
+    if (distanceToTarget() > 72) return false;
     if (splashHit(cs.x, cs.y, 62, Math.floor(getCompanionAtk(cId) * 0.9), effectColor, 280)) {
       triggerShake(8);
       showToast(profile.skillName + '!');
@@ -240,18 +252,16 @@ function useCompanionSkill(cId, cs, target, behavior) {
   if (profile.skillId === 'arrow_barrage') {
     const targets = enemies.filter(e => !e.dead).sort((a, b) => dist(cs, a) - dist(cs, b)).slice(0, 2);
     if (targets.length === 0) return false;
+    let hit = false;
     targets.forEach(e => {
       if (dist(cs, e) > 150) return;
-      const dmg = Math.floor(getCompanionAtk(cId) * 1.15);
-      e.hp -= dmg;
-      e.flashTimer = 10;
-      addDamageNumber(e.x, e.y, dmg, 'normal');
-      addParticles(e.x, e.y, effectColor, 5);
-      if (e.hp <= 0) killEnemy(e);
+      hit = directHit(e, Math.floor(getCompanionAtk(cId) * 1.15), 'normal') || hit;
     });
-    showToast(profile.skillName + '!');
-    skillReady();
-    return true;
+    if (hit) {
+      showToast(profile.skillName + '!');
+      skillReady();
+      return true;
+    }
   }
 
   if (profile.skillId === 'bone_nova') {
@@ -263,7 +273,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
   }
 
   if (profile.skillId === 'war_cleave') {
-    if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 76) return false;
+    if (distanceToTarget() > 76) return false;
     if (splashHit(target.x, target.y, 48, Math.floor(getCompanionAtk(cId) * 1.2), effectColor)) {
       triggerShake(7);
       showToast(profile.skillName + '!');
@@ -273,20 +283,15 @@ function useCompanionSkill(cId, cs, target, behavior) {
   }
 
   if (profile.skillId === 'shadow_strike') {
-    if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 160) return false;
+    if (distanceToTarget() > 160) return false;
     const angle = Math.atan2(player.y - target.y, player.x - target.x);
     cs.x = target.x + Math.cos(angle) * 18;
     cs.y = target.y + Math.sin(angle) * 18;
-    const dmg = Math.floor(getCompanionAtk(cId) * 1.55);
-    target.hp -= dmg;
-    target.flashTimer = 12;
-    target.hitStun = Math.max(target.hitStun || 0, 180);
-    addDamageNumber(target.x, target.y, dmg, 'critical');
-    addParticles(target.x, target.y, effectColor, 10);
-    if (target.hp <= 0) killEnemy(target);
-    showToast(profile.skillName + '!');
-    skillReady();
-    return true;
+    if (directHit(target, Math.floor(getCompanionAtk(cId) * 1.55), 'critical', 180)) {
+      showToast(profile.skillName + '!');
+      skillReady();
+      return true;
+    }
   }
 
   if (profile.skillId === 'flame_burst') {
@@ -298,17 +303,12 @@ function useCompanionSkill(cId, cs, target, behavior) {
   }
 
   if (profile.skillId === 'frost_lock') {
-    if (Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) > 110) return false;
-    const dmg = Math.floor(getCompanionAtk(cId) * 1.05);
-    target.hp -= dmg;
-    target.flashTimer = 12;
-    target.hitStun = Math.max(target.hitStun || 0, 360);
-    addDamageNumber(target.x, target.y, dmg, 'magic');
-    addParticles(target.x, target.y, effectColor, 9);
-    if (target.hp <= 0) killEnemy(target);
-    showToast(profile.skillName + '!');
-    skillReady();
-    return true;
+    if (distanceToTarget() > 110) return false;
+    if (directHit(target, Math.floor(getCompanionAtk(cId) * 1.05), 'magic', 360)) {
+      showToast(profile.skillName + '!');
+      skillReady();
+      return true;
+    }
   }
 
   if (profile.skillId === 'dark_aegis') {
@@ -318,12 +318,8 @@ function useCompanionSkill(cId, cs, target, behavior) {
     player.invincible = Math.max(player.invincible, 500);
     addDamageNumber(player.x, player.y, healAmt, 'heal');
     addParticles(player.x, player.y, effectColor, 10);
-    if (target && Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) < 70) {
-      const dmg = Math.floor(getCompanionAtk(cId) * 1.15);
-      target.hp -= dmg;
-      target.flashTimer = 10;
-      addDamageNumber(target.x, target.y, dmg, 'normal');
-      if (target.hp <= 0) killEnemy(target);
+    if (target && distanceToTarget() < 70) {
+      directHit(target, Math.floor(getCompanionAtk(cId) * 1.15), 'normal');
     }
     showToast(profile.skillName + '!');
     updateHUD();
@@ -342,6 +338,7 @@ function updateCompanion(dt) {
     const cs = companionStates[cId];
     if (!cs) return;
     const profile = getCompanionProfile(cId);
+    if (!profile) return;
     const behavior = getCompanionModeBehavior(cId, cs, profile);
     const followPoint = getCompanionFollowPoint(cId, idx, profile, cs);
 

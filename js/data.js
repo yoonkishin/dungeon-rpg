@@ -119,24 +119,28 @@ function isValidCompanionId(cId) {
 }
 
 function getCompanionRoster(cId) {
-  return COMPANION_ROSTER[cId] || COMPANION_ROSTER[0];
+  return COMPANION_ROSTER[cId] || null;
 }
 
 function getCompanionClassProfile(classId) {
-  return COMPANION_CLASS_PROFILES[classId] || COMPANION_CLASS_PROFILES[101];
+  return COMPANION_CLASS_PROFILES[classId] || null;
 }
 
 function getCompanionName(cId) {
-  return getCompanionRoster(cId).name;
+  const roster = getCompanionRoster(cId);
+  return roster ? roster.name : '알 수 없는 동료';
 }
 
 function getCompanionColor(cId) {
-  return getCompanionRoster(cId).color;
+  const roster = getCompanionRoster(cId);
+  return roster ? roster.color : '#7f8c8d';
 }
 
 function getCompanionProfile(cId) {
   const roster = getCompanionRoster(cId);
+  if (!roster) return null;
   const classProfile = getCompanionClassProfile(roster.classId);
+  if (!classProfile) return null;
   return {
     ...classProfile,
     ...roster,
@@ -151,7 +155,7 @@ function normalizeCompanionAIMode(mode) {
 
 function getCompanionUnitType(profileOrId) {
   const profile = typeof profileOrId === 'number' ? getCompanionProfile(profileOrId) : profileOrId;
-  return profile && profile.unitType ? profile.unitType : 'Infantry';
+  return profile && profile.unitType ? profile.unitType : null;
 }
 
 function isCompanionSupportProfile(profileOrId) {
@@ -212,8 +216,10 @@ function cycleCompanionAIMode(cId) {
 
 function getActiveCompanionSynergy() {
   if (activeCompanions.length !== 2) return null;
-  const classIds = activeCompanions
-    .map(cId => getCompanionProfile(cId).classId)
+  const profiles = activeCompanions.map(cId => getCompanionProfile(cId)).filter(Boolean);
+  if (profiles.length !== 2) return null;
+  const classIds = profiles
+    .map(profile => profile.classId)
     .sort((a, b) => a - b);
   const key = classIds.join('-');
   return COMPANION_CLASS_SYNERGIES[key] || null;
@@ -225,6 +231,8 @@ function getHealingMultiplier() {
 }
 
 function initCompanionState(cId) {
+  const profile = getCompanionProfile(cId);
+  if (!profile) return false;
   const maxHp = getCompanionMaxHp(cId);
   companionStates[cId] = {
     x: player.x + (Math.random() - 0.5) * 40,
@@ -236,6 +244,7 @@ function initCompanionState(cId) {
     flashTimer: 0,
     aiMode: getCompanionAIMode(cId)
   };
+  return true;
 }
 
 function getCompanionMaxHp(cId) {
@@ -249,15 +258,18 @@ function getCompanionAtk(cId) {
 }
 
 function getCompanionAttackRange(cId) {
-  return getCompanionProfile(cId).attackRange;
+  const profile = getCompanionProfile(cId);
+  return profile ? profile.attackRange : 50;
 }
 
 function getCompanionPreferredRange(cId) {
-  return getCompanionProfile(cId).preferredRange;
+  const profile = getCompanionProfile(cId);
+  return profile ? profile.preferredRange : 34;
 }
 
 function getCompanionAttackCooldown(cId, state) {
   const profile = getCompanionProfile(cId);
+  if (!profile) return 1000;
   const synergy = getActiveCompanionSynergy();
   const mode = getCompanionAIMode(cId, state);
   let modeMult = 1;
