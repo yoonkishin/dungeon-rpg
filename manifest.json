@@ -1,7 +1,7 @@
 {
   "name": "던전 탐험 RPG",
   "short_name": "던전RPG",
-  "start_url": "./index.html",
+  "start_url": "./index.html?v=20260410-1623",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#000000",
