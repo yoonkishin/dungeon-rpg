@@ -62,6 +62,9 @@ function spawnDungeonEnemies() {
     enemies.push(e);
   }
 
+  // Dungeon elite enemy
+  const eliteSpawned = spawnDungeonElite(typeMax, difficulty);
+
   // Boss enemy
   if (info) {
     const boss = {
@@ -96,6 +99,12 @@ function spawnDungeonEnemies() {
       bossSkillType: info.bossSkillType,
       bossSkillName: info.bossSkillName,
       bossSkillColor: info.bossSkillColor,
+      phaseThresholds: [0.7, 0.35],
+      phaseTriggered: [false, false],
+      phaseRank: 0,
+      summonTypeIdx: typeMin,
+      eliteSupportTypeIdx: typeMax,
+      eliteSupportActive: eliteSpawned,
       typeIdx: Math.min(difficulty, ENEMY_TYPES.length - 1),
       isBoss: true,
     };
@@ -133,7 +142,59 @@ function createEnemy(tx, ty, t, typeIdx) {
     attackWindup: 0,
     typeIdx: typeIdx,
     isBoss: false,
+    isElite: false,
   };
+}
+
+function createEliteEnemy(tx, ty, typeIdx, difficulty, titlePrefix = '정예') {
+  const base = createEnemy(tx, ty, ENEMY_TYPES[typeIdx], typeIdx);
+  base.isElite = true;
+  base.name = titlePrefix + ' ' + base.name;
+  base.w += 4;
+  base.h += 4;
+  base.hp = Math.floor(base.hp * 1.8) + difficulty * 30;
+  base.maxHp = base.hp;
+  base.atk += 8 + difficulty * 4;
+  base.speed += 0.08;
+  base.attackCooldown = Math.max(780, base.attackCooldown - 180);
+  base.xp = Math.floor(base.xp * 2.2);
+  base.gold = Math.floor(base.gold * 2);
+  return base;
+}
+
+function spawnDungeonElite(typeIdx, difficulty) {
+  for (let tries = 0; tries < 12; tries++) {
+    const tx = 4 + Math.random() * 12;
+    const ty = 4 + Math.random() * 7;
+    const gx = Math.floor(tx), gy = Math.floor(ty);
+    const tile = maps.dungeon[gy] && maps.dungeon[gy][gx];
+    if (tile === TILE_WALL || tile === TILE_EXIT) continue;
+    enemies.push(createEliteEnemy(tx, ty, typeIdx, difficulty));
+    return true;
+  }
+  return false;
+}
+
+function spawnBossReinforcements(boss, count, typeIdx) {
+  const difficulty = currentDungeonId >= 0 ? currentDungeonId : 0;
+  for (let i = 0; i < count; i++) {
+    for (let tries = 0; tries < 10; tries++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distTiles = 1.8 + Math.random() * 2.4;
+      const tx = (boss.x / TILE) + Math.cos(angle) * distTiles;
+      const ty = (boss.y / TILE) + Math.sin(angle) * distTiles;
+      const gx = Math.floor(tx), gy = Math.floor(ty);
+      const tile = maps.dungeon[gy] && maps.dungeon[gy][gx];
+      if (tile === TILE_WALL || tile === TILE_EXIT) continue;
+      const add = createEnemy(tx, ty, ENEMY_TYPES[typeIdx], typeIdx);
+      add.hp += difficulty * 12;
+      add.maxHp = add.hp;
+      add.atk += difficulty * 3;
+      enemies.push(add);
+      addParticles(add.x, add.y, boss.bossSkillColor || boss.color, 8);
+      break;
+    }
+  }
 }
 
 function spawnGroup(typeIdx, count, yRange, xRange, id) {

@@ -128,6 +128,7 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 - 미니맵 컨테이너는 HUD 우측 상단 슬롯(top 56px, right 12px)으로 감지됐다고 표시 상태는 localStorage에 저장된다.
 - HUD quick action 버튼은 6개 감지됐다: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - 수련의 방 패널과 승급 패널 진입점이 감지됐다.
+- 던전 정예 몬스터 / 보스 페이즈 기믹은 아직 감지되지 않았다.
 - pre-push 훅은 `scripts/check-boot.js`를 실행해 부팅 스모크 테스트를 강제한다.
 - pre-commit 훅은 `scripts/sync-doc-state.js --write`를 실행해 문서 스냅샷을 자동 갱신한다.
 - pre-push 훅은 문서 스냅샷 sync 여부도 검사한다.

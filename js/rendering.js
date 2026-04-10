@@ -198,6 +198,12 @@ function drawEnemy(e) {
   ctx.fillStyle = color;
   ctx.fillRect(sx - e.w/2, sy - e.h/2, e.w, e.h);
 
+  if (e.isElite) {
+    ctx.strokeStyle = 'rgba(241, 196, 15, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx - e.w/2 - 1, sy - e.h/2 - 1, e.w + 2, e.h + 2);
+  }
+
   ctx.fillStyle = '#fff';
   ctx.fillRect(sx - 5, sy - e.h/2 + 4, 4, 4);
   ctx.fillRect(sx + 1, sy - e.h/2 + 4, 4, 4);
@@ -211,18 +217,18 @@ function drawEnemy(e) {
   ctx.fillRect(sx + 1, sy + e.h/2 - 5, e.w/2 - 1, 5 - legBob);
 
   // Name tag (above HP bar)
-  const namePrefix = e.isBoss ? '⭐ ' : '';
+  const namePrefix = e.isBoss ? '⭐ ' : (e.isElite ? '◆ ' : '');
   const nameText = namePrefix + e.name;
   const nameW = nameText.length * (e.isBoss ? 9 : 8) + 8;
-  ctx.fillStyle = e.isBoss ? 'rgba(80,60,0,0.8)' : 'rgba(0,0,0,0.6)';
+  ctx.fillStyle = e.isBoss ? 'rgba(80,60,0,0.8)' : (e.isElite ? 'rgba(80,60,0,0.72)' : 'rgba(0,0,0,0.6)');
   ctx.fillRect(sx - nameW/2, sy - e.h/2 - 26, nameW, 11);
-  ctx.fillStyle = e.isBoss ? '#f1c40f' : '#fff';
+  ctx.fillStyle = e.isBoss ? '#f1c40f' : (e.isElite ? '#f6d365' : '#fff');
   ctx.font = e.isBoss ? 'bold 10px sans-serif' : '9px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(nameText, sx, sy - e.h/2 - 17);
 
   // HP bar (below name, above enemy)
-  drawHpBar(sx, sy - e.h/2 - 8, e.hp, e.maxHp, e.isBoss ? 48 : 32, '#e74c3c');
+  drawHpBar(sx, sy - e.h/2 - 8, e.hp, e.maxHp, e.isBoss ? 48 : (e.isElite ? 38 : 32), '#e74c3c');
 
   if (e.attackWindup > 0) {
     const windupPct = Math.min(1, e.attackWindup / (e.isBoss ? 420 : 240));
@@ -233,7 +239,7 @@ function drawEnemy(e) {
     ctx.stroke();
   }
 
-  // Boss crown
+  // Boss crown / elite marker
   if (e.isBoss) {
     ctx.fillStyle = '#f1c40f';
     ctx.beginPath();
@@ -244,6 +250,15 @@ function drawEnemy(e) {
     ctx.lineTo(sx + 2, sy - e.h/2 - 4);
     ctx.lineTo(sx + 6, sy - e.h/2 - 8);
     ctx.lineTo(sx + 8, sy - e.h/2 - 2);
+    ctx.closePath();
+    ctx.fill();
+  } else if (e.isElite) {
+    ctx.fillStyle = '#f1c40f';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - e.h/2 - 10);
+    ctx.lineTo(sx + 5, sy - e.h/2 - 5);
+    ctx.lineTo(sx, sy - e.h/2);
+    ctx.lineTo(sx - 5, sy - e.h/2 - 5);
     ctx.closePath();
     ctx.fill();
   }

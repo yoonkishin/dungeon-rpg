@@ -26,6 +26,9 @@ function requireMatch(text, regex, label) {
 const dataJs = read('js/data.js');
 const saveJs = read('js/save.js');
 const stateJs = read('js/state.js');
+const enemiesJs = read('js/enemies.js');
+const combatJs = read('js/combat.js');
+const mainJs = read('js/main.js');
 const indexHtml = read('index.html');
 const stylesCss = read('css/styles.css');
 const uiControlsJs = read('js/ui-controls.js');
@@ -49,6 +52,7 @@ const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIMo
 const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
 const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
 const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiControlsJs);
+const dungeonBossGimmickDetected = /spawnDungeonElite\(/.test(enemiesJs) && /triggerBossPhaseGimmick\(/.test(combatJs) && /e\.phaseThresholds/.test(enemiesJs) && /triggerBossPhaseGimmick\(e\)/.test(mainJs);
 const bootHook = /node scripts\/check-boot\.js/.test(prePush);
 const docSyncHook = /node scripts\/sync-doc-state\.js --write/.test(preCommit);
 const docSyncGuard = /node scripts\/sync-doc-state\.js --check/.test(prePush);
@@ -68,6 +72,9 @@ const snapshotBullets = [
   trainingRoomDetected
     ? '- 수련의 방 패널과 승급 패널 진입점이 감지됐다.'
     : '- 수련의 방 패널은 아직 감지되지 않았다.',
+  dungeonBossGimmickDetected
+    ? '- 던전 정예 몬스터와 보스 페이즈 기믹 로직이 감지됐다.'
+    : '- 던전 정예 몬스터 / 보스 페이즈 기믹은 아직 감지되지 않았다.',
   bootHook
     ? '- pre-push 훅은 `scripts/check-boot.js`를 실행해 부팅 스모크 테스트를 강제한다.'
     : '- pre-push 훅에서 부팅 스모크 테스트를 감지하지 못했다.',
@@ -119,6 +126,9 @@ const implementedStateDoc = [
   trainingRoomDetected
     ? '- [x] Training room / promotion panel detected.'
     : '- [ ] Training room / promotion panel was not detected.',
+  dungeonBossGimmickDetected
+    ? '- [x] Dungeon elite enemies and boss phase gimmicks detected.'
+    : '- [ ] Dungeon elite enemies / boss phase gimmicks were not detected.',
   '',
   '## Automation',
   '',
@@ -139,6 +149,9 @@ const implementedStateDoc = [
   '- `js/data.js`',
   '- `js/state.js`',
   '- `js/save.js`',
+  '- `js/enemies.js`',
+  '- `js/combat.js`',
+  '- `js/main.js`',
   '- `js/ui-controls.js`',
   '- `js/ui-panels.js`',
   '- `.githooks/pre-commit`',

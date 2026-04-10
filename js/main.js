@@ -280,6 +280,7 @@ function update(dt) {
     if (e.flashTimer > 0) e.flashTimer--;
     if (e.attackTimer > 0) e.attackTimer -= dt;
     if (e.isBoss && e.specialTimer > 0) e.specialTimer -= dt;
+    if (e.isBoss && typeof triggerBossPhaseGimmick === 'function') triggerBossPhaseGimmick(e);
 
     e.frameTimer += dt;
     if (e.frameTimer > 300) { e.frameTimer = 0; e.frame = 1 - e.frame; }

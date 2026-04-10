@@ -21,6 +21,7 @@
 - [x] Minimap visibility persistence detected via `localStorage`.
 - [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - [x] Training room / promotion panel detected.
+- [ ] Dungeon elite enemies / boss phase gimmicks were not detected.
 
 ## Automation
 
@@ -35,6 +36,9 @@
 - `js/data.js`
 - `js/state.js`
 - `js/save.js`
+- `js/enemies.js`
+- `js/combat.js`
+- `js/main.js`
 - `js/ui-controls.js`
 - `js/ui-panels.js`
 - `.githooks/pre-commit`
