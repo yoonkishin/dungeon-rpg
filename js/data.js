@@ -45,65 +45,6 @@ const COMPANION_CLASS_SYNERGIES = {
   '109-110': { name:'심연 공명', desc:'마법 동료 피해 +4', companionAtkBonus:4 },
 };
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let currentMap = 'town';
-let currentDungeonId = -1;
-let maps = {
-  town: buildTown(),
-  field: buildField(),
-  dungeon: buildDungeon()
-};
-
-function getMap() { return maps[currentMap]; }
-function mapW() {
-  if (currentMap === 'town') return OW_W;
-  if (currentMap === 'field') return FIELD_W;
-  return DG_W;
-}
-function mapH() {
-  if (currentMap === 'town') return OW_H;
-  if (currentMap === 'field') return FIELD_H;
-  return DG_H;
-}
-
-// ─── Player ───────────────────────────────────────────────────────────────────
-const player = {
-  x: 10 * TILE + TILE/2,
-  y: 15 * TILE + TILE/2,
-  w: 28, h: 28,
-  speed: 1.5,
-  hp: 100, maxHp: 100,
-  mp: 50, maxMp: 50,
-  level: 1,
-  xp: 0, xpNext: 30,
-  gold: 5000,
-  tier: 1,
-  atk: 15,
-  def: 3,
-  dir: 0,
-  frame: 0,
-  frameTimer: 0,
-  attackTimer: 0,
-  attackCooldown: 600,
-  isAttacking: false,
-  attackAngle: 0,
-  attackArc: 0,
-  invincible: 0,
-  dead: false,
-  vx: 0, vy: 0,
-  critChance: 10,
-};
-
-// ─── Dungeon & Companion State ────────────────────────────────────────────────
-let dungeonsCleared = [];
-let companions = [];
-let activeCompanions = [];  // array of companion IDs, max 2
-let deadCompanions = [];    // IDs of dead companions
-
-// Companion runtime states (keyed by companion ID)
-let companionStates = {};
-let companionAIModes = {};
-
 const COMPANION_AI_MODES = {
   aggressive: { key:'aggressive', label:'공격적', color:'#e74c3c' },
   defensive: { key:'defensive', label:'방어적', color:'#3498db' },
@@ -280,10 +221,6 @@ function getCompanionAttackCooldown(cId, state) {
 }
 
 
-// Stats tracking
-let totalGoldEarned = 0;
-let totalEnemiesKilled = 0;
-
 // ─── Skill System ─────────────────────────────────────────────────────────────
 const SKILLS = [
   { id:'fireball',   name:'파이어볼',   icon:'🔥', mpCost:10, cooldown:3000, damage:25, range:120, type:'projectile', desc:'전방에 화염구를 발사하여 적에게 25 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
@@ -327,9 +264,6 @@ const skillPages = [
   ['poison', 'sprint', 'thunder', 'drain'],
   [null, null, null, null],
 ];
-let currentSkillPage = 0;
-const skillCooldowns = {};
-const skillBuffs = {};
 
 function getSkillById(id) {
   return SKILLS.find(s => s.id === id) || null;
@@ -375,10 +309,7 @@ const DROP_TABLE = {
   4: [{ itemId:'axe1', chance:0.10 }, { itemId:'iron1', chance:0.08 }, { itemId:'robe1', chance:0.06 }, { itemId:'potion_hp', chance:0.15 }, { itemId:'helmet2', chance:0.05 }, { itemId:'boots2', chance:0.05 }, { itemId:'shield2', chance:0.04 }, { itemId:'event1', chance:0.02 }],
 };
 
-const inventory = [];
-const equipped = { weapon: null, armor: null, helmet: null, boots: null, accessory1: null, accessory2: null, shield: null, event: null };
 const EQUIP_SLOTS = ['weapon','armor','helmet','boots','accessory1','accessory2','shield','event'];
-let droppedItems = [];
 
 // Shop NPCs
 const NPCS = [
@@ -399,8 +330,6 @@ const TOWN_NPCS = [
   { id:'temple', name:'⛪ 신전', x:5*40+20, y:10*40+20, color:'#ffeaa7', hat:'#fdcb6e', isTemple:true,
     dialogue:['쓰러진 동료들을 이곳에서 부활시킬 수 있습니다.'] },
 ];
-let npcDialogueIdx = {};
-
 const MAIN_QUESTS = [
   {
     id: 'chief_intro',
@@ -447,17 +376,12 @@ const MAIN_QUESTS = [
     reward: { gold: 250, items: ['amulet1'] }
   }
 ];
-let mainQuestIndex = 0;
-let completedMainQuests = [];
-
 const TOWN_UPGRADES = {
   forge: { id:'forge', icon:'⚔️', name:'훈련장', maxLevel:5, baseCost:120, costStep:120, bonusText:'+2 공격력 / +1 동료 공격' },
   guard: { id:'guard', icon:'🛡️', name:'방비대', maxLevel:5, baseCost:140, costStep:140, bonusText:'+1 방어력 / +10 동료 체력' },
   trade: { id:'trade', icon:'💰', name:'상단 계약', maxLevel:5, baseCost:160, costStep:160, bonusText:'+12% 골드 획득' },
   alchemy: { id:'alchemy', icon:'🧪', name:'연금 공방', maxLevel:5, baseCost:180, costStep:180, bonusText:'+15% 포션 효율 / 부활비 할인' },
 };
-let villageUpgrades = { forge: 0, guard: 0, trade: 0, alchemy: 0 };
-
 function getVillageUpgradeLevel(id) {
   return villageUpgrades[id] || 0;
 }
@@ -542,15 +466,6 @@ const SUBQUESTS = [
     reward: { gold: 260, items: ['shield1'] }
   }
 ];
-let acceptedSubquests = [];
-let completedSubquests = [];
-let subquestProgress = {};
-let questRealtimeNoticeState = {
-  mainReadyQuestId: null,
-  subReadyQuestIds: {},
-  snapshot: ''
-};
-
 function getMainQuest() {
   return MAIN_QUESTS[mainQuestIndex] || null;
 }
@@ -928,22 +843,10 @@ function playerSpeed() {
   return s;
 }
 
-let pickupTextTimer = 0;
-let pickupTextContent = '';
 function showPickupText(name) {
   pickupTextContent = name + ' 획득!';
   pickupTextTimer = 90;
 }
 
-let enemies = [];
-let particles = [];
-let damageNumbers = [];
-let enemyEffects = [];
-let hudDirty = true;
-let skillSlotsDirty = true;
-let screenShake = { x:0, y:0, timer:0 };
-let dayNight = 0;
-let dayNightDir = 1;
-let cameraX = 0, cameraY = 0;
 
 // ─── Enemy Spawning ──────────────────────────────────────────────────────────

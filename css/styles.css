@@ -1747,14 +1747,15 @@ canvas {
 
 /* ── Companion grid ── */
 #companion-panel {
-  touch-action: none;
+  touch-action: pan-y;
 }
 #companion-panel .panel-scroll {
-  overflow: hidden;
-  touch-action: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
 }
 #companion-content {
-  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1806,13 +1807,13 @@ canvas {
   align-items: center;
 }
 .companion-grid {
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
+  min-height: auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   align-content: start;
-  grid-auto-rows: minmax(0, 1fr);
+  grid-auto-rows: auto;
 }
 .companion-card {
   display: flex;
