@@ -2038,6 +2038,30 @@ canvas {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.companion-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.companion-info-chip {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #cbd5e1;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+}
+.companion-info-chip.ai-default {
+  color: #8fd3ff;
+}
+.companion-card-desc {
+  color: #aab4c5;
+  font-size: 8px;
+  line-height: 1.35;
+  min-height: 22px;
+}
 .companion-status-badge {
   flex-shrink: 0;
   padding: 2px 6px;
@@ -2061,6 +2085,7 @@ canvas {
   gap: 8px;
   color: #cbd5e1;
   font-size: 8px;
+  flex-wrap: wrap;
 }
 .companion-hp-bar {
   height: 4px;

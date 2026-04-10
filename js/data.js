@@ -51,6 +51,19 @@ const COMPANION_AI_MODES = {
   support: { key:'support', label:'서포트', color:'#2ecc71' },
 };
 
+const COMPANION_UNIT_TYPE_LABELS = {
+  Infantry: '근접 전열',
+  FlyingKnight: '공중 기동',
+  Cavalry: '돌격 기병',
+  NavalUnit: '빙결 수호',
+  Lancer: '중거리 창격',
+  Archer: '원거리 사격',
+  Monk: '전투 지원',
+  Priest: '회복 지원',
+  Mage: '광역 마법',
+  DarkPriest: '약화 마도',
+};
+
 function getTotalCompanionCount() {
   return Object.keys(COMPANION_ROSTER).length;
 }
@@ -97,6 +110,11 @@ function normalizeCompanionAIMode(mode) {
 function getCompanionUnitType(profileOrId) {
   const profile = typeof profileOrId === 'number' ? getCompanionProfile(profileOrId) : profileOrId;
   return profile && profile.unitType ? profile.unitType : null;
+}
+
+function getCompanionUnitTypeLabel(profileOrId) {
+  const unitType = getCompanionUnitType(profileOrId);
+  return unitType ? (COMPANION_UNIT_TYPE_LABELS[unitType] || unitType) : '미정';
 }
 
 function isCompanionSupportProfile(profileOrId) {

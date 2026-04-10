@@ -640,6 +640,15 @@ function getCompanionActionState(cId, isActive, isDead) {
   return { label: '선택', className: 'activate', action: 'activate', disabled: false };
 }
 
+function buildCompanionIdentityChips(profile, aiMeta, defaultAiMeta) {
+  return '<div class="companion-chip-row">' +
+    '<span class="companion-info-chip">병종 ' + profile.className + '</span>' +
+    '<span class="companion-info-chip">타입 ' + getCompanionUnitTypeLabel(profile) + '</span>' +
+    '<span class="companion-info-chip ai-default">기본 ' + defaultAiMeta.label + '</span>' +
+    '<span class="companion-info-chip ai-current" style="border-color:' + aiMeta.color + '44;color:' + aiMeta.color + ';">운용 ' + aiMeta.label + '</span>' +
+  '</div>';
+}
+
 function buildCompanionCard(cId) {
   const profile = getCompanionProfile(cId);
   const info = getCompanionRoster(cId);
@@ -651,6 +660,8 @@ function buildCompanionCard(cId) {
   const hpPct = Math.max(0, Math.min(100, currentHp / maxHp * 100));
   const aiMode = getCompanionAIMode(cId, companionStates[cId]);
   const aiMeta = COMPANION_AI_MODES[aiMode] || COMPANION_AI_MODES.aggressive;
+  const defaultAiMode = getDefaultCompanionAIMode(cId);
+  const defaultAiMeta = COMPANION_AI_MODES[defaultAiMode] || COMPANION_AI_MODES.aggressive;
   const actionState = getCompanionActionState(cId, isActive, isDead);
   const statusText = isDead ? '사망' : isActive ? '출전 중' : '대기';
   const statusClass = isDead ? 'dead' : isActive ? 'active' : '';
@@ -663,17 +674,20 @@ function buildCompanionCard(cId) {
           '<div class="companion-card-name">' + info.name + '</div>' +
           '<div class="companion-status-badge ' + statusClass + '">' + statusText + '</div>' +
         '</div>' +
-        '<div class="companion-card-role">' + profile.className + ' · ' + profile.roleLabel + '</div>' +
-        '<div class="companion-card-skill">' + profile.skillName + '</div>' +
+        '<div class="companion-card-role">' + profile.roleLabel + '</div>' +
+        '<div class="companion-card-skill">대표 스킬 · ' + profile.skillName + '</div>' +
       '</div>' +
     '</div>' +
+    buildCompanionIdentityChips(profile, aiMeta, defaultAiMeta) +
+    '<div class="companion-card-desc">' + (info.desc || '') + '</div>' +
     '<div class="companion-card-stats">' +
       '<span>ATK ' + getCompanionAtk(cId) + '</span>' +
       '<span>HP ' + Math.floor(currentHp) + '/' + maxHp + '</span>' +
+      '<span>사거리 ' + profile.attackRange + '</span>' +
     '</div>' +
     '<div class="companion-hp-bar"><div class="companion-hp-fill" style="width:' + hpPct + '%;"></div></div>' +
     '<div class="companion-card-actions">' +
-      '<button class="comp-ai-btn companion-mini-btn" data-cid="' + cId + '" style="background:' + aiMeta.color + ';">AI: ' + aiMeta.label + '</button>' +
+      '<button class="comp-ai-btn companion-mini-btn" data-cid="' + cId + '" style="background:' + aiMeta.color + ';">AI 변경 · ' + aiMeta.label + '</button>' +
       '<button class="comp-btn companion-mini-btn ' + actionState.className + '" data-cid="' + cId + '" data-action="' + actionState.action + '"' + (actionState.disabled ? ' disabled' : '') + '>' + actionState.label + '</button>' +
     '</div>' +
     (isDead ? '<div class="companion-cost-note">신전에서 부활 가능</div>' : '') +
