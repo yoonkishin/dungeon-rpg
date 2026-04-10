@@ -3,6 +3,7 @@
 // ─── Map / World State ───────────────────────────────────────────────────────
 let currentMap = 'town';
 let currentDungeonId = -1;
+let currentEmblemTrial = null;
 let maps = {
   town: buildTown(),
   field: buildField(),

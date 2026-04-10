@@ -33,6 +33,7 @@ function autoSave() {
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
+      currentEmblemTrial: currentEmblemTrial ? { ...currentEmblemTrial } : null,
       mainQuestIndex: mainQuestIndex,
       completedMainQuests: completedMainQuests.slice(),
       villageUpgrades: { ...villageUpgrades },
@@ -145,6 +146,9 @@ function loadSave() {
     totalGoldEarned = data.totalGoldEarned || 0;
     totalEnemiesKilled = data.totalEnemiesKilled || 0;
     currentDungeonId = data.currentDungeonId !== undefined ? data.currentDungeonId : -1;
+    currentEmblemTrial = data.currentEmblemTrial && data.currentEmblemTrial.emblemId && getEmblemDef(data.currentEmblemTrial.emblemId)
+      ? { emblemId: data.currentEmblemTrial.emblemId }
+      : null;
     mainQuestIndex = data.mainQuestIndex !== undefined ? data.mainQuestIndex : 0;
     completedMainQuests = Array.isArray(data.completedMainQuests) ? data.completedMainQuests.slice() : [];
     if (data.villageUpgrades && typeof data.villageUpgrades === 'object') {

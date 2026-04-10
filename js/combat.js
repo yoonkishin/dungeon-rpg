@@ -404,6 +404,21 @@ function checkDungeonClear() {
   if (alive.length === 0) {
     dungeonCleared = true;
     showDungeonClearBanner();
+
+    if (isEmblemTrialActive()) {
+      const emblem = getCurrentEmblemTrialDef();
+      if (emblem && grantPlayerEmblem(emblem.id)) {
+        setTimeout(() => {
+          showToast(emblem.name + ' 획득!');
+          addParticles(player.x, player.y, '#d6b3ff', 24);
+        }, 500);
+      }
+      setTimeout(() => {
+        if (typeof exitDungeon === 'function') exitDungeon();
+      }, 1400);
+      return;
+    }
+
     if (currentDungeonId >= 0 && !dungeonsCleared.includes(currentDungeonId)) {
       dungeonsCleared.push(currentDungeonId);
       const info = DUNGEON_INFO[currentDungeonId];

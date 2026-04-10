@@ -40,6 +40,55 @@ function spawnFieldGroup(typeIdx, count, yRange, xRange) {
 }
 
 function spawnDungeonEnemies() {
+  if (typeof isEmblemTrialActive === 'function' && isEmblemTrialActive()) {
+    const emblem = getCurrentEmblemTrialDef();
+    const trialProfile = emblem ? getEmblemTrialEnemyProfile(emblem.id) : null;
+    if (trialProfile) {
+      enemies.push({
+        x: 10 * TILE + TILE/2,
+        y: 6 * TILE + TILE/2,
+        w: 34, h: 34,
+        hp: trialProfile.hp,
+        maxHp: trialProfile.hp,
+        atk: trialProfile.atk,
+        speed: trialProfile.speed,
+        xp: trialProfile.xp,
+        gold: trialProfile.gold,
+        color: trialProfile.color,
+        name: trialProfile.name,
+        aggroRange: 320,
+        attackRange: 42,
+        state: 'wander',
+        wanderTimer: Math.random() * 180,
+        wanderDx: 0, wanderDy: 0,
+        attackTimer: 0,
+        attackCooldown: 980,
+        flashTimer: 0,
+        dead: false,
+        frame: 0,
+        frameTimer: 0,
+        hitStun: 0,
+        knockbackVx: 0,
+        knockbackVy: 0,
+        attackWindup: 0,
+        specialTimer: 1200,
+        specialCooldown: 2800,
+        bossSkillType: trialProfile.bossSkillType,
+        bossSkillName: trialProfile.bossSkillName,
+        bossSkillColor: trialProfile.bossSkillColor,
+        phaseThresholds: [0.55],
+        phaseTriggered: [false],
+        phaseRank: 0,
+        summonTypeIdx: 0,
+        eliteSupportTypeIdx: 0,
+        typeIdx: 0,
+        isBoss: true,
+        isTrialBoss: true,
+      });
+    }
+    return;
+  }
+
   const info = currentDungeonId >= 0 ? DUNGEON_INFO[currentDungeonId] : null;
   const difficulty = currentDungeonId >= 0 ? currentDungeonId : 2;
 

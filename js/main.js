@@ -391,7 +391,8 @@ if (currentMap === 'town') { showAreaLabel('마을'); AudioSystem.startBgm('town
 else if (currentMap === 'field') { showAreaLabel('필드'); AudioSystem.startBgm('field'); }
 else if (currentMap === 'dungeon') {
   const info = currentDungeonId >= 0 ? DUNGEON_INFO[currentDungeonId] : null;
-  showAreaLabel(info ? info.name : '던전');
+  const emblem = typeof getCurrentEmblemTrialDef === 'function' ? getCurrentEmblemTrialDef() : null;
+  showAreaLabel(emblem ? (emblem.name + ' 시험') : (info ? info.name : '던전'));
   AudioSystem.startBgm('dungeon');
 }
 

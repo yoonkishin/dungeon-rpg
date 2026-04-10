@@ -518,6 +518,25 @@ function getOriginalLineLabel(lineId) {
   return ORIGINAL_LINE_LABELS[lineId] || lineId;
 }
 
+function isEmblemTrialActive() {
+  return !!(currentEmblemTrial && currentEmblemTrial.emblemId && getEmblemDef(currentEmblemTrial.emblemId));
+}
+
+function getCurrentEmblemTrialDef() {
+  return isEmblemTrialActive() ? getEmblemDef(currentEmblemTrial.emblemId) : null;
+}
+
+function startEmblemTrial(id) {
+  if (!canPlayerEnterEmblemTrial(id)) return false;
+  currentEmblemTrial = { emblemId: id };
+  if (typeof enterEmblemTrial === 'function') enterEmblemTrial(id);
+  return true;
+}
+
+function clearEmblemTrial() {
+  currentEmblemTrial = null;
+}
+
 function getEmblemDef(id) {
   return EMBLEM_DEFS[id] || null;
 }
@@ -612,6 +631,23 @@ function grantPlayerEmblem(id) {
   ensurePlayerEmblemBonusesApplied();
   autoSave();
   return true;
+}
+
+function getEmblemTrialEnemyProfile(id) {
+  const emblem = getEmblemDef(id);
+  if (!emblem) return null;
+  return {
+    name: emblem.name.replace(' 문장', '') + ' 수호자',
+    color: emblem.type === EMBLEM_TYPES.master ? '#f1c40f' : '#a29bfe',
+    hp: Math.max(220, emblem.requiredAttack + emblem.requiredDefense - 180),
+    atk: Math.max(18, Math.floor((emblem.requiredAttack + emblem.requiredDefense) / 28)),
+    speed: 0.72,
+    xp: 90,
+    gold: 40,
+    bossSkillType: emblem.targetLine === 'infantry' || emblem.targetLine === 'lancer' ? 'slam' : (emblem.targetLine === 'mage' || emblem.targetLine === 'darkPriest' || emblem.targetLine === 'priest' || emblem.targetLine === 'monk' ? 'nova' : 'bolt'),
+    bossSkillName: emblem.name + ' 시험',
+    bossSkillColor: emblem.type === EMBLEM_TYPES.master ? '#f1c40f' : '#c56cf0',
+  };
 }
 
 function fusePlayerMasterEmblem(id) {

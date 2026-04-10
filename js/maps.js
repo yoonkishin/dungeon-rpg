@@ -286,7 +286,19 @@ function buildFinalDungeon() {
   return m;
 }
 
+function buildEmblemTrialDungeon() {
+  const m = createDungeonGrid();
+  carveRect(m, 6, 2, 13, 12, TILE_FLOOR);
+  carveRect(m, 8, 9, 11, 12, TILE_FLOOR);
+  carveRect(m, 8, 2, 11, 4, TILE_FLOOR);
+  [[5,7],[5,12],[8,7],[8,12]].forEach(([y,x]) => { m[y][x] = TILE_STONE; });
+  m[2][9] = TILE_EXIT;
+  m[2][10] = TILE_EXIT;
+  return m;
+}
+
 function buildDungeon() {
+  if (typeof isEmblemTrialActive === 'function' && isEmblemTrialActive()) return buildEmblemTrialDungeon();
   const id = (typeof currentDungeonId !== 'undefined' && currentDungeonId >= 0) ? currentDungeonId : 0;
   switch (id) {
     case 0: return buildOpenDungeon();

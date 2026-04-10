@@ -125,6 +125,7 @@ function checkPortal() {
 }
 
 function enterField() {
+  clearEmblemTrial();
   currentMap = 'field';
   player.x = 40 * TILE;
   player.y = (FIELD_H - 3) * TILE + TILE/2;
@@ -137,6 +138,7 @@ function enterField() {
 }
 
 function enterTown() {
+  clearEmblemTrial();
   currentMap = 'town';
   player.x = 20 * TILE + TILE/2;
   player.y = 15 * TILE + TILE/2;
@@ -149,6 +151,7 @@ function enterTown() {
 }
 
 function enterDungeon(dungeonId) {
+  clearEmblemTrial();
   currentDungeonId = dungeonId;
   dungeonCleared = false;
   currentMap = 'dungeon';
@@ -175,7 +178,41 @@ function enterDungeon(dungeonId) {
   updateHUD();
 }
 
+function enterEmblemTrial(emblemId) {
+  currentDungeonId = -1;
+  currentMap = 'dungeon';
+  dungeonCleared = false;
+  maps.dungeon = buildDungeon();
+  player.x = 10 * TILE + TILE/2;
+  player.y = 12 * TILE + TILE/2;
+  spawnEnemies();
+  const emblem = getEmblemDef(emblemId);
+  showAreaLabel(emblem ? (emblem.name + ' 시험') : '문장 시험');
+  if (typeof showToast === 'function') {
+    setTimeout(() => showToast('수호자를 쓰러뜨리면 문장을 얻는다'), 200);
+  }
+  AudioSystem.sfx.portal();
+  AudioSystem.startBgm('dungeon');
+  autoSave();
+  updateHUD();
+}
+
 function exitDungeon() {
+  if (isEmblemTrialActive()) {
+    clearEmblemTrial();
+    currentDungeonId = -1;
+    currentMap = 'town';
+    player.x = 6 * TILE + TILE/2;
+    player.y = 13 * TILE + TILE/2;
+    AudioSystem.sfx.portal();
+    AudioSystem.startBgm('town');
+    spawnEnemies();
+    showAreaLabel('마을');
+    autoSave();
+    updateHUD();
+    return;
+  }
+
   const info = currentDungeonId >= 0 ? DUNGEON_INFO[currentDungeonId] : null;
   currentMap = 'field';
   if (info) {

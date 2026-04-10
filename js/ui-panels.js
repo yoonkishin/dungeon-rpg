@@ -1254,7 +1254,7 @@ function buildEmblemRoomSummaryCard() {
   const levelCap = getPlayerLevelCap();
   return '<div class="quest-card primary training-summary-card">' +
     '<div class="quest-focus-head"><div class="quest-focus-title">문장의방 진입 현황</div><span class="quest-chip active">원본형 성장 루프</span></div>' +
-    '<div class="quest-focus-text">7단 Lv35와 충분한 공격력/방어력을 만족하면 병종별 기본 문장 시험에 도전할 수 있다.</div>' +
+    '<div class="quest-focus-text">7단 Lv35와 충분한 공격력/방어력을 만족하면 병종별 기본 문장 시험 전투에 도전할 수 있다.</div>' +
     '<div class="training-summary-grid">' +
       '<div class="training-summary-item"><span class="training-summary-label">현재 라인</span><span class="training-summary-value">' + lineLabel + '</span></div>' +
       '<div class="training-summary-item"><span class="training-summary-label">현재 단수</span><span class="training-summary-value">' + (player.tier || 1) + '단</span></div>' +
@@ -1280,7 +1280,7 @@ function buildUnitEmblemCard(emblem) {
   if (emblem.bonus.maxMp) bonusRows.push('MP +' + emblem.bonus.maxMp);
   if (emblem.bonus.speed) bonusRows.push('이속 +' + emblem.bonus.speed.toFixed(2));
   if (emblem.bonus.critChance) bonusRows.push('치명 +' + emblem.bonus.critChance + '%');
-  const actionLabel = status.owned ? '보유 완료' : (status.canEnter ? '시험 통과 처리' : '조건 부족');
+  const actionLabel = status.owned ? '보유 완료' : (status.canEnter ? '시험 전투 시작' : '조건 부족');
   return '<div class="quest-card training-promo-card">' +
     '<div class="quest-focus-head"><div class="quest-focus-title">' + emblem.name + '</div><span class="quest-chip ' + (status.owned ? 'done' : (status.canEnter ? 'done' : 'active')) + '">' + (status.owned ? '보유 중' : (status.canEnter ? '도전 가능' : '잠김')) + '</span></div>' +
     '<div class="quest-desc">대상 라인: ' + getOriginalLineLabel(emblem.targetLine) + '</div>' +
@@ -1319,15 +1319,11 @@ function bindEmblemRoomActions(content) {
     bindTap(btn, () => {
       const emblemId = btn.getAttribute('data-emblem-id');
       const emblem = getEmblemDef(emblemId);
-      if (!grantPlayerEmblem(emblemId)) {
+      if (!startEmblemTrial(emblemId)) {
         showToast('아직 시험 조건이 부족하다');
         return;
       }
-      addParticles(player.x, player.y, '#d6b3ff', 24);
-      showToast((emblem ? emblem.name : '문장') + ' 획득!');
-      updateHUD();
-      if (profileOpen) renderProfile();
-      renderEmblemRoomPanel();
+      closeEmblemRoomPanel();
     }, { stopPropagation: true });
   });
 
@@ -1356,7 +1352,7 @@ function renderEmblemRoomPanel() {
 
   content.innerHTML =
     buildEmblemRoomSummaryCard() +
-    '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">기본 문장 시험</div><span class="quest-chip active">10종</span></div><div class="quest-focus-text">현재는 문서 기준 원본형 구조를 따라 기본 문장 획득과 마스터 문장 융합 뼈대를 우선 복원하는 단계다.</div></div>' +
+    '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">기본 문장 시험</div><span class="quest-chip active">10종</span></div><div class="quest-focus-text">조건을 만족한 문장은 즉시 지급되지 않고, 전용 시험 전투에서 수호자를 쓰러뜨려야 획득할 수 있다.</div></div>' +
     unitEmblems.map(buildUnitEmblemCard).join('') +
     '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">마스터 문장 융합</div><span class="quest-chip active">3종</span></div><div class="quest-focus-text">라인별 기본 문장을 모두 모으면 배틀마스터 / 택틱스마스터 / 매직마스터 문장으로 융합할 수 있다.</div></div>' +
     masterEmblems.map(buildMasterEmblemCard).join('');
