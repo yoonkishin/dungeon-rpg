@@ -576,6 +576,10 @@ function getVillageUpgradeLevel(id) {
   return villageUpgrades[id] || 0;
 }
 
+function getTotalVillageUpgradeLevel() {
+  return (villageUpgrades.forge || 0) + (villageUpgrades.guard || 0) + (villageUpgrades.trade || 0) + (villageUpgrades.alchemy || 0);
+}
+
 function getVillageUpgradeCost(id) {
   const def = TOWN_UPGRADES[id];
   if (!def) return 999999;
@@ -654,6 +658,45 @@ const SUBQUESTS = [
     progressLines: ['원정대는 아직 부족하네.', '던전을 더 정리해서 믿을 만한 동료를 모아오게.'],
     completionLines: ['훌륭하군. 이제 마을도 자네를 정식 원정대로 인정할 걸세.', '새 장비 한 점 마련할 수 있도록 지원금을 주지.'],
     reward: { gold: 260, items: ['shield1'] }
+  },
+  {
+    id: 'training_first_promotion',
+    npcId: 'sage',
+    title: '첫 승급 수련',
+    objectiveType: 'classRank',
+    targetAmount: 2,
+    prereqMainQuestIndex: 4,
+    description: '수련의 방에서 첫 승급을 완료하고 현자에게 수련 결과를 보고하자.',
+    offerLines: ['이제 자네도 기초 단계를 넘길 때가 됐네.', '마을 수련의 방에서 첫 승급을 끝내고 다시 오게.'],
+    progressLines: ['몸이 아직 덜 익었네.', 'Lv 6 이상이 되면 수련의 방에서 글라디에이터 승급을 확정할 수 있네.'],
+    completionLines: ['좋아, 승급의 감각을 익혔군.', '이제부터는 클래스 변화가 전투 흐름을 더 크게 바꿔줄 걸세.'],
+    reward: { gold: 220, items: ['helmet2'] }
+  },
+  {
+    id: 'chief_synergy_squad',
+    npcId: 'chief',
+    title: '연계 전술 시험',
+    objectiveType: 'activeSynergy',
+    targetAmount: 1,
+    prereqMainQuestIndex: 4,
+    description: '시너지가 맞는 동료 2명을 함께 편성해 연계 전술을 증명하자.',
+    offerLines: ['원정대는 숫자보다 조합이 중요하네.', '시너지가 나는 둘을 함께 묶어 진짜 전술팀을 보여주게.'],
+    progressLines: ['아직 조합의 힘이 보이지 않는군.', '동료 패널에서 시너지 조합을 맞춰 출전시켜 보게.'],
+    completionLines: ['좋아, 이게 바로 원정대다운 움직임일세.', '조합을 보는 눈이 생기면 전투가 훨씬 수월해질 걸세.'],
+    reward: { gold: 240, items: ['potion_hp2', 'potion_hp2'] }
+  },
+  {
+    id: 'guard_outpost_upgrade',
+    npcId: 'guard',
+    title: '전초기지 정비',
+    objectiveType: 'villageUpgradeTotal',
+    targetAmount: 3,
+    prereqMainQuestIndex: 4,
+    description: '마을 발전 시설을 합계 3단계 이상 강화해 방어 태세를 끌어올리자.',
+    offerLines: ['마을도 이제 전초기지다운 모양을 갖춰야 합니다.', '시설 강화를 몇 번만 더 해주면 경계가 훨씬 안정될 겁니다.'],
+    progressLines: ['아직 설비가 부족합니다.', '마을 발전 패널에서 시설을 더 강화하고 돌아와 주십시오.'],
+    completionLines: ['훌륭합니다. 이제 외곽 경계선도 한결 든든해졌습니다.', '이 장비는 정비 지원 명목으로 드리겠습니다.'],
+    reward: { gold: 230, items: ['boots2'] }
   }
 ];
 function getMainQuest() {
@@ -688,6 +731,9 @@ function getMainQuestStatus(quest) {
   if (isMainQuestObjectiveMet(quest)) return { label:'완료 - 보고 필요', ready:true };
   if (quest.objectiveType === 'talk') return { label:'대화 필요', ready:false };
   if (quest.objectiveType === 'clearDungeon') return { label:'던전 공략 중', ready:false };
+  if (quest.objectiveType === 'classRank') return { label:'승급 진행 중', ready:false };
+  if (quest.objectiveType === 'activeSynergy') return { label:'조합 구성 중', ready:false };
+  if (quest.objectiveType === 'villageUpgradeTotal') return { label:'마을 발전 중', ready:false };
   return { label:'진행 중', ready:false };
 }
 
@@ -782,6 +828,18 @@ function isMainQuestObjectiveMet(quest, npcId) {
   }
   if (quest.objectiveType === 'clearDungeon') {
     return dungeonsCleared.includes(quest.objectiveTarget);
+  }
+  if (quest.objectiveType === 'classRank') {
+    return player.classRank >= quest.objectiveTarget;
+  }
+  if (quest.objectiveType === 'activeSynergy') {
+    return !!getActiveCompanionSynergy();
+  }
+  if (quest.objectiveType === 'villageUpgradeTotal') {
+    return getTotalVillageUpgradeLevel() >= quest.objectiveTarget;
+  }
+  if (quest.objectiveType === 'companionCount') {
+    return companions.length >= quest.objectiveTarget;
   }
   return false;
 }
@@ -879,6 +937,9 @@ function getSubquestProgressValue(quest) {
   if (quest.objectiveType === 'killEnemies') return Math.max(0, totalEnemiesKilled - (progress.startKills || 0));
   if (quest.objectiveType === 'clearDungeonCount') return Math.max(0, dungeonsCleared.length - (progress.startDungeons || 0));
   if (quest.objectiveType === 'companionCount') return companions.length;
+  if (quest.objectiveType === 'classRank') return player.classRank;
+  if (quest.objectiveType === 'activeSynergy') return getActiveCompanionSynergy() ? 1 : 0;
+  if (quest.objectiveType === 'villageUpgradeTotal') return getTotalVillageUpgradeLevel();
   return 0;
 }
 
@@ -888,6 +949,10 @@ function isSubquestObjectiveMet(quest) {
 
 function buildSubquestProgressText(quest) {
   const value = Math.min(getSubquestProgressValue(quest), quest.targetAmount || 0);
+  if (quest.objectiveType === 'activeSynergy') {
+    const synergy = getActiveCompanionSynergy();
+    return synergy ? `1/1 (${synergy.name})` : '0/1';
+  }
   return `${value}/${quest.targetAmount}`;
 }
 
