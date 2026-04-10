@@ -82,6 +82,19 @@ function buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, lineNam
   `;
 }
 
+function buildProfilePromotionNote(tier, nextTier, lineName) {
+  const body = nextTier
+    ? `${lineName} 라인 ${tier.name} 단계야. 다음 승급은 ${nextTier.name}, Lv.${nextTier.reqLevel}에서 열려.`
+    : `${lineName} 라인의 최종 승급까지 왔어. 이제 장비와 동료 조합으로 후반 밸류를 올리면 돼.`;
+
+  return `
+    <div class="profile-promotion-note">
+      <div class="profile-promotion-title">성장 해석</div>
+      <div class="profile-promotion-body">${body}</div>
+    </div>
+  `;
+}
+
 function buildProfileProgressSection(dungeonCircles, companionCircles) {
   return `
     <div class="profile-progress-row">
@@ -136,6 +149,7 @@ function renderProfile() {
       buildProfileStatsCard(playerStats) +
     '</div>' +
     buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, growthLine.lineName) +
+    buildProfilePromotionNote(tier, nextTier, growthLine.lineName) +
     buildProfileProgressSection(dungeonCircles, companionCircles);
 }
 

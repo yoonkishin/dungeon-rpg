@@ -7,6 +7,19 @@ function updateHUD() {
   document.getElementById('mp-fill').style.width = (player.mp / player.maxMp * 100) + '%';
   document.getElementById('mp-text').textContent = Math.floor(player.mp) + '/' + player.maxMp;
   document.getElementById('player-avatar').textContent = player.level;
+
+  const tier = getCurrentTier();
+  const growthLine = getGrowthLine(player.classLine || 'infantry');
+  const nextTier = getNextTier();
+  const statusClassLineEl = document.getElementById('status-class-line');
+  const statusClassNextEl = document.getElementById('status-class-next');
+  if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
+  if (statusClassNextEl) {
+    statusClassNextEl.textContent = nextTier
+      ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}`
+      : '최종 승급 완료';
+  }
+
   // XP bar in status panel
   const xpPct = player.xpNext > 0 ? (player.xp / player.xpNext * 100) : 0;
   document.getElementById('xp-fill').style.width = xpPct + '%';
@@ -14,7 +27,6 @@ function updateHUD() {
   // Gold display (top-right)
   document.getElementById('gold-display').textContent = '💰 ' + player.gold;
   // Update avatar border color to tier color
-  const tier = getCurrentTier();
   document.getElementById('player-avatar').style.borderColor = tier.color;
   document.getElementById('player-avatar').style.background = 'linear-gradient(135deg, ' + tier.bodyColor + ', ' + tier.color + ')';
 }
