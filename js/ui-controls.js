@@ -125,6 +125,7 @@ let skillPanelOpen = false;
 let questPanelOpen = false;
 let villagePanelOpen = false;
 let trainingPanelOpen = false;
+let emblemRoomPanelOpen = false;
 
 const menuPanel = document.getElementById('menu-panel');
 const settingsPanel = document.getElementById('settings-panel');
@@ -385,6 +386,7 @@ function closeAllPanels(options = {}) {
     closeQuestPanel,
     closeVillagePanel,
     closeTrainingPanel,
+    closeEmblemRoomPanel,
     closeTemple,
   ].forEach((closeFn) => {
     if (typeof closeFn === 'function') closeFn();

@@ -53,7 +53,8 @@ function showAreaLabel(text) {
 // ─── Level Up ─────────────────────────────────────────────────────────────────
 let maxLevelToastShown = false;
 function gainXP(amount) {
-  if (player.level >= PLAYER_LEVEL_CAP) {
+  const levelCap = getPlayerLevelCap();
+  if (player.level >= levelCap) {
     player.xp = 0;
     if (!maxLevelToastShown) {
       showToast('최대 레벨');
@@ -64,12 +65,12 @@ function gainXP(amount) {
   }
   player.xp += amount;
   let leveled = false;
-  while (player.xp >= player.xpNext && player.level < PLAYER_LEVEL_CAP) {
+  while (player.xp >= player.xpNext && player.level < levelCap) {
     player.xp -= player.xpNext;
     player.level++;
 
     const growth = getLevelGrowthForRank(player.classLine || 'infantry', player.classRank || 1);
-    player.xpNext = getXpToNextLevel(player.level);
+    player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
     player.maxHp += growth.maxHp;
     player.hp = player.maxHp;
     player.maxMp += growth.maxMp;
@@ -90,7 +91,7 @@ function gainXP(amount) {
       addParticles(player.x, player.y, promotionTarget.color, 25);
     }
 
-    if (player.level >= PLAYER_LEVEL_CAP) {
+    if (player.level >= getPlayerLevelCap()) {
       player.xp = 0;
       player.xpNext = 0;
       break;

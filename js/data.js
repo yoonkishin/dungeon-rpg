@@ -256,8 +256,21 @@ const SKILLS = [
   { id:'drain',      name:'흡혈',       icon:'🩸', mpCost:12, cooldown:4000, damage:15, heal:15, range:55, type:'melee', desc:'적의 생명력을 흡수하여 15 피해 + 15 회복합니다', typeLabel:'근접', iconBg:'#e67e22' },
 ];
 
-// ─── Player Growth Lines ────────────────────────────────────────────────────
-const PLAYER_LEVEL_CAP = 35;
+// ─── Player Growth Lines / Original Emblem Foundations ─────────────────────
+const ORIGINAL_TIER_LEVEL_CAPS = {
+  1: 10,
+  2: 15,
+  3: 20,
+  4: 25,
+  5: 30,
+  6: 35,
+  7: 35,
+  8: 100,
+  9: 200,
+  10: 300,
+};
+
+const PLAYER_LEVEL_CAP = ORIGINAL_TIER_LEVEL_CAPS[7];
 
 const PLAYER_GROWTH_LINES = {
   infantry: {
@@ -284,8 +297,16 @@ const PLAYER_GROWTH_LINES = {
   }
 };
 
-function getXpToNextLevel(level) {
-  if (level >= PLAYER_LEVEL_CAP) return 0;
+function getTierLevelCap(tier) {
+  return ORIGINAL_TIER_LEVEL_CAPS[tier] || PLAYER_LEVEL_CAP;
+}
+
+function getPlayerLevelCap() {
+  return getTierLevelCap((player && (player.tier || player.classRank)) || 1);
+}
+
+function getXpToNextLevel(level, tier = 7) {
+  if (level >= getTierLevelCap(tier)) return 0;
   return 100 + (50 * level) + (10 * level * level);
 }
 
@@ -388,7 +409,15 @@ function syncPlayerGrowthState() {
   const nextRank = getNextRankFromCurrentRank(player.classLine, player.classRank);
   player.promotionPending = !!(nextRank && player.level >= nextRank.reqLevel);
   player.tier = player.classRank;
-  player.xpNext = getXpToNextLevel(player.level);
+  player.currentClassKey = player.currentClassKey || `${player.classLine}_rank${player.classRank}`;
+  player.currentClassKey = `${player.classLine}_rank${player.classRank}`;
+  if (!Array.isArray(player.classHistory) || player.classHistory.length === 0) {
+    player.classHistory = [player.currentClassKey];
+  }
+  if (!Array.isArray(player.emblemIds)) player.emblemIds = [];
+  if (!Array.isArray(player.emblemFusionHistory)) player.emblemFusionHistory = [];
+  player.masterEmblemId = player.masterEmblemId || null;
+  player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
   return getRankInfo(player.classLine, player.classRank);
 }
 
@@ -445,6 +474,165 @@ function getPlayerPromotionStatBonus() {
   const target = getPlayerPromotionTarget();
   if (!target) return null;
   return getPromotionBonusDelta(player.classLine || 'infantry', player.promotionBonusRankApplied || 1, target.rank);
+}
+
+const EMBLEM_TYPES = {
+  unit: 'unit',
+  master: 'master',
+  legacy: 'legacy',
+};
+
+const ORIGINAL_LINE_LABELS = {
+  infantry: '보병',
+  flyingKnight: '비병',
+  cavalry: '기병',
+  navalUnit: '수병',
+  lancer: '창병',
+  archer: '궁병',
+  monk: '승려',
+  priest: '신관',
+  mage: '법사',
+  darkPriest: '사교',
+  battleMaster: '배틀마스터',
+  tacticsMaster: '택틱스마스터',
+  magicMaster: '매직마스터',
+};
+
+const EMBLEM_DEFS = {
+  infantry_emblem: { id: 'infantry_emblem', type: EMBLEM_TYPES.unit, name: '보병 문장', targetLine: 'infantry', requiredTier: 7, requiredLevel: 35, requiredAttack: 400, requiredDefense: 200, bonus: { atk: 30, def: 20 } },
+  flying_knight_emblem: { id: 'flying_knight_emblem', type: EMBLEM_TYPES.unit, name: '비병 문장', targetLine: 'flyingKnight', requiredTier: 7, requiredLevel: 35, requiredAttack: 400, requiredDefense: 200, bonus: { speed: 0.35, critChance: 2 } },
+  cavalry_emblem: { id: 'cavalry_emblem', type: EMBLEM_TYPES.unit, name: '기병 문장', targetLine: 'cavalry', requiredTier: 7, requiredLevel: 35, requiredAttack: 450, requiredDefense: 200, bonus: { atk: 25, speed: 0.25 } },
+  naval_unit_emblem: { id: 'naval_unit_emblem', type: EMBLEM_TYPES.unit, name: '수병 문장', targetLine: 'navalUnit', requiredTier: 7, requiredLevel: 35, requiredAttack: 400, requiredDefense: 220, bonus: { def: 20, maxHp: 40 } },
+  lancer_emblem: { id: 'lancer_emblem', type: EMBLEM_TYPES.unit, name: '창병 문장', targetLine: 'lancer', requiredTier: 7, requiredLevel: 35, requiredAttack: 500, requiredDefense: 250, bonus: { atk: 30, critChance: 1 } },
+  archer_emblem: { id: 'archer_emblem', type: EMBLEM_TYPES.unit, name: '궁병 문장', targetLine: 'archer', requiredTier: 7, requiredLevel: 35, requiredAttack: 450, requiredDefense: 200, bonus: { atk: 25, critChance: 2 } },
+  monk_emblem: { id: 'monk_emblem', type: EMBLEM_TYPES.unit, name: '승려 문장', targetLine: 'monk', requiredTier: 7, requiredLevel: 35, requiredAttack: 500, requiredDefense: 250, bonus: { maxMp: 40, def: 10 } },
+  priest_emblem: { id: 'priest_emblem', type: EMBLEM_TYPES.unit, name: '신관 문장', targetLine: 'priest', requiredTier: 7, requiredLevel: 35, requiredAttack: 500, requiredDefense: 250, bonus: { maxMp: 50, def: 15 } },
+  mage_emblem: { id: 'mage_emblem', type: EMBLEM_TYPES.unit, name: '법사 문장', targetLine: 'mage', requiredTier: 7, requiredLevel: 35, requiredAttack: 600, requiredDefense: 300, bonus: { atk: 35, maxMp: 50 } },
+  dark_priest_emblem: { id: 'dark_priest_emblem', type: EMBLEM_TYPES.unit, name: '사교 문장', targetLine: 'darkPriest', requiredTier: 7, requiredLevel: 35, requiredAttack: 600, requiredDefense: 300, bonus: { atk: 30, def: 15, maxMp: 35 } },
+  battle_master_emblem: { id: 'battle_master_emblem', type: EMBLEM_TYPES.master, name: '배틀마스터 문장', targetLine: 'battleMaster', requiredTier: 7, requiredLevel: 35, fusionMaterials: ['infantry_emblem', 'flying_knight_emblem', 'cavalry_emblem'], bonus: { atk: 60, def: 40, maxHp: 100 } },
+  tactics_master_emblem: { id: 'tactics_master_emblem', type: EMBLEM_TYPES.master, name: '택틱스마스터 문장', targetLine: 'tacticsMaster', requiredTier: 7, requiredLevel: 35, fusionMaterials: ['naval_unit_emblem', 'lancer_emblem', 'archer_emblem'], bonus: { atk: 45, def: 25, critChance: 4 } },
+  magic_master_emblem: { id: 'magic_master_emblem', type: EMBLEM_TYPES.master, name: '매직마스터 문장', targetLine: 'magicMaster', requiredTier: 7, requiredLevel: 35, fusionMaterials: ['monk_emblem', 'priest_emblem', 'mage_emblem', 'dark_priest_emblem'], bonus: { atk: 55, maxMp: 80, critChance: 3 } },
+};
+
+function getOriginalLineLabel(lineId) {
+  return ORIGINAL_LINE_LABELS[lineId] || lineId;
+}
+
+function getEmblemDef(id) {
+  return EMBLEM_DEFS[id] || null;
+}
+
+function getAllEmblemDefs() {
+  return Object.values(EMBLEM_DEFS);
+}
+
+function getPlayerOwnedEmblems() {
+  return (player.emblemIds || []).map(getEmblemDef).filter(Boolean);
+}
+
+function playerHasEmblem(id) {
+  return Array.isArray(player.emblemIds) && player.emblemIds.includes(id);
+}
+
+function getPlayerEmblemTrialStatus(id) {
+  const emblem = getEmblemDef(id);
+  if (!emblem || emblem.type !== EMBLEM_TYPES.unit) return null;
+  const tierOk = (player.tier || player.classRank || 1) >= emblem.requiredTier;
+  const levelOk = player.level >= emblem.requiredLevel;
+  const lineOk = (player.classLine || 'infantry') === emblem.targetLine;
+  const attackValue = playerAtk();
+  const defenseValue = playerDef();
+  const attackOk = attackValue >= emblem.requiredAttack;
+  const defenseOk = defenseValue >= emblem.requiredDefense;
+  return {
+    emblem,
+    owned: playerHasEmblem(id),
+    tierOk,
+    levelOk,
+    lineOk,
+    attackOk,
+    defenseOk,
+    attackValue,
+    defenseValue,
+    canEnter: tierOk && levelOk && lineOk && attackOk && defenseOk,
+  };
+}
+
+function canPlayerEnterEmblemTrial(id) {
+  const status = getPlayerEmblemTrialStatus(id);
+  return !!(status && status.canEnter && !status.owned);
+}
+
+function canPlayerFuseMasterEmblem(id) {
+  const emblem = getEmblemDef(id);
+  if (!emblem || emblem.type !== EMBLEM_TYPES.master || playerHasEmblem(id)) return false;
+  return (emblem.fusionMaterials || []).every(playerHasEmblem);
+}
+
+function applyEmblemBonus(emblem) {
+  if (!emblem || !emblem.bonus) return;
+  player.maxHp += emblem.bonus.maxHp || 0;
+  player.hp = Math.min(player.maxHp, player.hp + (emblem.bonus.maxHp || 0));
+  player.maxMp += emblem.bonus.maxMp || 0;
+  player.mp = Math.min(player.maxMp, player.mp + (emblem.bonus.maxMp || 0));
+  player.atk += emblem.bonus.atk || 0;
+  player.def += emblem.bonus.def || 0;
+  player.speed += emblem.bonus.speed || 0;
+  player.critChance = Math.min(30, player.critChance + (emblem.bonus.critChance || 0));
+}
+
+function removeEmblemBonus(emblem) {
+  if (!emblem || !emblem.bonus) return;
+  player.maxHp = Math.max(1, player.maxHp - (emblem.bonus.maxHp || 0));
+  player.hp = Math.min(player.hp, player.maxHp);
+  player.maxMp = Math.max(0, player.maxMp - (emblem.bonus.maxMp || 0));
+  player.mp = Math.min(player.mp, player.maxMp);
+  player.atk -= emblem.bonus.atk || 0;
+  player.def -= emblem.bonus.def || 0;
+  player.speed -= emblem.bonus.speed || 0;
+  player.critChance = Math.max(0, player.critChance - (emblem.bonus.critChance || 0));
+}
+
+function ensurePlayerEmblemBonusesApplied() {
+  if (!Array.isArray(player.appliedEmblemBonusIds)) player.appliedEmblemBonusIds = [];
+  (player.emblemIds || []).forEach(id => {
+    if (player.appliedEmblemBonusIds.includes(id)) return;
+    const emblem = getEmblemDef(id);
+    if (!emblem) return;
+    applyEmblemBonus(emblem);
+    player.appliedEmblemBonusIds.push(id);
+  });
+}
+
+function grantPlayerEmblem(id) {
+  const emblem = getEmblemDef(id);
+  if (!emblem || emblem.type !== EMBLEM_TYPES.unit || playerHasEmblem(id) || !canPlayerEnterEmblemTrial(id)) return false;
+  if (!Array.isArray(player.emblemIds)) player.emblemIds = [];
+  player.emblemIds.push(id);
+  ensurePlayerEmblemBonusesApplied();
+  autoSave();
+  return true;
+}
+
+function fusePlayerMasterEmblem(id) {
+  const emblem = getEmblemDef(id);
+  if (!emblem || emblem.type !== EMBLEM_TYPES.master || !canPlayerFuseMasterEmblem(id)) return false;
+  emblem.fusionMaterials.forEach(materialId => {
+    const material = getEmblemDef(materialId);
+    if (player.appliedEmblemBonusIds && player.appliedEmblemBonusIds.includes(materialId)) {
+      removeEmblemBonus(material);
+      player.appliedEmblemBonusIds = player.appliedEmblemBonusIds.filter(entry => entry !== materialId);
+    }
+    player.emblemIds = (player.emblemIds || []).filter(entry => entry !== materialId);
+  });
+  if (!Array.isArray(player.emblemIds)) player.emblemIds = [];
+  player.emblemIds.push(id);
+  player.masterEmblemId = id;
+  if (!Array.isArray(player.emblemFusionHistory)) player.emblemFusionHistory = [];
+  player.emblemFusionHistory.push(id);
+  ensurePlayerEmblemBonusesApplied();
+  autoSave();
+  return true;
 }
 
 const skillPages = [
@@ -519,6 +707,8 @@ const TOWN_NPCS = [
     dialogue:['쓰러진 동료들을 이곳에서 부활시킬 수 있습니다.'] },
   { id:'training', name:'🏯 수련의 방', x:14*40+20, y:10*40+20, color:'#f8c471', hat:'#8e5a2b', isTrainingRoom:true,
     dialogue:['승급 자격이 생기면 이곳에서 클래스를 올릴 수 있습니다.'] },
+  { id:'emblem_room', name:'🜂 문장의방', x:5*40+20, y:13*40+20, color:'#d6b3ff', hat:'#6c5ce7', isEmblemRoom:true,
+    dialogue:['7단 Lv35와 충분한 전투 능력을 갖춘 자만 이곳의 시험에 도전할 수 있습니다.'] },
 ];
 const MAIN_QUESTS = [
   {

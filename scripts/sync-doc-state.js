@@ -51,8 +51,9 @@ const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
 const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
 const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
+const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\(/.test(uiPanelsJs) && /EMBLEM_DEFS/.test(dataJs);
 const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiControlsJs);
-const dungeonBossGimmickDetected = /spawnDungeonElite\(/.test(enemiesJs) && /triggerBossPhaseGimmick\(/.test(combatJs) && /e\.phaseThresholds/.test(enemiesJs) && /triggerBossPhaseGimmick\(e\)/.test(mainJs);
+const dungeonBossGimmickDetected = /spawnDungeonElite\(/.test(enemiesJs) && /triggerBossPhaseGimmick\(/.test(combatJs) && /phaseThresholds/.test(enemiesJs) && /triggerBossPhaseGimmick\(e\)/.test(mainJs);
 const bootHook = /node scripts\/check-boot\.js/.test(prePush);
 const docSyncHook = /node scripts\/sync-doc-state\.js --write/.test(preCommit);
 const docSyncGuard = /node scripts\/sync-doc-state\.js --check/.test(prePush);
@@ -72,6 +73,9 @@ const snapshotBullets = [
   trainingRoomDetected
     ? '- 수련의 방 패널과 승급 패널 진입점이 감지됐다.'
     : '- 수련의 방 패널은 아직 감지되지 않았다.',
+  emblemRoomDetected
+    ? '- 문장의방 패널과 문장 데이터 뼈대가 감지됐다.'
+    : '- 문장의방 패널 / 문장 데이터 뼈대는 아직 감지되지 않았다.',
   dungeonBossGimmickDetected
     ? '- 던전 정예 몬스터와 보스 페이즈 기믹 로직이 감지됐다.'
     : '- 던전 정예 몬스터 / 보스 페이즈 기믹은 아직 감지되지 않았다.',
@@ -126,6 +130,9 @@ const implementedStateDoc = [
   trainingRoomDetected
     ? '- [x] Training room / promotion panel detected.'
     : '- [ ] Training room / promotion panel was not detected.',
+  emblemRoomDetected
+    ? '- [x] Emblem room panel and emblem data foundations detected.'
+    : '- [ ] Emblem room panel / emblem data foundations were not detected.',
   dungeonBossGimmickDetected
     ? '- [x] Dungeon elite enemies and boss phase gimmicks detected.'
     : '- [ ] Dungeon elite enemies / boss phase gimmicks were not detected.',

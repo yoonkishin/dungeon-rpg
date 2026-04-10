@@ -21,7 +21,8 @@
 - [x] Minimap visibility persistence detected via `localStorage`.
 - [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - [x] Training room / promotion panel detected.
-- [ ] Dungeon elite enemies / boss phase gimmicks were not detected.
+- [x] Emblem room panel and emblem data foundations detected.
+- [x] Dungeon elite enemies and boss phase gimmicks detected.
 
 ## Automation
 

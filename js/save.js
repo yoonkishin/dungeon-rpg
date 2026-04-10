@@ -13,7 +13,13 @@ function autoSave() {
         mp: player.mp, maxMp: player.maxMp,
         level: player.level, xp: player.xp, xpNext: player.xpNext,
         tier: player.tier,
-        classLine: player.classLine, classRank: player.classRank, promotionPending: player.promotionPending, promotionBonusRankApplied: player.promotionBonusRankApplied,
+        classLine: player.classLine, classRank: player.classRank, currentClassKey: player.currentClassKey,
+        classHistory: Array.isArray(player.classHistory) ? player.classHistory.slice() : [],
+        emblemIds: Array.isArray(player.emblemIds) ? player.emblemIds.slice() : [],
+        appliedEmblemBonusIds: Array.isArray(player.appliedEmblemBonusIds) ? player.appliedEmblemBonusIds.slice() : [],
+        masterEmblemId: player.masterEmblemId || null,
+        emblemFusionHistory: Array.isArray(player.emblemFusionHistory) ? player.emblemFusionHistory.slice() : [],
+        promotionPending: player.promotionPending, promotionBonusRankApplied: player.promotionBonusRankApplied,
         gold: player.gold, atk: player.atk, def: player.def, speed: player.speed, critChance: player.critChance,
       },
       inventory: inventory.slice(),
@@ -61,9 +67,15 @@ function loadSave() {
     player.tier = p.tier || 1;
     player.classLine = p.classLine || 'infantry';
     player.classRank = p.classRank || p.tier || getRankForLevel(player.classLine, player.level).rank;
+    player.currentClassKey = p.currentClassKey || `${player.classLine}_rank${player.classRank}`;
+    player.classHistory = Array.isArray(p.classHistory) && p.classHistory.length ? p.classHistory.slice() : [player.currentClassKey];
+    player.emblemIds = Array.isArray(p.emblemIds) ? p.emblemIds.filter(id => !!getEmblemDef(id)) : [];
+    player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
+    player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
+    player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
     player.promotionPending = !!p.promotionPending;
     player.promotionBonusRankApplied = p.promotionBonusRankApplied || 1;
-    player.xpNext = getXpToNextLevel(player.level);
+    player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
     player.atk = p.atk || player.atk;
     player.def = p.def || player.def;
     player.speed = p.speed || player.speed;
@@ -72,6 +84,7 @@ function loadSave() {
       applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
       player.promotionBonusRankApplied = player.classRank;
     }
+    if (typeof ensurePlayerEmblemBonusesApplied === 'function') ensurePlayerEmblemBonusesApplied();
     syncPlayerGrowthState();
 
     // Restore inventory

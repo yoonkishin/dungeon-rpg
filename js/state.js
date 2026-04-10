@@ -49,6 +49,12 @@ const player = {
   critChance: 10,
   classLine: 'infantry',
   classRank: 1,
+  currentClassKey: 'infantry_rank1',
+  classHistory: ['infantry_rank1'],
+  emblemIds: [],
+  appliedEmblemBonusIds: [],
+  masterEmblemId: null,
+  emblemFusionHistory: [],
   promotionPending: false,
   promotionBonusRankApplied: 1,
 };
