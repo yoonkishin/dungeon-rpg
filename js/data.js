@@ -273,13 +273,13 @@ const PLAYER_GROWTH_LINES = {
       critChance: 0.5,
     },
     ranks: [
-      { rank: 1, className: '견습보병',     reqLevel: 1,  color: '#bdc3c7', bodyColor: '#8e8e8e', levelGrowthBonus: { maxHp: 0, atk: 0, def: 0, critChance: 0.0 } },
-      { rank: 2, className: '글라디에이터', reqLevel: 6,  color: '#3498db', bodyColor: '#2980b9', levelGrowthBonus: { maxHp: 1, atk: 0, def: 0, critChance: 0.05 } },
-      { rank: 3, className: '소드맨',       reqLevel: 11, color: '#2ecc71', bodyColor: '#27ae60', levelGrowthBonus: { maxHp: 2, atk: 1, def: 0, critChance: 0.1 } },
-      { rank: 4, className: '파이터',       reqLevel: 16, color: '#e74c3c', bodyColor: '#c0392b', levelGrowthBonus: { maxHp: 3, atk: 1, def: 0, critChance: 0.15 } },
-      { rank: 5, className: '로열파이터',   reqLevel: 21, color: '#f1c40f', bodyColor: '#f39c12', levelGrowthBonus: { maxHp: 4, atk: 1, def: 1, critChance: 0.2 } },
-      { rank: 6, className: '제네럴',       reqLevel: 26, color: '#9b59b6', bodyColor: '#8e44ad', levelGrowthBonus: { maxHp: 5, atk: 2, def: 1, critChance: 0.25 } },
-      { rank: 7, className: '로열가드',     reqLevel: 31, color: '#e74c3c', bodyColor: '#ff6b6b', levelGrowthBonus: { maxHp: 6, atk: 2, def: 1, critChance: 0.3 } },
+      { rank: 1, className: '견습보병',     reqLevel: 1,  color: '#bdc3c7', bodyColor: '#8e8e8e', levelGrowthBonus: { maxHp: 0, atk: 0, def: 0, critChance: 0.0 }, promotionBonus: { maxHp: 0, maxMp: 0, atk: 0, def: 0, speed: 0, critChance: 0 } },
+      { rank: 2, className: '글라디에이터', reqLevel: 6,  color: '#3498db', bodyColor: '#2980b9', levelGrowthBonus: { maxHp: 1, atk: 0, def: 0, critChance: 0.05 }, promotionBonus: { maxHp: 10, atk: 2, def: 1, critChance: 0.5 } },
+      { rank: 3, className: '소드맨',       reqLevel: 11, color: '#2ecc71', bodyColor: '#27ae60', levelGrowthBonus: { maxHp: 2, atk: 1, def: 0, critChance: 0.1 }, promotionBonus: { maxHp: 12, atk: 3, def: 1, critChance: 0.5 } },
+      { rank: 4, className: '파이터',       reqLevel: 16, color: '#e74c3c', bodyColor: '#c0392b', levelGrowthBonus: { maxHp: 3, atk: 1, def: 0, critChance: 0.15 }, promotionBonus: { maxHp: 14, atk: 3, def: 1, critChance: 0.75 } },
+      { rank: 5, className: '로열파이터',   reqLevel: 21, color: '#f1c40f', bodyColor: '#f39c12', levelGrowthBonus: { maxHp: 4, atk: 1, def: 1, critChance: 0.2 }, promotionBonus: { maxHp: 16, atk: 4, def: 2, critChance: 0.75 } },
+      { rank: 6, className: '제네럴',       reqLevel: 26, color: '#9b59b6', bodyColor: '#8e44ad', levelGrowthBonus: { maxHp: 5, atk: 2, def: 1, critChance: 0.25 }, promotionBonus: { maxHp: 18, atk: 4, def: 2, critChance: 1 } },
+      { rank: 7, className: '로열가드',     reqLevel: 31, color: '#e74c3c', bodyColor: '#ff6b6b', levelGrowthBonus: { maxHp: 6, atk: 2, def: 1, critChance: 0.3 }, promotionBonus: { maxHp: 20, atk: 5, def: 2, critChance: 1 } },
     ],
   }
 };
@@ -340,12 +340,51 @@ function getLevelGrowthForRank(lineId, rank) {
   };
 }
 
+function getPromotionBonusForRank(lineId, rank) {
+  const rankInfo = getRankInfo(lineId, rank);
+  const bonus = rankInfo.promotionBonus || {};
+  return {
+    maxHp: bonus.maxHp || 0,
+    maxMp: bonus.maxMp || 0,
+    atk: bonus.atk || 0,
+    def: bonus.def || 0,
+    speed: bonus.speed || 0,
+    critChance: bonus.critChance || 0,
+  };
+}
+
+function getPromotionBonusDelta(lineId, fromRank, toRank) {
+  const delta = { maxHp: 0, maxMp: 0, atk: 0, def: 0, speed: 0, critChance: 0 };
+  for (let rank = fromRank + 1; rank <= toRank; rank++) {
+    const bonus = getPromotionBonusForRank(lineId, rank);
+    delta.maxHp += bonus.maxHp;
+    delta.maxMp += bonus.maxMp;
+    delta.atk += bonus.atk;
+    delta.def += bonus.def;
+    delta.speed += bonus.speed;
+    delta.critChance += bonus.critChance;
+  }
+  return delta;
+}
+
+function applyPromotionBonus(delta) {
+  player.maxHp += delta.maxHp;
+  player.hp = player.maxHp;
+  player.maxMp += delta.maxMp;
+  player.mp = player.maxMp;
+  player.atk += delta.atk;
+  player.def += delta.def;
+  player.speed += delta.speed;
+  player.critChance = Math.min(30, player.critChance + delta.critChance);
+}
+
 function syncPlayerGrowthState() {
   player.classLine = player.classLine || 'infantry';
   const line = getGrowthLine(player.classLine);
   const highestRank = line.ranks[line.ranks.length - 1].rank;
   const derivedRank = getRankForLevel(player.classLine, player.level).rank;
   player.classRank = Math.max(1, Math.min(player.classRank || derivedRank, highestRank));
+  player.promotionBonusRankApplied = Math.max(1, Math.min(player.promotionBonusRankApplied || 1, player.classRank));
   const nextRank = getNextRankFromCurrentRank(player.classLine, player.classRank);
   player.promotionPending = !!(nextRank && player.level >= nextRank.reqLevel);
   player.tier = player.classRank;
@@ -400,6 +439,12 @@ function getPlayerPromotionGrowthDelta() {
     speed: targetGrowth.speed - currentGrowth.speed,
     critChance: targetGrowth.critChance - currentGrowth.critChance,
   };
+}
+
+function getPlayerPromotionStatBonus() {
+  const target = getPlayerPromotionTarget();
+  if (!target) return null;
+  return getPromotionBonusDelta(player.classLine || 'infantry', player.promotionBonusRankApplied || 1, target.rank);
 }
 
 const skillPages = [

@@ -1864,6 +1864,13 @@ canvas {
   font-weight: 700;
   color: #f5f7fb;
 }
+.training-subtitle {
+  color: #f1f5f9;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
 .training-badge-row {
   display: flex;
   flex-wrap: wrap;

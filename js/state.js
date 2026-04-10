@@ -50,6 +50,7 @@ const player = {
   classLine: 'infantry',
   classRank: 1,
   promotionPending: false,
+  promotionBonusRankApplied: 1,
 };
 
 let dungeonsCleared = [];

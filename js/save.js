@@ -13,7 +13,7 @@ function autoSave() {
         mp: player.mp, maxMp: player.maxMp,
         level: player.level, xp: player.xp, xpNext: player.xpNext,
         tier: player.tier,
-        classLine: player.classLine, classRank: player.classRank, promotionPending: player.promotionPending,
+        classLine: player.classLine, classRank: player.classRank, promotionPending: player.promotionPending, promotionBonusRankApplied: player.promotionBonusRankApplied,
         gold: player.gold, atk: player.atk, def: player.def, speed: player.speed, critChance: player.critChance,
       },
       inventory: inventory.slice(),
@@ -62,11 +62,16 @@ function loadSave() {
     player.classLine = p.classLine || 'infantry';
     player.classRank = p.classRank || p.tier || getRankForLevel(player.classLine, player.level).rank;
     player.promotionPending = !!p.promotionPending;
+    player.promotionBonusRankApplied = p.promotionBonusRankApplied || 1;
     player.xpNext = getXpToNextLevel(player.level);
     player.atk = p.atk || player.atk;
     player.def = p.def || player.def;
     player.speed = p.speed || player.speed;
     player.critChance = p.critChance !== undefined ? p.critChance : 10;
+    if (p.promotionBonusRankApplied === undefined && player.classRank > 1) {
+      applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
+      player.promotionBonusRankApplied = player.classRank;
+    }
     syncPlayerGrowthState();
 
     // Restore inventory
