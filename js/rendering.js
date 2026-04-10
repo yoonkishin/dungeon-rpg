@@ -345,12 +345,13 @@ function drawDayNight() {
 
 function drawMinimap() {
   if (!minimapVisible) return;
-  const mw = 64, mh = 64;
+  const mw = Math.round(minimapCanvas.width / dpr);
+  const mh = Math.round(minimapCanvas.height / dpr);
   const tw = mapW(), th = mapH();
   const scaleX = mw / tw;
   const scaleY = mh / th;
 
-  mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+  mmCtx.clearRect(0, 0, mw, mh);
   const m = getMap();
 
   // For large maps, skip some tiles

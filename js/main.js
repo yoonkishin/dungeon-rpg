@@ -51,9 +51,10 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const minimapCanvas = document.getElementById('minimap');
 const mmCtx = minimapCanvas.getContext('2d');
+const MINIMAP_SIZE = 72;
 
-minimapCanvas.width = 64;
-minimapCanvas.height = 64;
+minimapCanvas.width = MINIMAP_SIZE;
+minimapCanvas.height = MINIMAP_SIZE;
 
 let dpr = 1;
 function resize() {
@@ -66,11 +67,11 @@ function resize() {
   canvas.style.height = h + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   // minimap
-  const mmSize = Math.round(64 * dpr);
+  const mmSize = Math.round(MINIMAP_SIZE * dpr);
   minimapCanvas.width = mmSize;
   minimapCanvas.height = mmSize;
-  minimapCanvas.style.width = '64px';
-  minimapCanvas.style.height = '64px';
+  minimapCanvas.style.width = MINIMAP_SIZE + 'px';
+  minimapCanvas.style.height = MINIMAP_SIZE + 'px';
   mmCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resize();
