@@ -6,7 +6,7 @@
 
 - [x] `state.js` runtime state module is present and loaded by `index.html`.
 - [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.
-- [x] `data.js` remains the authoritative source for immutable game data tables.
+- [x] Core game data is split across `data.js` and `data-growth.js`.
 
 ## Companion System
 
@@ -35,6 +35,7 @@
 - `index.html`
 - `css/styles.css`
 - `js/data.js`
+- `js/data-growth.js`
 - `js/state.js`
 - `js/save.js`
 - `js/enemies.js`

@@ -24,6 +24,7 @@ function requireMatch(text, regex, label) {
 }
 
 const dataJs = read('js/data.js');
+const dataGrowthJs = exists('js/data-growth.js') ? read('js/data-growth.js') : '';
 const saveJs = read('js/save.js');
 const stateJs = read('js/state.js');
 const enemiesJs = read('js/enemies.js');
@@ -51,7 +52,7 @@ const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
 const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
 const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
-const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\(/.test(uiPanelsJs) && /EMBLEM_DEFS/.test(dataJs);
+const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\(/.test(uiPanelsJs) && (/EMBLEM_DEFS/.test(dataJs) || /EMBLEM_DEFS/.test(dataGrowthJs));
 const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiControlsJs);
 const dungeonBossGimmickDetected = /spawnDungeonElite\(/.test(enemiesJs) && /triggerBossPhaseGimmick\(/.test(combatJs) && /phaseThresholds/.test(enemiesJs) && /triggerBossPhaseGimmick\(e\)/.test(mainJs);
 const bootHook = /node scripts\/check-boot\.js/.test(prePush);
@@ -109,7 +110,7 @@ const implementedStateDoc = [
   growthStateDetected
     ? '- [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.'
     : '- [ ] Player growth runtime fields could not be fully detected.',
-  '- [x] `data.js` remains the authoritative source for immutable game data tables.',
+  '- [x] Core game data is split across `data.js` and `data-growth.js`.',
   '',
   '## Companion System',
   '',
@@ -154,6 +155,7 @@ const implementedStateDoc = [
   '- `index.html`',
   '- `css/styles.css`',
   '- `js/data.js`',
+  '- `js/data-growth.js`',
   '- `js/state.js`',
   '- `js/save.js`',
   '- `js/enemies.js`',
