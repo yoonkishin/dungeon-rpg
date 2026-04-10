@@ -41,6 +41,7 @@ function autoSave() {
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
+      fieldSeed: fieldSeed,
       currentEmblemTrial: currentEmblemTrial ? { ...currentEmblemTrial } : null,
       mainQuestIndex: mainQuestIndex,
       completedMainQuests: completedMainQuests.slice(),
@@ -173,9 +174,29 @@ function loadSave() {
     completedSubquests = Array.isArray(data.completedSubquests) ? data.completedSubquests.slice() : [];
     subquestProgress = data.subquestProgress && typeof data.subquestProgress === 'object' ? data.subquestProgress : {};
 
-    // If saved in dungeon, rebuild it
+    // Restore field seed and rebuild field deterministically
+    if (data.fieldSeed !== undefined) {
+      maps.field = buildField(data.fieldSeed);
+    }
+
+    // Dungeon resume policy: disallow resume, safely return to field
     if (currentMap === 'dungeon' && currentDungeonId >= 0) {
-      maps.dungeon = buildDungeon();
+      const info = DUNGEON_INFO[currentDungeonId];
+      currentMap = 'field';
+      if (info) {
+        player.x = info.portalX * TILE + TILE / 2;
+        player.y = (info.portalY + 1) * TILE + TILE / 2;
+      } else {
+        player.x = 40 * TILE;
+        player.y = (FIELD_H - 3) * TILE + TILE / 2;
+      }
+      // Mark active companions as dead (dungeon interrupted)
+      activeCompanions.forEach(cId => {
+        if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
+      });
+      activeCompanions = [];
+      companionStates = {};
+      currentDungeonId = -1;
     }
 
     return true;

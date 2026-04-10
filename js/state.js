@@ -4,9 +4,10 @@
 let currentMap = 'town';
 let currentDungeonId = -1;
 let currentEmblemTrial = null;
+const initialFieldSeed = Date.now();
 let maps = {
   town: buildTown(),
-  field: buildField(),
+  field: buildField(initialFieldSeed),
   dungeon: buildDungeon()
 };
 

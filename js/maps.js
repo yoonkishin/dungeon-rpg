@@ -1,5 +1,12 @@
 'use strict';
 
+// Seeded RNG for deterministic map generation
+let fieldSeed = Date.now();
+function seededRandom() {
+  fieldSeed = (fieldSeed * 16807 + 0) % 2147483647;
+  return (fieldSeed & 0x7fffffff) / 2147483647;
+}
+
 const OW_W = 40, OW_H = 30;
 function buildTown() {
   const m = [];
@@ -57,7 +64,9 @@ function buildTown() {
 
 // Field: 80x60 tiles
 const FIELD_W = 80, FIELD_H = 60;
-function buildField() {
+function buildField(seed) {
+  if (seed !== undefined) fieldSeed = seed;
+  else fieldSeed = Date.now();
   const m = [];
   for (let y = 0; y < FIELD_H; y++) {
     m[y] = [];
@@ -89,7 +98,7 @@ function buildField() {
   forestAreas.forEach(f => {
     for (let y = f.y; y < f.y + f.h && y < FIELD_H-1; y++) {
       for (let x = f.x; x < f.x + f.w && x < FIELD_W-1; x++) {
-        if (Math.random() < f.density && m[y][x] === TILE_GRASS) m[y][x] = TILE_TREE;
+        if (seededRandom() < f.density && m[y][x] === TILE_GRASS) m[y][x] = TILE_TREE;
       }
     }
   });
@@ -104,14 +113,14 @@ function buildField() {
   // Water/swamp areas
   for (let y = 20; y < 28; y++) {
     for (let x = 20; x < 30; x++) {
-      if (Math.random() < 0.4) m[y][x] = TILE_WATER;
+      if (seededRandom() < 0.4) m[y][x] = TILE_WATER;
     }
   }
 
   // Scattered stones
   for (let i = 0; i < 30; i++) {
-    const rx = 2 + Math.floor(Math.random() * (FIELD_W-4));
-    const ry = 2 + Math.floor(Math.random() * (FIELD_H-4));
+    const rx = 2 + Math.floor(seededRandom() * (FIELD_W-4));
+    const ry = 2 + Math.floor(seededRandom() * (FIELD_H-4));
     if (m[ry][rx] === TILE_GRASS) m[ry][rx] = TILE_STONE;
   }
 
