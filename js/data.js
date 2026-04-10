@@ -80,6 +80,11 @@ function getCompanionClassProfile(classId) {
   return COMPANION_CLASS_PROFILES[classId] || null;
 }
 
+function getCompanionClassName(classId) {
+  const profile = getCompanionClassProfile(classId);
+  return profile ? profile.className : '미정';
+}
+
 function getCompanionName(cId) {
   const roster = getCompanionRoster(cId);
   return roster ? roster.name : '알 수 없는 동료';

@@ -719,6 +719,51 @@ function handleCompanionAction(cId, action) {
   autoSave();
 }
 
+function buildCompanionSynergyCard(key, synergyDef) {
+  const classIds = key.split('-').map(id => parseInt(id, 10));
+  const classNames = classIds.map(getCompanionClassName);
+  const ownedClassIds = new Set(companions.map(cId => {
+    const roster = getCompanionRoster(cId);
+    return roster ? roster.classId : null;
+  }).filter(Boolean));
+  const activeClassIds = new Set(activeCompanions.map(cId => {
+    const roster = getCompanionRoster(cId);
+    return roster ? roster.classId : null;
+  }).filter(Boolean));
+  const ownedCount = classIds.filter(classId => ownedClassIds.has(classId)).length;
+  const activeCount = classIds.filter(classId => activeClassIds.has(classId)).length;
+
+  let stateClass = 'locked';
+  let stateLabel = ownedCount + '/2 확보';
+  if (activeCount === 2) {
+    stateClass = 'active';
+    stateLabel = '활성';
+  } else if (ownedCount === 2) {
+    stateClass = 'ready';
+    stateLabel = '보유 완료';
+  } else if (ownedCount > 0) {
+    stateClass = 'partial';
+  }
+
+  return '<div class="companion-synergy-card ' + stateClass + '">' +
+    '<div class="companion-synergy-card-head">' +
+      '<div class="companion-synergy-name">' + synergyDef.name + '</div>' +
+      '<div class="companion-synergy-state ' + stateClass + '">' + stateLabel + '</div>' +
+    '</div>' +
+    '<div class="companion-synergy-pair">' + classNames.join(' × ') + '</div>' +
+    '<div class="companion-synergy-desc">' + synergyDef.desc + '</div>' +
+  '</div>';
+}
+
+function buildCompanionSynergySection() {
+  const entries = Object.entries(COMPANION_CLASS_SYNERGIES);
+  if (!entries.length) return '';
+  return '<div class="companion-synergy-section">' +
+    '<div class="companion-section-title">시너지 조합</div>' +
+    '<div class="companion-synergy-list">' + entries.map(([key, def]) => buildCompanionSynergyCard(key, def)).join('') + '</div>' +
+  '</div>';
+}
+
 function bindCompanionPanelActions(content) {
   content.querySelectorAll('.comp-ai-btn').forEach(btn => {
     bindTap(btn, () => {
@@ -752,7 +797,8 @@ function renderCompanionPanel() {
       buildCompanionSummaryCard('사망', deadCompanions.length + '명', deadCompanions.length > 0 ? 'warn' : '') +
       buildCompanionSummaryCard('용병 슬롯', '잠김', 'lock', 'mercenary') +
     '</div>' +
-    '<div class="companion-synergy-banner">' + (synergy ? ('시너지: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 조합에 따라 추가 보너스가 생긴다') + '</div>' +
+    '<div class="companion-synergy-banner">' + (synergy ? ('시너지 활성: ' + synergy.name + ' · ' + synergy.desc) : '시너지 없음 — 아래 조합 카드에서 다음 목표 조합을 바로 볼 수 있다') + '</div>' +
+    buildCompanionSynergySection() +
     '<div class="companion-grid">' + companions.map(buildCompanionCard).join('') + '</div>';
 
   bindCompanionPanelActions(content);
