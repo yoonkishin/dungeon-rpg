@@ -242,6 +242,14 @@ function loadMapState(data) {
     currentDungeonId = -1;
   }
 
+  // Safety net: dungeon map with neither a valid id nor a trial is a
+  // corrupted state. Route to town so we don't boot into a fake dungeon.
+  if (currentMap === 'dungeon') {
+    currentMap = 'town';
+    player.x = 20 * TILE + TILE / 2;
+    player.y = 15 * TILE + TILE / 2;
+  }
+
   // Normalize: a non-dungeon map must not retain a dungeon id or an active
   // emblem trial. Clears leftover flags from already-corrupted saves so they
   // don't keep re-persisting.
