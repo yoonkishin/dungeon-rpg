@@ -24,6 +24,54 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => { toastEl.style.opacity = '0'; }, 1500);
 }
 
+// ─── HUD Rendering ──────────────────────────────────────────────────────────
+function updateHUD() {
+  hudDirty = false;
+  document.getElementById('hp-fill').style.width = (player.hp / player.maxHp * 100) + '%';
+  document.getElementById('hp-text').textContent = Math.floor(player.hp) + '/' + player.maxHp;
+  document.getElementById('mp-fill').style.width = (player.mp / player.maxMp * 100) + '%';
+  document.getElementById('mp-text').textContent = Math.floor(player.mp) + '/' + player.maxMp;
+  document.getElementById('player-avatar').textContent = player.level;
+
+  const tier = getCurrentTier();
+  const growthLine = getGrowthLine(player.classLine || 'infantry');
+  const nextTier = getNextTier();
+  const promotionTarget = getPlayerPromotionTarget();
+  const statusClassLineEl = document.getElementById('status-class-line');
+  const statusClassNextEl = document.getElementById('status-class-next');
+  if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
+  if (statusClassNextEl) {
+    statusClassNextEl.textContent = promotionTarget
+      ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
+      : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
+  }
+
+  const xpPct = player.xpNext > 0 ? (player.xp / player.xpNext * 100) : 0;
+  document.getElementById('xp-fill').style.width = xpPct + '%';
+  document.getElementById('xp-text').textContent = player.xp + '/' + player.xpNext;
+  document.getElementById('gold-display').textContent = '💰 ' + player.gold;
+  document.getElementById('player-avatar').style.borderColor = tier.color;
+  document.getElementById('player-avatar').style.background = 'linear-gradient(135deg, ' + tier.bodyColor + ', ' + tier.color + ')';
+}
+
+let levelupTimeout = null;
+function showLevelup() {
+  AudioSystem.sfx.levelUp();
+  const el = document.getElementById('levelup-banner');
+  el.style.opacity = '1';
+  if (levelupTimeout) clearTimeout(levelupTimeout);
+  levelupTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+let areaTimeout = null;
+function showAreaLabel(text) {
+  const el = document.getElementById('area-label');
+  el.textContent = text;
+  el.style.opacity = '1';
+  if (areaTimeout) clearTimeout(areaTimeout);
+  areaTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
 // ─── Panel Registry ─────────────────────────────────────────────────────────
 // Single source of truth for "is some panel open?" and "close them all".
 // Adding a new panel = add one entry here. The arrows capture live bindings
@@ -290,7 +338,11 @@ function closeAllPanels(options = {}) {
   const { includeDialogue = true } = options;
   for (const p of PANEL_REGISTRY) {
     if (p.id === 'dialogue' && !includeDialogue) continue;
-    try { p.close(); } catch (ex) {}
+    try {
+      p.close();
+    } catch (ex) {
+      console.warn('[closeAllPanels] failed to close panel:', p.id, ex);
+    }
   }
 }
 

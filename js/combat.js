@@ -65,10 +65,8 @@ function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
     player.dead = true;
     AudioSystem.sfx.death();
     AudioSystem.stopBgm();
-    if (typeof returnPlayerToTownAfterDeath === 'function') {
-      returnPlayerToTownAfterDeath();
-      return;
-    }
+    returnPlayerToTownAfterDeath();
+    return;
   }
   updateHUD();
 }
@@ -365,6 +363,58 @@ function updateEnemyEffects(dt) {
 
 // ─── Update ───────────────────────────────────────────────────────────────────
 let lastTime = 0;
+
+
+// ─── Level Up ────────────────────────────────────────────────────────────────
+let maxLevelToastShown = false;
+function gainXP(amount) {
+  const levelCap = getPlayerLevelCap();
+  if (player.level >= levelCap) {
+    player.xp = 0;
+    if (!maxLevelToastShown) {
+      showToast('최대 레벨');
+      maxLevelToastShown = true;
+    }
+    updateHUD();
+    return;
+  }
+  player.xp += amount;
+  let leveled = false;
+  while (player.xp >= player.xpNext && player.level < levelCap) {
+    player.xp -= player.xpNext;
+    player.level++;
+
+    const growth = getLevelGrowthForRank(player.classLine || 'infantry', player.classRank || 1);
+    player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+    player.maxHp += growth.maxHp;
+    player.hp = player.maxHp;
+    player.maxMp += growth.maxMp;
+    player.mp = player.maxMp;
+    player.atk += growth.atk;
+    player.def += growth.def;
+    player.speed += growth.speed;
+    player.critChance = Math.min(30, player.critChance + growth.critChance);
+    showLevelup();
+    addParticles(player.x, player.y, '#f1c40f', 20);
+    leveled = true;
+
+    const wasPending = !!player.promotionPending;
+    syncPlayerGrowthState();
+    const promotionTarget = getPlayerPromotionTarget();
+    if (!wasPending && promotionTarget) {
+      showToast('승급 가능! 수련의 방으로 가자');
+      addParticles(player.x, player.y, promotionTarget.color, 25);
+    }
+
+    if (player.level >= getPlayerLevelCap()) {
+      player.xp = 0;
+      player.xpNext = 0;
+      break;
+    }
+  }
+  if (leveled) autoSave();
+  updateHUD();
+}
 
 
 // ─── Kill Enemy Helper ───────────────────────────────────────────────────────

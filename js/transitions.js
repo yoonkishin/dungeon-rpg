@@ -1,105 +1,7 @@
 'use strict';
 
-function updateHUD() {
-  hudDirty = false;
-  document.getElementById('hp-fill').style.width = (player.hp / player.maxHp * 100) + '%';
-  document.getElementById('hp-text').textContent = Math.floor(player.hp) + '/' + player.maxHp;
-  document.getElementById('mp-fill').style.width = (player.mp / player.maxMp * 100) + '%';
-  document.getElementById('mp-text').textContent = Math.floor(player.mp) + '/' + player.maxMp;
-  document.getElementById('player-avatar').textContent = player.level;
-
-  const tier = getCurrentTier();
-  const growthLine = getGrowthLine(player.classLine || 'infantry');
-  const nextTier = getNextTier();
-  const promotionTarget = getPlayerPromotionTarget();
-  const statusClassLineEl = document.getElementById('status-class-line');
-  const statusClassNextEl = document.getElementById('status-class-next');
-  if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
-  if (statusClassNextEl) {
-    statusClassNextEl.textContent = promotionTarget
-      ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
-      : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
-  }
-
-  // XP bar in status panel
-  const xpPct = player.xpNext > 0 ? (player.xp / player.xpNext * 100) : 0;
-  document.getElementById('xp-fill').style.width = xpPct + '%';
-  document.getElementById('xp-text').textContent = player.xp + '/' + player.xpNext;
-  // Gold display (top-right)
-  document.getElementById('gold-display').textContent = '💰 ' + player.gold;
-  // Update avatar border color to tier color
-  document.getElementById('player-avatar').style.borderColor = tier.color;
-  document.getElementById('player-avatar').style.background = 'linear-gradient(135deg, ' + tier.bodyColor + ', ' + tier.color + ')';
-}
-
-let levelupTimeout = null;
-function showLevelup() {
-  AudioSystem.sfx.levelUp();
-  const el = document.getElementById('levelup-banner');
-  el.style.opacity = '1';
-  if (levelupTimeout) clearTimeout(levelupTimeout);
-  levelupTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2000);
-}
-
-let areaTimeout = null;
-function showAreaLabel(text) {
-  const el = document.getElementById('area-label');
-  el.textContent = text;
-  el.style.opacity = '1';
-  if (areaTimeout) clearTimeout(areaTimeout);
-  areaTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2500);
-}
-
-// ─── Level Up ─────────────────────────────────────────────────────────────────
-let maxLevelToastShown = false;
-function gainXP(amount) {
-  const levelCap = getPlayerLevelCap();
-  if (player.level >= levelCap) {
-    player.xp = 0;
-    if (!maxLevelToastShown) {
-      showToast('최대 레벨');
-      maxLevelToastShown = true;
-    }
-    updateHUD();
-    return;
-  }
-  player.xp += amount;
-  let leveled = false;
-  while (player.xp >= player.xpNext && player.level < levelCap) {
-    player.xp -= player.xpNext;
-    player.level++;
-
-    const growth = getLevelGrowthForRank(player.classLine || 'infantry', player.classRank || 1);
-    player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
-    player.maxHp += growth.maxHp;
-    player.hp = player.maxHp;
-    player.maxMp += growth.maxMp;
-    player.mp = player.maxMp;
-    player.atk += growth.atk;
-    player.def += growth.def;
-    player.speed += growth.speed;
-    player.critChance = Math.min(30, player.critChance + growth.critChance);
-    showLevelup();
-    addParticles(player.x, player.y, '#f1c40f', 20);
-    leveled = true;
-
-    const wasPending = !!player.promotionPending;
-    syncPlayerGrowthState();
-    const promotionTarget = getPlayerPromotionTarget();
-    if (!wasPending && promotionTarget) {
-      showToast('승급 가능! 수련의 방으로 가자');
-      addParticles(player.x, player.y, promotionTarget.color, 25);
-    }
-
-    if (player.level >= getPlayerLevelCap()) {
-      player.xp = 0;
-      player.xpNext = 0;
-      break;
-    }
-  }
-  if (leveled) autoSave();
-  updateHUD();
-}
+// HUD rendering (updateHUD/showLevelup/showAreaLabel) lives in ui-manager.js.
+// Player progression (gainXP) lives in combat.js where XP rewards originate.
 
 // ─── Portal / Transition ──────────────────────────────────────────────────────
 function checkPortal() {
@@ -126,6 +28,7 @@ function checkPortal() {
 
 function enterField() {
   clearEmblemTrial();
+  currentDungeonId = -1;
   currentMap = 'field';
   player.x = 40 * TILE;
   player.y = (FIELD_H - 3) * TILE + TILE/2;
@@ -139,6 +42,7 @@ function enterField() {
 
 function enterTown() {
   clearEmblemTrial();
+  currentDungeonId = -1;
   currentMap = 'town';
   player.x = 20 * TILE + TILE/2;
   player.y = 15 * TILE + TILE/2;

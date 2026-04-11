@@ -5,18 +5,31 @@ const SAVE_KEY = 'rpg_save_data';
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
-// Persisted player fields — single source of truth for what autoSave serializes.
-// Add a key here when you add a persistent field to `player`; load migrations
-// still live in loadPlayerState() because defaults/rewrites need per-field care.
-const PERSISTED_PLAYER_SCALAR_KEYS = [
-  'x', 'y',
-  'hp', 'maxHp', 'mp', 'maxMp',
-  'level', 'xp', 'xpNext',
-  'gold', 'tier',
-  'atk', 'def', 'speed', 'critChance',
-  'classLine', 'classRank', 'currentClassKey',
-  'promotionPending', 'promotionBonusRankApplied',
-];
+// Persisted player scalar fields — single source of truth for save AND load.
+// Value = fallback used on load when the save lacks the field. PLAYER_KEEP
+// means "retain whatever state.js set as the current default". Fields that
+// need real migrations (classRank, xpNext, emblemIds, etc.) stay special-cased
+// in loadPlayerState() below.
+const PLAYER_KEEP = Symbol('keep');
+const PERSISTED_PLAYER_SCALARS = {
+  x: PLAYER_KEEP,
+  y: PLAYER_KEEP,
+  hp: PLAYER_KEEP,
+  maxHp: PLAYER_KEEP,
+  mp: PLAYER_KEEP,
+  maxMp: PLAYER_KEEP,
+  level: PLAYER_KEEP,
+  xp: 0,
+  gold: 0,
+  tier: 1,
+  atk: PLAYER_KEEP,
+  def: PLAYER_KEEP,
+  speed: PLAYER_KEEP,
+  critChance: 10,
+  classLine: 'infantry',
+  promotionPending: false,
+  promotionBonusRankApplied: 1,
+};
 const PERSISTED_PLAYER_ARRAY_KEYS = [
   'classHistory',
   'emblemIds',
@@ -26,7 +39,11 @@ const PERSISTED_PLAYER_ARRAY_KEYS = [
 
 function serializePlayer() {
   const out = {};
-  for (const k of PERSISTED_PLAYER_SCALAR_KEYS) out[k] = player[k];
+  for (const k of Object.keys(PERSISTED_PLAYER_SCALARS)) out[k] = player[k];
+  // Special-cased scalars (migration-dependent) still flow through save.
+  out.classRank = player.classRank;
+  out.currentClassKey = player.currentClassKey;
+  out.xpNext = player.xpNext;
   for (const k of PERSISTED_PLAYER_ARRAY_KEYS) {
     out[k] = Array.isArray(player[k]) ? player[k].slice() : [];
   }
@@ -41,6 +58,16 @@ function hasOwn(obj, key) {
 
 function readValue(obj, key, fallback) {
   return hasOwn(obj, key) ? obj[key] : fallback;
+}
+
+function loadPlayerScalars(p) {
+  for (const [k, fallback] of Object.entries(PERSISTED_PLAYER_SCALARS)) {
+    if (hasOwn(p, k)) {
+      player[k] = p[k];
+    } else if (fallback !== PLAYER_KEEP) {
+      player[k] = fallback;
+    }
+  }
 }
 
 function autoSave() {
@@ -75,17 +102,8 @@ function autoSave() {
 }
 
 function loadPlayerState(p) {
-  player.x = readValue(p, 'x', player.x);
-  player.y = readValue(p, 'y', player.y);
-  player.hp = readValue(p, 'hp', player.hp);
-  player.maxHp = readValue(p, 'maxHp', player.maxHp);
-  player.mp = readValue(p, 'mp', player.mp);
-  player.maxMp = readValue(p, 'maxMp', player.maxMp);
-  player.level = readValue(p, 'level', player.level);
-  player.xp = readValue(p, 'xp', 0);
-  player.gold = readValue(p, 'gold', 0);
-  player.tier = readValue(p, 'tier', 1);
-  player.classLine = readValue(p, 'classLine', 'infantry');
+  loadPlayerScalars(p);
+  // Special-cased: migrations / computed fallbacks.
   player.classRank = hasOwn(p, 'classRank') ? p.classRank : (hasOwn(p, 'tier') ? p.tier : getRankForLevel(player.classLine, player.level).rank);
   player.currentClassKey = readValue(p, 'currentClassKey', `${player.classLine}_rank${player.classRank}`);
   player.classHistory = Array.isArray(p.classHistory) && p.classHistory.length ? p.classHistory.slice() : [player.currentClassKey];
@@ -93,13 +111,8 @@ function loadPlayerState(p) {
   player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
   player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
   player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
-  player.promotionPending = !!readValue(p, 'promotionPending', false);
-  player.promotionBonusRankApplied = readValue(p, 'promotionBonusRankApplied', 1);
+  player.promotionPending = !!player.promotionPending;
   player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
-  player.atk = readValue(p, 'atk', player.atk);
-  player.def = readValue(p, 'def', player.def);
-  player.speed = readValue(p, 'speed', player.speed);
-  player.critChance = readValue(p, 'critChance', 10);
   if (p.promotionBonusRankApplied === undefined && player.classRank > 1) {
     applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
     player.promotionBonusRankApplied = player.classRank;
@@ -199,6 +212,17 @@ function loadMapState(data) {
     maps.field = buildField(data.fieldSeed);
   }
 
+  // Emblem trial resume policy: treat as transient, return to town on reload.
+  // Must run BEFORE the generic dungeon resume branch so corrupted saves that
+  // carry both a stale dungeon id and an active trial still route to the
+  // trial exit spawn instead of the dungeon portal.
+  if (currentMap === 'dungeon' && currentEmblemTrial) {
+    currentMap = 'town';
+    currentEmblemTrial = null;
+    player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
+    player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
+  }
+
   // Dungeon resume policy: disallow resume, safely return to field
   if (currentMap === 'dungeon' && currentDungeonId >= 0) {
     const info = DUNGEON_INFO[currentDungeonId];
@@ -218,12 +242,12 @@ function loadMapState(data) {
     currentDungeonId = -1;
   }
 
-  // Emblem trial resume policy: treat as transient, return to town on reload
-  if (currentMap === 'dungeon' && currentEmblemTrial) {
-    currentMap = 'town';
+  // Normalize: a non-dungeon map must not retain a dungeon id or an active
+  // emblem trial. Clears leftover flags from already-corrupted saves so they
+  // don't keep re-persisting.
+  if (currentMap !== 'dungeon') {
+    currentDungeonId = -1;
     currentEmblemTrial = null;
-    player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
-    player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
   }
 }
 
@@ -240,6 +264,8 @@ function loadSave() {
     loadQuestState(data);
     loadMapState(data);
 
+    // Flush normalized state so corrupted blobs don't linger on disk.
+    autoSave();
     return true;
   } catch(ex) {
     return false;
