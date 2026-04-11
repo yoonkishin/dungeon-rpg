@@ -1,0 +1,75 @@
+/* ── Pickup Prompt ── */
+#pickup-prompt {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  border: 1px solid #f1c40f;
+  border-radius: 8px;
+  color: #f1c40f;
+  font-size: 13px;
+  padding: 6px 14px;
+  pointer-events: none;
+  display: none;
+}
+
+/* ── Toast notification ── */
+#toast {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10,12,20,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(241,196,15,0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 18px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 300;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* ── Dialogue Panel ── */
+#dialogue-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  min-height: 148px;
+  background: rgba(10,12,20,0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(241,196,15,0.3);
+  display: none;
+  flex-direction: column;
+  padding: 12px 20px;
+  z-index: 200;
+  pointer-events: all;
+}
+#dialogue-panel .npc-name {
+  color: #f1c40f;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+#dialogue-panel .npc-text {
+  color: #ddd;
+  font-size: 13px;
+  flex: 1;
+  line-height: 1.5;
+}
+#dialogue-panel .dialogue-close {
+  align-self: flex-end;
+  padding: 4px 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+  pointer-events: all;
+}

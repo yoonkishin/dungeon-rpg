@@ -1,0 +1,310 @@
+/* ── Profile Panel ── */
+.profile-layout {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.profile-character-card,
+.profile-stats-card,
+.profile-tier-card,
+.profile-progress-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+.profile-character-card {
+  position: relative;
+  width: 120px;
+  min-width: 120px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  background: linear-gradient(180deg, #0a0c14, #1a1c24, #0a0c14);
+}
+.profile-character-glow {
+  position: absolute;
+  inset: 0;
+}
+.profile-character-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.profile-character-figure {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+.profile-character-aura {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+}
+.profile-character-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+}
+.profile-character-fallback {
+  display: none;
+  width: 40px;
+  height: 45px;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.profile-character-body {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+.profile-character-meta {
+  text-align: center;
+  margin-top: 4px;
+}
+.profile-character-name {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+.profile-character-tier,
+.profile-character-level {
+  font-size: 9px;
+  margin-top: 1px;
+}
+.profile-character-tier {
+  font-weight: 700;
+}
+.profile-character-level,
+.profile-resource-value,
+.profile-tier-foot,
+.profile-progress-title {
+  color: #aaa;
+}
+.profile-stats-card,
+.profile-tier-card,
+.profile-progress-card {
+  padding: 8px;
+}
+.profile-stats-card {
+  flex: 1;
+}
+.profile-resource-block {
+  margin-bottom: 4px;
+}
+.profile-resource-gap {
+  margin-bottom: 6px;
+}
+.profile-resource-row,
+.profile-tier-head,
+.profile-metric-item {
+  display: flex;
+  justify-content: space-between;
+}
+.profile-resource-row {
+  margin-bottom: 2px;
+}
+.profile-resource-label,
+.profile-resource-value,
+.profile-tier-text,
+.profile-tier-next,
+.profile-metric-label,
+.profile-metric-value,
+.profile-progress-title,
+.profile-progress-dot {
+  font-size: 9px;
+}
+.profile-resource-label,
+.profile-metric-label {
+  font-weight: 700;
+}
+.profile-resource-label.hp { color: #e74c3c; }
+.profile-resource-label.mp { color: #3498db; }
+.profile-bar {
+  height: 6px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.profile-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.profile-bar-fill.hp {
+  background: linear-gradient(90deg, #ff6b6b, #e74c3c);
+}
+.profile-bar-fill.mp {
+  background: linear-gradient(90deg, #74b9ff, #0984e3);
+}
+.profile-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+.profile-metric-item {
+  padding: 3px 5px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+}
+.profile-metric-label {
+  color: #aaa;
+}
+.profile-metric-value,
+.profile-tier-name {
+  color: #f1c40f;
+  font-weight: 700;
+}
+.profile-tier-card {
+  margin-bottom: 6px;
+}
+.profile-tier-head {
+  margin-bottom: 3px;
+  gap: 8px;
+}
+.profile-tier-text {
+  color: #ddd;
+}
+.profile-tier-next {
+  color: #888;
+}
+.profile-tier-next.max {
+  color: #f1c40f;
+}
+.profile-tier-foot {
+  text-align: right;
+  font-size: 8px;
+  margin-top: 2px;
+}
+.profile-promotion-note {
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.profile-promotion-title {
+  color: #f1c40f;
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.profile-promotion-body {
+  color: #cfd6e6;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.profile-progress-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.profile-progress-card {
+  flex: 1;
+}
+.profile-progress-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.profile-progress-dots {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.profile-progress-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  color: #555;
+}
+.profile-progress-dot.active {
+  color: #fff;
+}
+.profile-progress-dot.dungeon.active {
+  background: #2ecc71;
+  border-color: #27ae60;
+}
+.profile-progress-dot.companion.active {
+  background: #3498db;
+  border-color: #2980b9;
+}
+
+.training-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.training-summary-item {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.training-summary-label {
+  font-size: 10px;
+  color: #9fb0d1;
+}
+.training-summary-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f5f7fb;
+}
+.training-subtitle {
+  color: #f1f5f9;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+.training-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.training-delta-badge {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(241,196,15,0.12);
+  border: 1px solid rgba(241,196,15,0.22);
+  color: #f6d46b;
+  font-size: 10px;
+  font-weight: 700;
+}
+.training-action-row {
+  margin-top: 12px;
+}
+.training-promote-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: linear-gradient(135deg, #f1c40f, #e67e22);
+  color: #1a1a1a;
+  font-weight: 800;
+  font-size: 12px;
+}
+.training-promote-btn:disabled {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.4);
+}

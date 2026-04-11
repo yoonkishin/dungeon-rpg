@@ -1,0 +1,22 @@
+/* ── Overlay Panels ── */
+.overlay-panel {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,10,18,0.97), rgba(15,18,30,0.97));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  flex-direction: column;
+  z-index: 200;
+  pointer-events: all;
+  padding: 8px 12px;
+  overflow: hidden;
+  touch-action: pan-y;
+  transition: opacity 0.15s ease;
+  opacity: 0;
+}
+/* ── Panel transitions ── */
+#menu-panel, #settings-panel {
+  transition: opacity 0.15s ease;
+  opacity: 0;
+}

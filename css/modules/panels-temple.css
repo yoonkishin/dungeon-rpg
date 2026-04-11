@@ -1,0 +1,102 @@
+/* ── Temple Panel ── */
+.temple-empty-state {
+  text-align: center;
+  padding: 30px 10px;
+}
+.temple-empty-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+.temple-empty-title {
+  color: #2ecc71;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.temple-empty-text,
+.temple-note {
+  color: #888;
+  font-size: 10px;
+}
+.temple-note,
+.temple-gold {
+  text-align: center;
+  margin-bottom: 8px;
+}
+.temple-gold {
+  color: #f1c40f;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+.temple-revive-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+.temple-revive-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #fff;
+  opacity: 0.5;
+}
+.temple-revive-main {
+  flex: 1;
+}
+.temple-revive-name {
+  color: #ddd;
+  font-size: 11px;
+  font-weight: 700;
+}
+.temple-revive-state {
+  color: #e74c3c;
+  font-size: 9px;
+}
+.temple-revive-cost {
+  color: #f1c40f;
+  font-size: 10px;
+  margin-right: 6px;
+}
+.temple-revive-btn,
+.temple-revive-all-btn {
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  pointer-events: all;
+  font-weight: 700;
+}
+.temple-revive-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  background: linear-gradient(180deg,#2ecc71,#27ae60);
+}
+.temple-revive-all-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 11px;
+  background: linear-gradient(180deg,#f39c12,#e67e22);
+}
+.temple-revive-btn:disabled,
+.temple-revive-all-btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+.temple-actions {
+  margin-top: 10px;
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .companion-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

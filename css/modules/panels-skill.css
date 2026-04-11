@@ -1,0 +1,355 @@
+/* ── Production Skill Panel Cards ── */
+.skill-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  transition: background 0.15s;
+}
+.skill-card:active {
+  background: rgba(255,255,255,0.08);
+}
+.skill-icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+  background: var(--skill-icon-bg, rgba(255,255,255,0.08));
+  border: 1px solid var(--skill-icon-border, rgba(255,255,255,0.12));
+}
+.skill-info { flex: 1; min-width: 0; }
+.skill-name {
+  font-weight: 600;
+  font-size: 11px;
+  color: #eee;
+  margin-bottom: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skill-desc {
+  font-size: 9px;
+  color: #777;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.skill-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 9px;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+.skill-stat { display: flex; align-items: center; gap: 2px; }
+.skill-stat.mp { color: #74b9ff; }
+.skill-stat.cd { color: #ffa502; }
+.skill-type-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: bold;
+  background: var(--skill-type-bg, rgba(255,255,255,0.08));
+  color: var(--skill-type-color, #ddd);
+  border: 1px solid var(--skill-type-border, rgba(255,255,255,0.12));
+}
+.skill-slot-info { font-size: 8px; margin-top: 1px; color: #555; }
+
+/* ── Quest Panel Cards ── */
+.quest-section-title {
+  color: #f1c40f;
+  font-size: 12px;
+  font-weight: bold;
+  margin: 10px 0 7px;
+}
+.quest-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.quest-card.primary {
+  border-color: rgba(241,196,15,0.28);
+  background: linear-gradient(180deg, rgba(241,196,15,0.10), rgba(255,255,255,0.03));
+}
+.quest-focus-card {
+  margin-bottom: 10px;
+}
+.quest-focus-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.quest-focus-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.quest-focus-text {
+  color: #d9dee7;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.quest-summary-grid,
+.village-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.quest-summary-item,
+.village-summary-item {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 8px 9px;
+  min-width: 0;
+}
+.quest-summary-label,
+.village-summary-label {
+  display: block;
+  color: #97a3b6;
+  font-size: 9px;
+  margin-bottom: 4px;
+}
+.quest-summary-value,
+.village-summary-value {
+  display: block;
+  color: #f5f7fb;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.quest-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  color: #ddd;
+  font-size: 11px;
+  padding: 5px 0;
+}
+.quest-row + .quest-row {
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.quest-label {
+  color: #aaa;
+  min-width: 72px;
+}
+.quest-value {
+  color: #f1c40f;
+  font-weight: bold;
+  text-align: right;
+}
+.quest-desc {
+  color: #c1c8d3;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.quest-desc-emphasis {
+  color: #dce3ee;
+}
+.quest-desc-emphasis.ready {
+  color: #f1c40f;
+}
+.quest-desc-emphasis.pending {
+  color: #9aa3b2;
+}
+.quest-chip-row {
+  margin-bottom: 4px;
+}
+.quest-inline-highlight {
+  color: #f1c40f;
+  font-weight: 700;
+}
+.quest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: bold;
+  margin-right: 5px;
+  margin-top: 4px;
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
+}
+.quest-chip.done {
+  background: rgba(46,204,113,0.16);
+  color: #2ecc71;
+}
+.quest-chip.active {
+  background: rgba(52,152,219,0.18);
+  color: #74b9ff;
+}
+.quest-chip.warn {
+  background: rgba(241,196,15,0.16);
+  color: #f1c40f;
+}
+.quest-dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quest-dungeon-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.quest-dungeon-item.next {
+  border-color: rgba(116,185,255,0.45);
+  box-shadow: inset 0 0 0 1px rgba(116,185,255,0.12);
+}
+.quest-dungeon-item.done {
+  opacity: 0.82;
+}
+.quest-dungeon-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.quest-dungeon-name {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+.quest-dungeon-meta {
+  color: #9aa3b2;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.quest-dungeon-reward {
+  color: #ddd;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.quest-dungeon-boss {
+  color: #bbb;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.village-overview-card {
+  margin-bottom: 10px;
+}
+.village-tip-banner {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(116,185,255,0.10);
+  border: 1px solid rgba(116,185,255,0.18);
+  color: #bfe0ff;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.village-upgrade-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.village-upgrade-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.village-upgrade-name {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.village-upgrade-meta {
+  color: #97a3b6;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.village-next-upgrade {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  color: #f4d35e;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.village-upgrade-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.village-upgrade-cost {
+  color: #a9b5c7;
+  font-size: 10px;
+  line-height: 1.35;
+}
+.village-upgrade-btn {
+  flex-shrink: 0;
+  min-width: 88px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f39c12, #d68910);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.village-upgrade-btn:disabled {
+  background: rgba(255,255,255,0.14);
+  color: #8c96a5;
+  cursor: not-allowed;
+}
+.village-upgrade-btn:not(:disabled):active {
+  opacity: 0.72;
+}
+.village-benefit-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.village-benefit-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: #d7dde7;
+  font-size: 10px;
+}
+.village-benefit-item.reached {
+  border-color: rgba(46,204,113,0.28);
+  background: rgba(46,204,113,0.10);
+}
+.village-benefit-item.current {
+  border-color: rgba(241,196,15,0.28);
+}
+.village-benefit-label {
+  color: #f1c40f;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.village-benefit-value {
+  text-align: right;
+}

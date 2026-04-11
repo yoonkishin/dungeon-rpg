@@ -1,0 +1,194 @@
+/* ── Tier promotion banner ── */
+#tier-banner {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  font-weight: bold;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  text-align: center;
+  line-height: 1.6;
+  text-shadow: 0 0 20px currentColor, 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* ── TOP-RIGHT: Menu & Settings Buttons ── */
+#top-right-btns {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex;
+  gap: 5px;
+  pointer-events: all;
+}
+#menu-btn {
+  display: none;
+}
+.top-circle-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(10,12,20,0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(241,196,15,0.2);
+  color: #fff;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.top-circle-btn:active { transform: scale(0.92); }
+
+/* ── Menu Panel ── */
+#menu-panel {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,10,18,0.97), rgba(15,18,30,0.97));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  z-index: 200;
+  pointer-events: all;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding: 12px 0;
+}
+#menu-panel .menu-title {
+  color: #f1c40f;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(241,196,15,0.4);
+  flex-shrink: 0;
+}
+#menu-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 70px);
+  grid-template-rows: repeat(2, 80px);
+  gap: 8px;
+  flex-shrink: 0;
+}
+.menu-grid-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  padding: 8px 4px;
+}
+.menu-grid-btn:active {
+  transform: scale(0.92);
+  background: rgba(241,196,15,0.15);
+}
+.menu-grid-btn .m-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+.menu-grid-btn .m-label {
+  color: #ccc;
+  font-size: 11px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+#menu-close {
+  margin-top: 20px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+#menu-close:active { transform: scale(0.92); }
+
+/* ── Settings Panel ── */
+#settings-panel {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,10,18,0.97), rgba(15,18,30,0.97));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  z-index: 200;
+  pointer-events: all;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding: 12px 0;
+}
+#settings-panel .settings-title {
+  color: #f1c40f;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(241,196,15,0.4);
+  flex-shrink: 0;
+}
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+  flex-shrink: 0;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ddd;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+}
+.settings-row:active {
+  transform: scale(0.97);
+  background: rgba(241,196,15,0.12);
+}
+.settings-row .s-icon { font-size: 18px; margin-right: 10px; }
+.settings-row .s-label { flex: 1; }
+.settings-row .s-toggle {
+  color: #888;
+  font-size: 12px;
+}
+#settings-close {
+  margin-top: 20px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+#settings-close:active { transform: scale(0.92); }
