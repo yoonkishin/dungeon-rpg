@@ -89,27 +89,4 @@ function addDamageNumber(x, y, amount, type) {
   if (damageNumbers.length > 50) damageNumbers.splice(0, damageNumbers.length - 50);
 }
 
-function drawDamageNumbers() {
-  damageNumbers.forEach(dn => {
-    const sx = dn.x - cameraX + screenShake.x;
-    const sy = dn.y - cameraY + screenShake.y;
-    const alpha = Math.min(1, dn.timer / 20);
-    const scale = dn.isCrit ? 1 + (60 - dn.timer) * 0.01 : 1;
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.font = `bold ${Math.floor(dn.size * scale)}px sans-serif`;
-    ctx.textAlign = 'center';
-
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 3;
-    ctx.strokeText(dn.text, sx, sy);
-
-    ctx.fillStyle = dn.color;
-    ctx.fillText(dn.text, sx, sy);
-
-    ctx.restore();
-  });
-}
-
 // ─── Kill Enemy Helper ───────────────────────────────────────────────────────
