@@ -98,11 +98,12 @@ potionBtn.addEventListener('click', (e) => {
 });
 
 function usePotion() {
-  const idx = inventory.findIndex(id => id === 'potion_hp2');
-  const idx2 = inventory.findIndex(id => id === 'potion_hp');
+  const idx = inventory.findIndex(e => e.itemId === 'potion_hp2');
+  const idx2 = inventory.findIndex(e => e.itemId === 'potion_hp');
   const useIdx = idx >= 0 ? idx : idx2;
   if (useIdx < 0) return;
-  const itemId = inventory[useIdx];
+  const entry = inventory[useIdx];
+  const itemId = entry.itemId;
   const item = ITEMS[itemId];
   if (!item || item.type !== 'potion') return;
   const boostedHeal = Math.floor(item.heal * getHealingMultiplier());

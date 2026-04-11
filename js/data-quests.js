@@ -304,7 +304,7 @@ function grantMainQuestReward(quest) {
   if (quest.reward.gold) player.gold += quest.reward.gold;
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
-      if (ITEMS[id]) inventory.push(id);
+      if (ITEMS[id]) inventory.push(createItemInstance(id));
     });
   }
   if (Array.isArray(quest.reward.companions)) {
@@ -398,7 +398,7 @@ function grantSubquestReward(quest) {
   if (quest.reward.gold) player.gold += quest.reward.gold;
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
-      if (ITEMS[id]) inventory.push(id);
+      if (ITEMS[id]) inventory.push(createItemInstance(id));
     });
   }
   if (Array.isArray(quest.reward.companions)) {

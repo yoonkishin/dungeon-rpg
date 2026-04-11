@@ -73,9 +73,9 @@ function getEquipBonus() {
   let bonusAtk = 0, bonusDef = 0, speedBonus = 0, critBonus = 0, goldBonus = 0;
   const slots = EQUIP_SLOTS;
   slots.forEach(slot => {
-    const id = equipped[slot];
-    if (id && ITEMS[id]) {
-      const item = ITEMS[id];
+    const inst = equipped[slot];
+    if (inst && ITEMS[inst.itemId]) {
+      const item = ITEMS[inst.itemId];
       bonusAtk += item.atk || 0;
       bonusDef += item.def || 0;
       if (item.speedBonus) speedBonus += item.speedBonus;

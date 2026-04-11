@@ -77,6 +77,10 @@ const skillCooldowns = {};
 const skillBuffs = {};
 
 // ─── Inventory / Equipment State ─────────────────────────────────────────────
+let nextItemUid = 1;
+function createItemInstance(itemId) {
+  return { uid: nextItemUid++, itemId: itemId };
+}
 const inventory = [];
 const equipped = { weapon: null, armor: null, helmet: null, boots: null, accessory1: null, accessory2: null, shield: null, event: null };
 let droppedItems = [];

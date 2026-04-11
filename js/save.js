@@ -30,8 +30,9 @@ function autoSave() {
         promotionPending: player.promotionPending, promotionBonusRankApplied: player.promotionBonusRankApplied,
         gold: player.gold, atk: player.atk, def: player.def, speed: player.speed, critChance: player.critChance,
       },
-      inventory: inventory.slice(),
-      equipped: { weapon: equipped.weapon, armor: equipped.armor, helmet: equipped.helmet, boots: equipped.boots, accessory1: equipped.accessory1, accessory2: equipped.accessory2, shield: equipped.shield, event: equipped.event },
+      inventory: inventory.map(e => ({ uid: e.uid, itemId: e.itemId })),
+      nextItemUid: nextItemUid,
+      equipped: Object.fromEntries(EQUIP_SLOTS.map(s => [s, equipped[s] ? { uid: equipped[s].uid, itemId: equipped[s].itemId } : null])),
       currentMap: currentMap,
       dungeonsCleared: dungeonsCleared.slice(),
       companions: companions.slice(),
@@ -97,26 +98,49 @@ function loadSave() {
     if (typeof ensurePlayerEmblemBonusesApplied === 'function') ensurePlayerEmblemBonusesApplied();
     syncPlayerGrowthState();
 
-    // Restore inventory
+    // Restore inventory (with backward compat for old string-based saves)
     inventory.length = 0;
+    let maxUid = 0;
     if (Array.isArray(data.inventory)) {
-      data.inventory.forEach(id => { if (ITEMS[id]) inventory.push(id); });
+      data.inventory.forEach(entry => {
+        if (typeof entry === 'string') {
+          if (ITEMS[entry]) {
+            inventory.push({ uid: ++maxUid, itemId: entry });
+          }
+        } else if (entry && entry.itemId && ITEMS[entry.itemId]) {
+          const uid = entry.uid || ++maxUid;
+          inventory.push({ uid: uid, itemId: entry.itemId });
+          if (uid > maxUid) maxUid = uid;
+        }
+      });
     }
+    nextItemUid = (data.nextItemUid && data.nextItemUid > maxUid) ? data.nextItemUid : maxUid + 1;
 
-    // Restore equipped (backward compatible with old 3-slot saves)
+    // Restore equipped (backward compatible with old string saves and old 3-slot saves)
     if (data.equipped) {
-      equipped.weapon = readValue(data.equipped, 'weapon', null);
-      equipped.armor = readValue(data.equipped, 'armor', null);
-      equipped.helmet = readValue(data.equipped, 'helmet', null);
-      equipped.boots = readValue(data.equipped, 'boots', null);
-      equipped.shield = readValue(data.equipped, 'shield', null);
-      equipped.event = readValue(data.equipped, 'event', null);
+      const loadEquipSlot = (val) => {
+        if (!val) return null;
+        if (typeof val === 'string') {
+          if (!ITEMS[val]) return null;
+          return { uid: nextItemUid++, itemId: val };
+        }
+        if (val.itemId && ITEMS[val.itemId]) {
+          return { uid: val.uid || nextItemUid++, itemId: val.itemId };
+        }
+        return null;
+      };
+      equipped.weapon = loadEquipSlot(readValue(data.equipped, 'weapon', null));
+      equipped.armor = loadEquipSlot(readValue(data.equipped, 'armor', null));
+      equipped.helmet = loadEquipSlot(readValue(data.equipped, 'helmet', null));
+      equipped.boots = loadEquipSlot(readValue(data.equipped, 'boots', null));
+      equipped.shield = loadEquipSlot(readValue(data.equipped, 'shield', null));
+      equipped.event = loadEquipSlot(readValue(data.equipped, 'event', null));
       // Backward compat: old 'accessory' -> accessory1
       if (hasOwn(data.equipped, 'accessory1')) {
-        equipped.accessory1 = readValue(data.equipped, 'accessory1', null);
-        equipped.accessory2 = readValue(data.equipped, 'accessory2', null);
+        equipped.accessory1 = loadEquipSlot(readValue(data.equipped, 'accessory1', null));
+        equipped.accessory2 = loadEquipSlot(readValue(data.equipped, 'accessory2', null));
       } else {
-        equipped.accessory1 = readValue(data.equipped, 'accessory', null);
+        equipped.accessory1 = loadEquipSlot(readValue(data.equipped, 'accessory', null));
         equipped.accessory2 = null;
       }
     }

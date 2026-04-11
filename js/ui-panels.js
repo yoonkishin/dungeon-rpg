@@ -119,7 +119,7 @@ function renderProfile() {
   const nextTier = getNextTier();
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const content = document.getElementById('profile-content');
-  const armorColor = equipped.armor && ITEMS[equipped.armor] ? ITEMS[equipped.armor].color : null;
+  const armorColor = equipped.armor && ITEMS[equipped.armor.itemId] ? ITEMS[equipped.armor.itemId].color : null;
   const glowSize = Math.min(tier.tier * 4, 24);
   const glowOpacity = Math.min(tier.tier * 0.12, 0.7);
 
@@ -208,9 +208,9 @@ Object.keys(EQUIP_SLOT_META).forEach(slot => {
   if (!slotEl) return;
   function handleSlotTap() {
     if (!invOpen) return;
-    const itemId = equipped[slot];
-    if (!itemId || !ITEMS[itemId]) return;
-    openItemPopup({ itemId, source: 'equipped', slot });
+    const inst = equipped[slot];
+    if (!inst || !ITEMS[inst.itemId]) return;
+    openItemPopup({ itemId: inst.itemId, source: 'equipped', slot });
   }
   bindTap(slotEl, handleSlotTap, { stopPropagation: true });
 });
@@ -250,15 +250,15 @@ function switchShopTab(tab) {
 }
 function getInventoryCounts() {
   const counts = {};
-  inventory.forEach(id => {
-    counts[id] = (counts[id] || 0) + 1;
+  inventory.forEach(e => {
+    counts[e.itemId] = (counts[e.itemId] || 0) + 1;
   });
   return counts;
 }
 function getOwnedItemCount(itemId) {
-  let count = inventory.filter(id => id === itemId).length;
+  let count = inventory.filter(e => e.itemId === itemId).length;
   Object.keys(equipped).forEach(slot => {
-    if (equipped[slot] === itemId) count++;
+    if (equipped[slot] && equipped[slot].itemId === itemId) count++;
   });
   return count;
 }
@@ -312,8 +312,8 @@ function getPreferredEquipSlot(item) {
   if (item.type === 'accessory') {
     if (!equipped.accessory1) return 'accessory1';
     if (!equipped.accessory2) return 'accessory2';
-    const acc1 = ITEMS[equipped.accessory1] || null;
-    const acc2 = ITEMS[equipped.accessory2] || null;
+    const acc1 = equipped.accessory1 ? ITEMS[equipped.accessory1.itemId] : null;
+    const acc2 = equipped.accessory2 ? ITEMS[equipped.accessory2.itemId] : null;
     const score = target => target ? ((target.atk || 0) + (target.def || 0) + (target.critBonus || 0) + (target.goldBonus || 0) + ((target.speedBonus || 0) * 10)) : -1;
     return score(acc1) <= score(acc2) ? 'accessory1' : 'accessory2';
   }
@@ -322,16 +322,16 @@ function getPreferredEquipSlot(item) {
   }
   return null;
 }
-function equipInventoryItem(itemId) {
-  const item = ITEMS[itemId];
+function equipInventoryItem(invEntry) {
+  const item = ITEMS[invEntry.itemId];
   if (!item) return;
   const slot = getPreferredEquipSlot(item);
   if (!slot) return;
-  const invIdx = inventory.indexOf(itemId);
+  const invIdx = inventory.indexOf(invEntry);
   if (invIdx === -1) return;
   const previous = equipped[slot];
   inventory.splice(invIdx, 1);
-  equipped[slot] = itemId;
+  equipped[slot] = invEntry;
   if (previous) inventory.push(previous);
   AudioSystem.sfx.pickup();
   showToast(item.name + ' 장착');
@@ -339,18 +339,18 @@ function equipInventoryItem(itemId) {
   autoSave();
 }
 function unequipSlot(slot) {
-  const itemId = equipped[slot];
-  if (!itemId) return;
-  inventory.push(itemId);
+  const inst = equipped[slot];
+  if (!inst) return;
+  inventory.push(inst);
   equipped[slot] = null;
   AudioSystem.sfx.sell();
-  showToast((ITEMS[itemId] ? ITEMS[itemId].name : '장비') + ' 해제');
+  showToast((ITEMS[inst.itemId] ? ITEMS[inst.itemId].name : '장비') + ' 해제');
   updateHUD();
   autoSave();
 }
-function consumeInventoryItem(itemId) {
-  const item = ITEMS[itemId];
-  const idx = inventory.indexOf(itemId);
+function consumeInventoryItem(invEntry) {
+  const item = ITEMS[invEntry.itemId];
+  const idx = inventory.indexOf(invEntry);
   if (!item || item.type !== 'potion' || idx === -1) return;
   if (player.hp >= player.maxHp) {
     showToast('HP가 이미 가득합니다');
@@ -416,7 +416,7 @@ function getShopRecommendation(itemId) {
   }
   const slot = getPreferredEquipSlot(item);
   if (!slot) return '';
-  const currentItem = equipped[slot] ? ITEMS[equipped[slot]] : null;
+  const currentItem = equipped[slot] ? ITEMS[equipped[slot].itemId] : null;
   if (!currentItem) return '첫 장비';
   return getItemScore(item) > getItemScore(currentItem) ? '업그레이드' : '';
 }
@@ -428,11 +428,11 @@ function appendPopupActionButton(container, className, label, handler) {
   container.appendChild(btn);
 }
 
-function openItemPopup({ itemId, source, slot }) {
+function openItemPopup({ itemId, source, slot, invEntry }) {
   const item = ITEMS[itemId];
   if (!item) return;
   const targetSlot = slot || getPreferredEquipSlot(item);
-  const currentItem = targetSlot && equipped[targetSlot] ? ITEMS[equipped[targetSlot]] : null;
+  const currentItem = targetSlot && equipped[targetSlot] ? ITEMS[equipped[targetSlot].itemId] : null;
   const canEquip = source !== 'equipped' && !!targetSlot && item.type !== 'potion';
   const canUse = item.type === 'potion';
   const canUnequip = source === 'equipped';
@@ -454,14 +454,14 @@ function openItemPopup({ itemId, source, slot }) {
   const btns = popupContent.querySelector('.popup-btns');
   if (canEquip) {
     appendPopupActionButton(btns, 'equip', '장착', () => {
-      equipInventoryItem(itemId);
+      equipInventoryItem(invEntry);
       closeItemPopup();
       renderInventory();
     });
   }
   if (canUse) {
     appendPopupActionButton(btns, 'use', '사용', () => {
-      consumeInventoryItem(itemId);
+      consumeInventoryItem(invEntry);
       closeItemPopup();
       renderInventory();
     });
@@ -490,8 +490,8 @@ function renderInventory() {
   Object.keys(EQUIP_SLOT_META).forEach(slot => {
     const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
     if (!slotEl) return;
-    const itemId = equipped[slot];
-    const item = itemId ? ITEMS[itemId] : null;
+    const inst = equipped[slot];
+    const item = inst ? ITEMS[inst.itemId] : null;
     slotEl.classList.toggle('equipped', !!item);
     slotEl.innerHTML = item ? item.icon : EQUIP_SLOT_META[slot].icon;
     slotEl.title = item ? (EQUIP_SLOT_META[slot].label + ': ' + item.name) : EQUIP_SLOT_META[slot].label;
@@ -502,12 +502,14 @@ function renderInventory() {
   sortedIds.forEach(id => {
     const item = ITEMS[id];
     if (!item) return;
+    // Find the first inventory entry for this itemId to pass as invEntry
+    const firstEntry = inventory.find(e => e.itemId === id);
     const cell = document.createElement('button');
     cell.className = 'bag-cell' + (item.type === 'potion' ? ' potion-cell' : '');
     cell.innerHTML = item.icon + ((counts[id] || 0) > 1 ? '<span class="cell-count">' + counts[id] + '</span>' : '');
     cell.title = item.name;
     function handleBagTap() {
-      openItemPopup({ itemId: id, source: 'inventory' });
+      openItemPopup({ itemId: id, source: 'inventory', invEntry: firstEntry });
     }
     bindTap(cell, handleBagTap, { stopPropagation: true });
     bagGrid.appendChild(cell);
@@ -520,7 +522,7 @@ function buyItem(itemId) {
     return;
   }
   player.gold -= item.price;
-  inventory.push(itemId);
+  inventory.push(createItemInstance(itemId));
   AudioSystem.sfx.buy();
   showToast(item.name + ' 구매');
   updateHUD();
@@ -532,12 +534,12 @@ function getSellPrice(itemId) {
   if (!item) return 0;
   return Math.max(1, Math.floor((item.price || 0) * 0.5));
 }
-function sellItem(itemId) {
-  const idx = inventory.indexOf(itemId);
+function sellItem(invEntry) {
+  const idx = inventory.indexOf(invEntry);
   if (idx === -1) return;
-  const item = ITEMS[itemId];
+  const item = ITEMS[invEntry.itemId];
   inventory.splice(idx, 1);
-  player.gold += getSellPrice(itemId);
+  player.gold += getSellPrice(invEntry.itemId);
   AudioSystem.sfx.sell();
   showToast((item ? item.name : '아이템') + ' 판매');
   updateHUD();
@@ -586,7 +588,9 @@ function bindShopActions() {
 
   shopSellList.querySelectorAll('[data-sell-item]').forEach(btn => {
     bindTap(btn, () => {
-      sellItem(btn.getAttribute('data-sell-item'));
+      const sellId = btn.getAttribute('data-sell-item');
+      const entry = inventory.find(e => e.itemId === sellId);
+      if (entry) sellItem(entry);
     }, { stopPropagation: true });
   });
 }

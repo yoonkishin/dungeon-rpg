@@ -251,7 +251,7 @@ function update(dt) {
     if (di.timer <= 0) return false;
     const d2 = dist(player, di);
     if (d2 < 35) {
-      inventory.push(di.itemId);
+      inventory.push(createItemInstance(di.itemId));
       addParticles(di.x, di.y, ITEMS[di.itemId].color, 6);
       showPickupText(ITEMS[di.itemId].name);
       AudioSystem.sfx.pickup();
