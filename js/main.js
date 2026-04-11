@@ -81,17 +81,8 @@ function ch() { return Math.round(canvas.height / dpr); }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-function update(dt) {
-  if (player.dead) return;
-  if (typeof isAnyPanelOpen === 'function' && isAnyPanelOpen()) return;
-
-  // Day/night cycle
-  // Day/night cycle disabled - always daytime
-  // dayNight += 0.0002 * dayNightDir;
-  // if (dayNight >= 1) { dayNight = 1; dayNightDir = -1; }
-  // if (dayNight <= 0) { dayNight = 0; dayNightDir = 1; }
-
-  // Screen shake decay
+// ─── Update Sub-systems ─────────────────────────────────────────────────────
+function updateTimers(dt) {
   if (screenShake.timer > 0) {
     screenShake.timer -= dt * 60 / 1000;
     const mag = screenShake.timer * 0.5;
@@ -101,7 +92,6 @@ function update(dt) {
     screenShake.x = 0; screenShake.y = 0;
   }
 
-  // Attack timer
   if (player.attackTimer > 0) player.attackTimer -= dt;
   if (player.isAttacking) {
     player.attackArc += dt * 0.012;
@@ -109,30 +99,26 @@ function update(dt) {
   }
   if (player.invincible > 0) player.invincible -= dt;
 
-  // MP regen
   if (player.mp < player.maxMp) {
     player.mp = Math.min(player.maxMp, player.mp + 0.008 * dt);
     hudDirty = true;
   }
 
-  // Skill cooldowns
-  Object.keys(skillCooldowns).forEach(id => {
+  for (const id in skillCooldowns) {
     if (skillCooldowns[id] > 0) {
       skillCooldowns[id] = Math.max(0, skillCooldowns[id] - dt);
       skillSlotsDirty = true;
     }
-  });
-
-  // Buff timers
-  Object.keys(skillBuffs).forEach(id => {
+  }
+  for (const id in skillBuffs) {
     if (skillBuffs[id].timer > 0) {
       skillBuffs[id].timer = Math.max(0, skillBuffs[id].timer - dt);
     }
-  });
-
+  }
   if (skillSlotsDirty) renderSkillSlots();
+}
 
-  // Movement
+function updateMovement(dt) {
   let moveX = 0, moveY = 0;
   if (joyActive) {
     if (Math.abs(joyDx) > JOY_DEAD) moveX = joyDx;
@@ -167,54 +153,47 @@ function update(dt) {
       player.frame = 1 - player.frame;
     }
 
-    // Tier 6+ particle trail when moving
     if (player.tier >= 6 && Math.random() < 0.3) {
       const tierInfo = getCurrentTier();
       addParticles(player.x + (Math.random()-0.5)*10, player.y + (Math.random()-0.5)*10, tierInfo.color, 1);
     }
   }
 
-  // Check map edge transitions (walking onto EXIT tiles)
+  // Auto-transition on EXIT tiles
   const ptx = Math.floor(player.x / TILE);
   const pty = Math.floor(player.y / TILE);
   const ptile = getMap()[pty] && getMap()[pty][ptx];
-  if (ptile === TILE_EXIT || ptile === TILE_PORTAL) {
-    // Auto-transition for EXIT tiles when walking on them
-    if (ptile === TILE_EXIT) {
-      if (currentMap === 'town') { enterField(); return; }
-      else if (currentMap === 'field') { enterTown(); return; }
-      else if (currentMap === 'dungeon') { exitDungeon(); return; }
-    }
+  if (ptile === TILE_EXIT) {
+    if (currentMap === 'town') { enterField(); return true; }
+    else if (currentMap === 'field') { enterTown(); return true; }
+    else if (currentMap === 'dungeon') { exitDungeon(); return true; }
   }
+  return false;
+}
 
-  // Attack input
+function updateInput() {
+  const ptx = Math.floor(player.x / TILE);
+  const pty = Math.floor(player.y / TILE);
+  const ptile = getMap()[pty] && getMap()[pty][ptx];
+
   if (attackQueued || keys[' '] || keys['z']) {
     let handled = false;
     if (currentMap === 'town') {
-      // Check shop NPCs
       for (const npc of NPCS) {
-        const nd = Math.sqrt((player.x - npc.x)**2 + (player.y - npc.y)**2);
-        if (nd < 50) {
+        if (dist(player, npc) < 50) {
           openShop(npc);
           attackQueued = false;
           handled = true;
           break;
         }
       }
-      // Check town NPCs (dialogue or temple)
       if (!handled) {
         for (const npc of TOWN_NPCS) {
-          const nd = Math.sqrt((player.x - npc.x)**2 + (player.y - npc.y)**2);
-          if (nd < 50) {
-            if (npc.isTemple) {
-              openTemple();
-            } else if (npc.isTrainingRoom) {
-              openTrainingPanel();
-            } else if (npc.isEmblemRoom) {
-              openEmblemRoomPanel();
-            } else {
-              openDialogue(npc);
-            }
+          if (dist(player, npc) < 50) {
+            if (npc.isTemple) openTemple();
+            else if (npc.isTrainingRoom) openTrainingPanel();
+            else if (npc.isEmblemRoom) openEmblemRoomPanel();
+            else openDialogue(npc);
             attackQueued = false;
             handled = true;
             break;
@@ -222,12 +201,10 @@ function update(dt) {
         }
       }
     }
-    if (!handled && currentMap === 'field') {
-      if (ptile === TILE_PORTAL) {
-        checkPortal();
-        attackQueued = false;
-        handled = true;
-      }
+    if (!handled && currentMap === 'field' && ptile === TILE_PORTAL) {
+      checkPortal();
+      attackQueued = false;
+      handled = true;
     }
     if (!handled) {
       doAttack();
@@ -238,19 +215,18 @@ function update(dt) {
   if (keys['e']) {
     if (currentMap === 'town') {
       for (const npc of NPCS) {
-        const nd = Math.sqrt((player.x - npc.x)**2 + (player.y - npc.y)**2);
-        if (nd < 50) { openShop(npc); break; }
+        if (dist(player, npc) < 50) { openShop(npc); break; }
       }
     }
     checkPortal();
   }
+}
 
-  // Item pickup
+function updatePickups(dt) {
   droppedItems = droppedItems.filter(di => {
     di.timer -= dt * 0.001;
     if (di.timer <= 0) return false;
-    const d2 = dist(player, di);
-    if (d2 < 35) {
+    if (dist(player, di) < 35) {
       inventory.push(createItemInstance(di.itemId));
       addParticles(di.x, di.y, ITEMS[di.itemId].color, 6);
       showPickupText(ITEMS[di.itemId].name);
@@ -260,21 +236,18 @@ function update(dt) {
     }
     return true;
   });
+}
 
-  // Camera
+function updateCamera() {
   const camTargetX = player.x - cw() / 2;
   const camTargetY = player.y - ch() / 2;
   cameraX += (camTargetX - cameraX) * 0.3;
   cameraY += (camTargetY - cameraY) * 0.3;
-  const maxCamX = mapW() * TILE - cw();
-  const maxCamY = mapH() * TILE - ch();
-  cameraX = Math.max(0, Math.min(maxCamX, cameraX));
-  cameraY = Math.max(0, Math.min(maxCamY, cameraY));
+  cameraX = Math.max(0, Math.min(mapW() * TILE - cw(), cameraX));
+  cameraY = Math.max(0, Math.min(mapH() * TILE - ch(), cameraY));
+}
 
-  // Update companion
-  updateCompanion(dt);
-
-  // Update enemies
+function updateEnemyAI(dt) {
   enemies.forEach(e => {
     if (e.dead) return;
     const d = dist(player, e);
@@ -304,9 +277,7 @@ function update(dt) {
         e.wanderDx = Math.cos(angle) * e.speed * 0.5;
         e.wanderDy = Math.sin(angle) * e.speed * 0.5;
       }
-      const ex = e.x + e.wanderDx;
-      const ey = e.y + e.wanderDy;
-      const pos = resolveCollision(e, ex, ey);
+      const pos = resolveCollision(e, e.x + e.wanderDx, e.y + e.wanderDy);
       e.x = pos.x; e.y = pos.y;
       if (d < e.aggroRange) e.state = 'chase';
     } else if (e.state === 'chase') {
@@ -322,9 +293,7 @@ function update(dt) {
       if (d > e.attackRange + 8) {
         e.attackWindup = 0;
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        const ex2 = e.x + Math.cos(angle) * e.speed * 1.55;
-        const ey2 = e.y + Math.sin(angle) * e.speed * 1.55;
-        const pos = resolveCollision(e, ex2, ey2);
+        const pos = resolveCollision(e, e.x + Math.cos(angle) * e.speed * 1.55, e.y + Math.sin(angle) * e.speed * 1.55);
         e.x = pos.x; e.y = pos.y;
       } else {
         if (e.attackWindup > 0) {
@@ -343,31 +312,40 @@ function update(dt) {
   });
 
   updateEnemyEffects(dt);
-
   enemies = enemies.filter(e => !e.dead || e.flashTimer > 0);
 
-  // Safety net: re-check dungeon clear after dead enemies are fully removed
   if (currentMap === 'dungeon' && !dungeonCleared) {
     checkDungeonClear();
   }
+}
 
+function updateParticles() {
   particles.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx *= 0.9;
-    p.vy *= 0.9;
-    p.vy += 0.08;
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.9; p.vy *= 0.9; p.vy += 0.08;
     p.life--;
   });
   particles = particles.filter(p => p.life > 0);
 
   damageNumbers.forEach(dn => {
-    dn.y += dn.vy;
-    dn.vy *= 0.96;
-    dn.timer--;
+    dn.y += dn.vy; dn.vy *= 0.96; dn.timer--;
   });
   damageNumbers = damageNumbers.filter(dn => dn.timer > 0);
+}
 
+// ─── Main Update ────────────────────────────────────────────────────────────
+function update(dt) {
+  if (player.dead) return;
+  if (typeof isAnyPanelOpen === 'function' && isAnyPanelOpen()) return;
+
+  updateTimers(dt);
+  if (updateMovement(dt)) return;
+  updateInput();
+  updatePickups(dt);
+  updateCamera();
+  updateCompanion(dt);
+  updateEnemyAI(dt);
+  updateParticles();
   if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
   if (hudDirty) updateHUD();
 }
