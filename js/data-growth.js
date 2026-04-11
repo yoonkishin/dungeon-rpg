@@ -10,6 +10,10 @@ const SKILLS = [
   { id:'sprint',     name:'질주',       icon:'💨', mpCost:5,  cooldown:6000, speedBuff:2, duration:3000, range:0, type:'buff', desc:'3초간 이동속도가 크게 증가합니다', typeLabel:'버프', iconBg:'#3498db' },
   { id:'thunder',    name:'번개',       icon:'⚡', mpCost:20, cooldown:6000, damage:40, range:100, type:'projectile', desc:'번개를 내려 적에게 40 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
   { id:'drain',      name:'흡혈',       icon:'🩸', mpCost:12, cooldown:4000, damage:15, heal:15, range:55, type:'melee', desc:'적의 생명력을 흡수하여 15 피해 + 15 회복합니다', typeLabel:'근접', iconBg:'#e67e22' },
+  { id:'whirlwind',  name:'폭풍참',     icon:'🌪️', mpCost:25, cooldown:4000, damage:60, range:80,  type:'melee',      desc:'폭풍처럼 회전하며 주변 모든 적에게 60 피해를 입힙니다', typeLabel:'근접', iconBg:'#e67e22' },
+  { id:'meteor',     name:'유성낙하',   icon:'☄️', mpCost:30, cooldown:8000, damage:80, range:150, type:'projectile', desc:'강력한 유성을 내리꽂아 범위 내 적에게 80 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
+  { id:'iron_fortress', name:'철벽진', icon:'🏯', mpCost:20, cooldown:10000, defBuff:20, duration:6000, range:0, type:'buff', desc:'6초간 방어력이 20 증가하는 철벽 방어 태세를 취합니다', typeLabel:'버프', iconBg:'#3498db' },
+  { id:'life_drain', name:'생명흡수',   icon:'💀', mpCost:22, cooldown:5000, damage:30, heal:30, range:65, type:'melee', desc:'강력한 생명 흡수로 근접 적에게 30 피해 + 30 회복합니다', typeLabel:'근접', iconBg:'#8e44ad' },
 ];
 
 // ─── Player Growth Lines / Original Emblem Foundations ─────────────────────
@@ -430,7 +434,7 @@ function fusePlayerMasterEmblem(id) {
 const skillPages = [
   ['fireball', 'heal', 'slash', 'shield'],
   ['poison', 'sprint', 'thunder', 'drain'],
-  [null, null, null, null],
+  ['whirlwind', 'meteor', 'iron_fortress', 'life_drain'],
 ];
 
 function getSkillById(id) {
