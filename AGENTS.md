@@ -67,22 +67,36 @@ node scripts/check-boot.js
 순서가 곧 의존성이다. 순서를 바꾸면 부팅이 깨진다.
 
 ```
-constants.js  → 타일 상수, DUNGEON_INFO, Runtime Error Overlay
-audio.js      → AudioSystem 싱글턴 (Web Audio API)
-maps.js       → buildTown(), buildField(), buildDungeon() — 맵 2D 배열 생성
-data.js       → COMPANION_ROSTER, ITEMS, SKILLS, ENEMY_TYPES 정의
-state.js      → 모든 전역 가변 상태 선언 (player, enemies, inventory 등)
-helpers.js    → dist(), resolveCollision(), addParticles() 등 유틸
-enemies.js    → spawnEnemies(), createEnemy(), 적 AI
-combat.js     → doAttack(), performEnemyAttack(), boss 특수기
-transitions.js→ enterField(), enterTown(), enterDungeon(), checkPortal()
-skills.js     → useSkill(), skillPages, 키보드 fallback 입력
-companions.js → updateCompanion(), 동료 AI 모드별 행동
-rendering.js  → draw(), drawMap(), Y-sort 엔티티 렌더링, 미니맵
-ui-controls.js→ 조이스틱, 공격/포션 버튼, 메뉴 토글
-ui-panels.js  → 인벤토리/상점/프로필/동료/스킬/퀘스트 패널 렌더링
-save.js       → autoSave(30초), loadSave(), localStorage 직렬화
-main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
+error-overlay.js      → Runtime Error Overlay (window.onerror, unhandledrejection)
+constants.js          → 타일 상수, TILE_COLORS, MAX_ACTIVE_COMPANIONS
+audio.js              → AudioSystem 싱글턴 (Web Audio API)
+maps.js               → buildTown(), buildField(), buildDungeon() — 맵 2D 배열 생성
+data.js               → DUNGEON_INFO, ITEMS, SKILLS, ENEMY_TYPES, EQUIP_SLOTS
+data-companions.js    → COMPANION_ROSTER, COMPANION_CLASS_PROFILES, AI 모드, 시너지
+data-growth.js        → 성장 테이블, EMBLEM_DEFS, 승급 보너스
+data-town.js          → TOWN_NPCS, TOWN_UPGRADES, 시설 업그레이드 비용
+data-quests.js        → MAIN_QUESTS, SUBQUESTS, NPC 대화 흐름
+state.js              → 모든 전역 가변 상태 선언 (player, enemies, inventory 등)
+helpers.js            → dist(), resolveCollision(), addParticles() 등 유틸
+enemies.js            → spawnEnemies(), createEnemy(), 적 AI, 정예/보스 페이즈
+combat.js             → doAttack(), performEnemyAttack(), 보스 특수기
+transitions.js        → enterField(), enterTown(), enterDungeon(), checkPortal()
+skills.js             → useSkill(), skillPages, 키보드 fallback 입력
+companions.js         → updateCompanion(), 동료 AI 모드별 행동
+rendering.js          → draw(), drawMap(), Y-sort 엔티티 렌더링, 미니맵
+game-controls.js      → 조이스틱, 공격/포션 버튼, 터치/키보드 입력 캡처
+ui-manager.js         → 메뉴/설정/대화 + 패널 open-close 상태, bindTap, 공통 헬퍼
+ui-panel-profile.js   → 프로필 패널
+ui-panel-equip.js     → 장비/가방/상점 패널
+ui-panel-companion.js → 동료 관리 패널
+ui-panel-temple.js    → 신전(동료 부활) 패널
+ui-panel-skill.js     → 스킬 편성 패널
+ui-panel-quest.js     → 퀘스트 패널
+ui-panel-training.js  → 수련의 방 / 승급 패널
+ui-panel-emblem.js    → 문장의 방 패널
+ui-panel-village.js   → 마을 발전 패널
+save.js               → autoSave(30초), loadSave(), localStorage 직렬화
+main.js               → gameLoop() → update(dt) + draw(), 초기화 진입점
 ```
 
 ### Game Loop
@@ -94,7 +108,7 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 
 ### Global State Model
 
-- **constants.js / data.js**: 불변 게임 설정 (DUNGEON_INFO, ITEMS, ENEMY_TYPES, COMPANION_ROSTER)
+- **constants.js / data.js / data-*.js**: 불변 게임 설정 (DUNGEON_INFO, ITEMS, COMPANION_ROSTER, EMBLEM_DEFS, TOWN_NPCS, MAIN_QUESTS 등)
 - **state.js**: 가변 런타임 상태 (player, enemies[], companions[], inventory[], equipped, 퀘스트 진행 등)
 - **save.js**: state.js의 주요 변수들을 localStorage로 직렬화/역직렬화
 
@@ -104,8 +118,9 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 |------|------|
 | `combat.js` | 전투 판정, 피해 계산, 보스 특수기. 패널 HTML 건드리지 않음 |
 | `transitions.js` | 맵 이동, 지역 전환. 맵 전환의 기준 파일 |
-| `ui-controls.js` | 입력 캡처 + 라우팅 (조이스틱, 버튼, 터치) |
-| `ui-panels.js` | 패널 콘텐츠 렌더링 + 내부 인터랙션 |
+| `game-controls.js` | 입력 캡처 + 라우팅 (조이스틱, 공격/포션, 터치) |
+| `ui-manager.js` | 메뉴/설정/대화 + 패널 open-close, `bindTap`, `isAnyPanelOpen`, `closeAllPanels` |
+| `ui-panel-*.js` | 각 오버레이 패널의 콘텐츠 렌더링 + 내부 인터랙션 (파일당 패널 1개) |
 | `save.js` | 저장/복원 전담. 다른 파일에서 세이브 포맷 직접 변경 금지 |
 | `enemies.js` | 적 생성 + 스폰 로직 |
 | `maps.js` | 맵 타일 배열 생성 (town 40x30, field 80x60, dungeon 20x15) |
@@ -129,7 +144,7 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 - 동료 시스템은 10명 roster / 10개 병종 프로필 구조로 감지됐다: 보병, 비병, 기병, 수병, 창병, 궁병, 승려, 신관, 법사, 사교.
 - 동료 AI 모드는 `aggressive`, `defensive`, `support` 로 감지됐다고 save/load 연동도 확인됐다.
 - 미니맵 컨테이너는 HUD 우측 상단 슬롯(top 56px, right 12px)으로 감지됐다고 표시 상태는 localStorage에 저장된다.
-- HUD quick action 버튼은 0개 감지됐다: .
+- HUD quick action 버튼은 6개 감지됐다: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - 수련의 방 패널과 승급 패널 진입점이 감지됐다.
 - 문장의방 패널과 문장 데이터 뼈대가 감지됐다.
 - 던전 정예 몬스터와 보스 페이즈 기믹 로직이 감지됐다.
@@ -164,13 +179,13 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 번들러 없이 `<script>`로 직접 로드되므로, 초기화 순서 하나만 틀려도 부팅이 죽는다.
 
 1. `buildDungeon()` 등 맵 빌드 함수가 참조할 전역 상태(`currentDungeonId` 등)는 반드시 맵 빌드 이전에 선언
-2. `data.js`, `maps.js`, `save.js`, `main.js`, `ui-panels.js` 수정 시 부팅 경로 깨짐 여부 먼저 의심
+2. `data*.js`, `maps.js`, `state.js`, `save.js`, `main.js`, `ui-manager.js`, `ui-panel-*.js` 수정 시 부팅 경로 깨짐 여부 먼저 의심
 3. 새 기능을 넣을 때 기존 save/localStorage와 충돌 가능성을 함께 본다
 4. 프로토타입이라도 "문법 체크 통과"만으로 끝내지 않는다
    - 최소한 **초기 부팅**, **메뉴 열기**, **패널 열기**, **세이브 복원**까지 한 번 생각한다
 5. 검은 화면이 뜨면 렌더링부터 의심하지 말고, **초기화 순서 / 전역 상태 선언 시점 / 저장 데이터 복원 시점**을 먼저 본다
 6. push 전 `node scripts/check-boot.js` 통과 필수 (pre-push 훅으로 자동 실행)
-7. `js/constants.js`의 Runtime Error Overlay(`window.onerror`, `unhandledrejection`)를 유지할 것
+7. `js/error-overlay.js`의 Runtime Error Overlay(`window.onerror`, `unhandledrejection`)를 유지할 것
 
 ### 새 전역 상태 추가 시 체크리스트
 
@@ -216,8 +231,9 @@ main.js       → gameLoop() → update(dt) + draw(), 초기화 진입점
 
 - 맵 전환 → `transitions.js`
 - 저장/복원 → `save.js`
-- 패널 렌더링 → `ui-panels.js`
-- 입력/메뉴/오버레이 제어 → `ui-controls.js`
+- 패널 open/close & 공통 UI → `ui-manager.js`
+- 개별 패널 콘텐츠 → `ui-panel-*.js` (파일당 하나)
+- 입력/조이스틱/공격 → `game-controls.js`
 
 핵심 흐름을 바꿀 때는 먼저 **기준 파일 하나**를 정하고,
 다른 파일은 그 흐름을 호출만 하게 유지한다.

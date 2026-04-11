@@ -1,3 +1,7 @@
 .omc/
 .omx/
 index-original.html
+
+# Playwright MCP test artifacts
+.playwright-mcp/
+final-state.png

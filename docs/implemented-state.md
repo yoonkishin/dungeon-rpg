@@ -22,7 +22,7 @@
 
 - [x] Minimap HUD slot detected at **top 56px / right 12px**.
 - [x] Minimap visibility persistence detected via `localStorage`.
-- [x] HUD quick actions detected: .
+- [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - [x] Training room / promotion panel detected.
 - [x] Emblem room panel and emblem data foundations detected.
 - [x] Dungeon elite enemies and boss phase gimmicks detected.
@@ -47,7 +47,9 @@
 - `js/enemies.js`
 - `js/combat.js`
 - `js/main.js`
-- `js/ui-controls.js`
-- `js/ui-panels.js`
+- `js/game-controls.js`
+- `js/ui-manager.js`
+- `js/ui-panel-training.js`
+- `js/ui-panel-emblem.js`
 - `.githooks/pre-commit`
 - `.githooks/pre-push`

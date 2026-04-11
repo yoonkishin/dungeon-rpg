@@ -34,9 +34,25 @@ const enemiesJs = read('js/enemies.js');
 const combatJs = read('js/combat.js');
 const mainJs = read('js/main.js');
 const indexHtml = read('index.html');
-const stylesCss = read('css/styles.css');
-const uiControlsJs = read('js/ui-controls.js');
-const uiPanelsJs = read('js/ui-panels.js');
+
+// styles.css is an @import manifest; concatenate all css under css/ so regex
+// probes work regardless of which module a rule has been extracted into.
+function readAllCss() {
+  const files = [];
+  if (exists('css/styles.css')) files.push('css/styles.css');
+  const modulesDirAbs = path.join(repoRoot, 'css', 'modules');
+  if (fs.existsSync(modulesDirAbs)) {
+    for (const f of fs.readdirSync(modulesDirAbs).sort()) {
+      if (f.endsWith('.css')) files.push(`css/modules/${f}`);
+    }
+  }
+  return files.map(read).join('\n');
+}
+const stylesCss = readAllCss();
+const gameControlsJs = exists('js/game-controls.js') ? read('js/game-controls.js') : '';
+const uiManagerJs = exists('js/ui-manager.js') ? read('js/ui-manager.js') : '';
+const uiPanelTrainingJs = exists('js/ui-panel-training.js') ? read('js/ui-panel-training.js') : '';
+const uiPanelEmblemJs = exists('js/ui-panel-emblem.js') ? read('js/ui-panel-emblem.js') : '';
 const prePush = exists('.githooks/pre-push') ? read('.githooks/pre-push') : '';
 const preCommit = exists('.githooks/pre-commit') ? read('.githooks/pre-commit') : '';
 
@@ -48,18 +64,18 @@ const minimapBlock = requireMatch(stylesCss, /#minimap-container\s*\{([\s\S]*?)\
 const rosterCount = [...rosterBlock.matchAll(/^\s+\d+:/gm)].length;
 const classNames = [...classBlock.matchAll(/className:'([^']+)'/g)].map(m => m[1]);
 const aiModes = [...aiBlock.matchAll(/^\s+([a-z]+):\s*\{/gm)].map(m => m[1]);
-const hudActions = [...indexHtml.matchAll(/class="hud-quick-btn"\s+data-action="([^"]+)"/g)].map(m => m[1]);
+const hudActions = [...indexHtml.matchAll(/class="[^"]*\bhud-quick-btn\b[^"]*"\s+data-action="([^"]+)"/g)].map(m => m[1]);
 const minimapTop = (minimapBlock.match(/top:\s*([^;]+);/) || [null, 'unknown'])[1].trim();
 const minimapRight = (minimapBlock.match(/right:\s*([^;]+);/) || [null, 'unknown'])[1].trim();
 const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
-const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine: player\.classLine/.test(saveJs);
+const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && (/'classLine'/.test(saveJs) || /classLine:\s*player\.classLine/.test(saveJs));
 const companionModuleDetected = /const COMPANION_ROSTER = \{/.test(dataCompanionsJs) && /const COMPANION_CLASS_PROFILES = \{/.test(dataCompanionsJs) && /getActiveCompanionSynergy\(/.test(dataCompanionsJs);
 const townModuleDetected = /const TOWN_NPCS = \[/.test(dataTownJs) && /const TOWN_UPGRADES = \{/.test(dataTownJs) && /getVillageUpgradeCost\(/.test(dataTownJs);
 const questModuleDetected = /const MAIN_QUESTS = \[/.test(dataQuestsJs) && /const SUBQUESTS = \[/.test(dataQuestsJs) && /getNpcInteractionLines\(/.test(dataQuestsJs);
-const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\(/.test(uiPanelsJs);
-const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\(/.test(uiPanelsJs) && (/EMBLEM_DEFS/.test(dataJs) || /EMBLEM_DEFS/.test(dataGrowthJs));
-const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiControlsJs);
+const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\s*\(/.test(uiPanelTrainingJs);
+const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\s*\(/.test(uiPanelEmblemJs) && (/EMBLEM_DEFS/.test(dataJs) || /EMBLEM_DEFS/.test(dataGrowthJs));
+const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiManagerJs);
 const dungeonBossGimmickDetected = /spawnDungeonElite\(/.test(enemiesJs) && /triggerBossPhaseGimmick\(/.test(combatJs) && /phaseThresholds/.test(enemiesJs) && /triggerBossPhaseGimmick\(e\)/.test(mainJs);
 const bootHook = /node scripts\/check-boot\.js/.test(prePush);
 const docSyncHook = /node scripts\/sync-doc-state\.js --write/.test(preCommit);
@@ -188,8 +204,10 @@ const implementedStateDoc = [
   '- `js/enemies.js`',
   '- `js/combat.js`',
   '- `js/main.js`',
-  '- `js/ui-controls.js`',
-  '- `js/ui-panels.js`',
+  '- `js/game-controls.js`',
+  '- `js/ui-manager.js`',
+  '- `js/ui-panel-training.js`',
+  '- `js/ui-panel-emblem.js`',
   '- `.githooks/pre-commit`',
   '- `.githooks/pre-push`',
   '',
