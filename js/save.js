@@ -5,6 +5,36 @@ const SAVE_KEY = 'rpg_save_data';
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
+// Persisted player fields — single source of truth for what autoSave serializes.
+// Add a key here when you add a persistent field to `player`; load migrations
+// still live in loadPlayerState() because defaults/rewrites need per-field care.
+const PERSISTED_PLAYER_SCALAR_KEYS = [
+  'x', 'y',
+  'hp', 'maxHp', 'mp', 'maxMp',
+  'level', 'xp', 'xpNext',
+  'gold', 'tier',
+  'atk', 'def', 'speed', 'critChance',
+  'classLine', 'classRank', 'currentClassKey',
+  'promotionPending', 'promotionBonusRankApplied',
+];
+const PERSISTED_PLAYER_ARRAY_KEYS = [
+  'classHistory',
+  'emblemIds',
+  'appliedEmblemBonusIds',
+  'emblemFusionHistory',
+];
+
+function serializePlayer() {
+  const out = {};
+  for (const k of PERSISTED_PLAYER_SCALAR_KEYS) out[k] = player[k];
+  for (const k of PERSISTED_PLAYER_ARRAY_KEYS) {
+    out[k] = Array.isArray(player[k]) ? player[k].slice() : [];
+  }
+  // Nullable singleton — preserve explicit null when absent/falsy.
+  out.masterEmblemId = player.masterEmblemId || null;
+  return out;
+}
+
 function hasOwn(obj, key) {
   return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
 }
@@ -16,21 +46,7 @@ function readValue(obj, key, fallback) {
 function autoSave() {
   try {
     const saveData = {
-      player: {
-        x: player.x, y: player.y,
-        hp: player.hp, maxHp: player.maxHp,
-        mp: player.mp, maxMp: player.maxMp,
-        level: player.level, xp: player.xp, xpNext: player.xpNext,
-        tier: player.tier,
-        classLine: player.classLine, classRank: player.classRank, currentClassKey: player.currentClassKey,
-        classHistory: Array.isArray(player.classHistory) ? player.classHistory.slice() : [],
-        emblemIds: Array.isArray(player.emblemIds) ? player.emblemIds.slice() : [],
-        appliedEmblemBonusIds: Array.isArray(player.appliedEmblemBonusIds) ? player.appliedEmblemBonusIds.slice() : [],
-        masterEmblemId: player.masterEmblemId || null,
-        emblemFusionHistory: Array.isArray(player.emblemFusionHistory) ? player.emblemFusionHistory.slice() : [],
-        promotionPending: player.promotionPending, promotionBonusRankApplied: player.promotionBonusRankApplied,
-        gold: player.gold, atk: player.atk, def: player.def, speed: player.speed, critChance: player.critChance,
-      },
+      player: serializePlayer(),
       inventory: inventory.map(e => ({ uid: e.uid, itemId: e.itemId })),
       nextItemUid: nextItemUid,
       equipped: Object.fromEntries(EQUIP_SLOTS.map(s => [s, equipped[s] ? { uid: equipped[s].uid, itemId: equipped[s].itemId } : null])),
