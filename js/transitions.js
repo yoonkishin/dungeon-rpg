@@ -178,15 +178,14 @@ function enterDungeon(dungeonId) {
   updateHUD();
 }
 
+const EMBLEM_TRIAL_EXIT_SPAWN = { x: 6 * TILE + TILE / 2, y: 13 * TILE + TILE / 2 };
+
 function enterEmblemTrial(emblemId) {
   currentDungeonId = -1;
   currentMap = 'dungeon';
   dungeonCleared = false;
-  // Ensure the trial state is set before spawnEnemies() so isEmblemTrialActive()
-  // returns true and spawnDungeonEnemies() spawns the guardian instead of regular mobs.
-  if (!currentEmblemTrial || currentEmblemTrial.emblemId !== emblemId) {
-    currentEmblemTrial = { emblemId: emblemId };
-  }
+  clearEmblemTrial();
+  currentEmblemTrial = { emblemId: emblemId };
   maps.dungeon = buildDungeon();
   player.x = 10 * TILE + TILE/2;
   player.y = 12 * TILE + TILE/2;
@@ -207,8 +206,8 @@ function exitDungeon() {
     clearEmblemTrial();
     currentDungeonId = -1;
     currentMap = 'town';
-    player.x = 6 * TILE + TILE/2;
-    player.y = 13 * TILE + TILE/2;
+    player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
+    player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
     AudioSystem.sfx.portal();
     AudioSystem.startBgm('town');
     spawnEnemies();

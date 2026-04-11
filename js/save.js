@@ -206,8 +206,8 @@ function loadMapState(data) {
   if (currentMap === 'dungeon' && currentEmblemTrial) {
     currentMap = 'town';
     currentEmblemTrial = null;
-    player.x = 6 * TILE + TILE / 2;
-    player.y = 13 * TILE + TILE / 2;
+    player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
+    player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
   }
 }
 
