@@ -24,22 +24,32 @@ function showToast(msg) {
   toastTimeout = setTimeout(() => { toastEl.style.opacity = '0'; }, 1500);
 }
 
+// ─── Panel Registry ─────────────────────────────────────────────────────────
+// Single source of truth for "is some panel open?" and "close them all".
+// Adding a new panel = add one entry here. The arrows capture live bindings
+// from other script files; by the time isAnyPanelOpen / closeAllPanels are
+// ever called, every script tag has loaded, so cross-file references resolve.
+const PANEL_REGISTRY = [
+  { id: 'inventory', isOpen: () => invOpen,             close: () => closeInventory() },
+  { id: 'shop',      isOpen: () => shopOpen,            close: () => closeShop() },
+  { id: 'menu',      isOpen: () => menuOpen,            close: () => closeMenu() },
+  { id: 'settings',  isOpen: () => settingsOpen,        close: () => closeSettings() },
+  { id: 'dialogue',  isOpen: () => dialogueOpen,        close: () => closeDialogue() },
+  { id: 'profile',   isOpen: () => profileOpen,         close: () => closeProfile() },
+  { id: 'companion', isOpen: () => companionPanelOpen,  close: () => closeCompanionPanel() },
+  { id: 'skill',     isOpen: () => skillPanelOpen,      close: () => closeSkillPanel() },
+  { id: 'quest',     isOpen: () => questPanelOpen,      close: () => closeQuestPanel() },
+  { id: 'village',   isOpen: () => villagePanelOpen,    close: () => closeVillagePanel() },
+  { id: 'training',  isOpen: () => trainingPanelOpen,   close: () => closeTrainingPanel() },
+  { id: 'emblem',    isOpen: () => emblemRoomPanelOpen, close: () => closeEmblemRoomPanel() },
+  { id: 'temple',    isOpen: () => templeOpen,          close: () => closeTemple() },
+];
+
 function isAnyPanelOpen() {
-  return !!(
-    invOpen ||
-    shopOpen ||
-    menuOpen ||
-    settingsOpen ||
-    dialogueOpen ||
-    profileOpen ||
-    companionPanelOpen ||
-    skillPanelOpen ||
-    questPanelOpen ||
-    villagePanelOpen ||
-    trainingPanelOpen ||
-    emblemRoomPanelOpen ||
-    (typeof templeOpen !== 'undefined' && templeOpen)
-  );
+  for (const p of PANEL_REGISTRY) {
+    if (p.isOpen()) return true;
+  }
+  return false;
 }
 
 // ─── Panel show/hide helpers (flicker-free transitions) ─────────────────────
@@ -278,25 +288,9 @@ function closeDialogue() {
 
 function closeAllPanels(options = {}) {
   const { includeDialogue = true } = options;
-  [
-    closeInventory,
-    closeShop,
-    closeMenu,
-    closeSettings,
-    closeProfile,
-    closeCompanionPanel,
-    closeSkillPanel,
-    closeQuestPanel,
-    closeVillagePanel,
-    closeTrainingPanel,
-    closeEmblemRoomPanel,
-    closeTemple,
-  ].forEach((closeFn) => {
-    if (typeof closeFn === 'function') closeFn();
-  });
-
-  if (includeDialogue && typeof closeDialogue === 'function') {
-    closeDialogue();
+  for (const p of PANEL_REGISTRY) {
+    if (p.id === 'dialogue' && !includeDialogue) continue;
+    try { p.close(); } catch (ex) {}
   }
 }
 
