@@ -4,6 +4,7 @@ const path = require('path');
 
 const base = path.resolve(__dirname, '..');
 const files = [
+  'js/error-overlay.js',
   'js/constants.js',
   'js/audio.js',
   'js/maps.js',
@@ -20,8 +21,17 @@ const files = [
   'js/skills.js',
   'js/companions.js',
   'js/rendering.js',
-  'js/ui-controls.js',
-  'js/ui-panels.js',
+  'js/game-controls.js',
+  'js/ui-manager.js',
+  'js/ui-panel-profile.js',
+  'js/ui-panel-equip.js',
+  'js/ui-panel-companion.js',
+  'js/ui-panel-temple.js',
+  'js/ui-panel-skill.js',
+  'js/ui-panel-quest.js',
+  'js/ui-panel-training.js',
+  'js/ui-panel-emblem.js',
+  'js/ui-panel-village.js',
   'js/save.js',
   'js/main.js',
 ];
