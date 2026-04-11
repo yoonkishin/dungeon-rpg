@@ -131,10 +131,10 @@ function getCompanionPriorityEnemy(cId, cs, behavior) {
 
   enemies.forEach(e => {
     if (e.dead) return;
-    const d = Math.sqrt((cs.x - e.x) ** 2 + (cs.y - e.y) ** 2);
+    const d = dist(cs, e);
     if (d > behavior.engageRadius) return;
 
-    const dPlayer = Math.sqrt((player.x - e.x) ** 2 + (player.y - e.y) ** 2);
+    const dPlayer = dist(player, e);
     let score = 200 - d;
 
     if (profile.unitType === 'FlyingKnight') score += (e.maxHp - e.hp) * 0.8;
@@ -209,7 +209,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
     if (enemy.hp <= 0) killEnemy(enemy);
     return true;
   };
-  const distanceToTarget = () => target ? Math.sqrt((target.x - cs.x) ** 2 + (target.y - cs.y) ** 2) : Infinity;
+  const distanceToTarget = () => target ? dist(target, cs) : Infinity;
 
   if (profile.skillId === 'holy_prayer') {
     const allies = [{ kind: 'player', hp: player.hp, maxHp: player.maxHp }];
@@ -352,8 +352,8 @@ function updateCompanion(dt) {
     const attackRange = behavior.attackRange;
 
     if (target) {
-      const d = Math.sqrt((cs.x - target.x) ** 2 + (cs.y - target.y) ** 2);
-      const targetPlayerDist = Math.sqrt((player.x - target.x) ** 2 + (player.y - target.y) ** 2);
+      const d = dist(cs, target);
+      const targetPlayerDist = dist(player, target);
       const lowHp = cs.hp / cs.maxHp < (behavior.mode === 'aggressive' ? 0.25 : 0.40);
       const rangedRole = isCompanionRangedProfile(profile);
       const supportRole = isCompanionSupportProfile(profile);

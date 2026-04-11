@@ -246,15 +246,4 @@ function spawnBossReinforcements(boss, count, typeIdx) {
   }
 }
 
-function spawnGroup(typeIdx, count, yRange, xRange, id) {
-  const t = ENEMY_TYPES[typeIdx];
-  for (let i = 0; i < count; i++) {
-    const tx = xRange[0] + Math.random() * (xRange[1] - xRange[0]);
-    const ty = yRange[0] + Math.random() * (yRange[1] - yRange[0]);
-    const gx = Math.floor(tx), gy = Math.floor(ty);
-    const tile = getMap()[gy] && getMap()[gy][gx];
-    if (tile === TILE_WATER || tile === TILE_TREE || tile === TILE_WALL) continue;
-    enemies.push(createEnemy(tx, ty, t, typeIdx));
-  }
-}
 

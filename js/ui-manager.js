@@ -194,7 +194,7 @@ document.querySelectorAll('.settings-row').forEach(row => {
       }
     } else if (setting === 'reset') {
       if (confirm('정말로 모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-        try { localStorage.removeItem('rpg_save_data'); } catch(ex) {}
+        try { localStorage.removeItem(SAVE_KEY); } catch(ex) {}
         location.reload();
       }
     } else {

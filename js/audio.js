@@ -256,11 +256,6 @@ const AudioSystem = (() => {
   return { init, sfx, startBgm, stopBgm, setSound, setMusic, isSoundOn, isMusicOn, ensureCtx };
 })();
 
-function onTap(el, handler) {
-  el.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); handler(e); }, { passive: false });
-  el.addEventListener('click', (e) => { e.stopPropagation(); handler(e); });
-}
-
 // Initialize audio on first user interaction
 ['touchstart', 'click', 'keydown'].forEach(evt => {
   document.addEventListener(evt, function initAudio() {

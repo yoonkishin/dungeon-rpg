@@ -1,6 +1,7 @@
 'use strict';
 
 // ─── Auto-Save System ────────────────────────────────────────────────────────
+const SAVE_KEY = 'rpg_save_data';
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
 
@@ -51,7 +52,7 @@ function autoSave() {
       completedSubquests: completedSubquests.slice(),
       subquestProgress: JSON.parse(JSON.stringify(subquestProgress)),
     };
-    localStorage.setItem('rpg_save_data', JSON.stringify(saveData));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
   } catch(ex) {
     // localStorage may be unavailable
   }
@@ -204,7 +205,7 @@ function loadMapState(data) {
 
 function loadSave() {
   try {
-    const raw = localStorage.getItem('rpg_save_data');
+    const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return false;
     const data = JSON.parse(raw);
     if (!data || !data.player) return false;

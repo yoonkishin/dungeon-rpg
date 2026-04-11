@@ -104,7 +104,7 @@ function performEnemyAttack(e) {
     activeCompanions.forEach(cId => {
       const cs = companionStates[cId];
       if (!cs) return;
-      const cd = Math.sqrt((e.x - cs.x)**2 + (e.y - cs.y)**2);
+      const cd = dist(e, cs);
       if (cd < compDist) { targetComp = cId; compDist = cd; }
     });
     if (targetComp !== null) {
@@ -290,7 +290,7 @@ function updateEnemyEffects(dt) {
           activeCompanions.slice().forEach(cId => {
             const cs = companionStates[cId];
             if (!cs) return;
-            const cd = Math.sqrt((cs.x - effect.x)**2 + (cs.y - effect.y)**2);
+            const cd = dist(cs, effect);
             if (cd <= effect.radius) {
               damageCompanionById(cId, Math.max(1, effect.damage - 4), effect.x, effect.y);
             }
@@ -316,7 +316,7 @@ function updateEnemyEffects(dt) {
         for (const cId of activeCompanions.slice()) {
           const cs = companionStates[cId];
           if (!cs) continue;
-          const cd = Math.sqrt((cs.x - effect.x)**2 + (cs.y - effect.y)**2);
+          const cd = dist(cs, effect);
           if (cd <= effect.radius + 10) {
             damageCompanionById(cId, Math.max(1, effect.damage - 5), effect.x, effect.y);
             addParticles(effect.x, effect.y, effect.color, 10);
@@ -347,7 +347,7 @@ function updateEnemyEffects(dt) {
           activeCompanions.slice().forEach(cId => {
             const cs = companionStates[cId];
             if (!cs || effect.hitCompanions[cId]) return;
-            const cd = Math.sqrt((cs.x - owner.x)**2 + (cs.y - owner.y)**2);
+            const cd = dist(cs, owner);
             if (cd <= effect.radius + 6) {
               effect.hitCompanions[cId] = true;
               damageCompanionById(cId, Math.max(1, effect.damage - 5), owner.x, owner.y);
@@ -403,7 +403,7 @@ function checkDungeonClear() {
   const alive = enemies.filter(e => !e.dead);
   if (alive.length === 0) {
     dungeonCleared = true;
-    showDungeonClearBanner();
+    showDungeonClearBanner('던전 클리어!');
 
     if (isEmblemTrialActive()) {
       const emblem = getCurrentEmblemTrialDef();
@@ -425,7 +425,7 @@ function checkDungeonClear() {
       if (info && !companions.includes(currentDungeonId)) {
         companions.push(currentDungeonId);
         setTimeout(() => {
-          showDungeonClearBanner2(info.companionName);
+          showDungeonClearBanner('새로운 동료: ' + info.companionName + ' 획득!');
         }, 2000);
       }
       const quest = typeof getMainQuest === 'function' ? getMainQuest() : null;
@@ -440,17 +440,10 @@ function checkDungeonClear() {
 }
 
 let dungeonClearTimeout = null;
-function showDungeonClearBanner() {
+function showDungeonClearBanner(text) {
   AudioSystem.sfx.dungeonClear();
   const el = document.getElementById('dungeon-clear-banner');
-  el.textContent = '던전 클리어!';
-  el.style.opacity = '1';
-  if (dungeonClearTimeout) clearTimeout(dungeonClearTimeout);
-  dungeonClearTimeout = setTimeout(() => { el.style.opacity = '0'; }, 3000);
-}
-function showDungeonClearBanner2(compName) {
-  const el = document.getElementById('dungeon-clear-banner');
-  el.textContent = '새로운 동료: ' + compName + ' 획득!';
+  el.textContent = text;
   el.style.opacity = '1';
   if (dungeonClearTimeout) clearTimeout(dungeonClearTimeout);
   dungeonClearTimeout = setTimeout(() => { el.style.opacity = '0'; }, 3000);

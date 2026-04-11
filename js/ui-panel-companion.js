@@ -27,7 +27,7 @@ function getCompanionActionState(cId, isActive, isDead) {
   if (isActive) {
     return { label: '해제', className: 'deactivate', action: 'deactivate', disabled: false };
   }
-  if (activeCompanions.length >= 2) {
+  if (activeCompanions.length >= MAX_ACTIVE_COMPANIONS) {
     return { label: '만석', className: 'disabled', action: 'none', disabled: true };
   }
   return { label: '선택', className: 'activate', action: 'activate', disabled: false };
@@ -98,7 +98,7 @@ function handleCompanionAiTap(cId) {
 
 function handleCompanionAction(cId, action) {
   if (action === 'activate') {
-    if (activeCompanions.length < 2) {
+    if (activeCompanions.length < MAX_ACTIVE_COMPANIONS) {
       activeCompanions.push(cId);
       initCompanionState(cId);
     }
@@ -127,11 +127,11 @@ function buildCompanionSynergyCard(key, synergyDef) {
   const activeCount = classIds.filter(classId => activeClassIds.has(classId)).length;
 
   let stateClass = 'locked';
-  let stateLabel = ownedCount + '/2 확보';
-  if (activeCount === 2) {
+  let stateLabel = ownedCount + '/' + MAX_ACTIVE_COMPANIONS + ' 확보';
+  if (activeCount === MAX_ACTIVE_COMPANIONS) {
     stateClass = 'active';
     stateLabel = '활성';
-  } else if (ownedCount === 2) {
+  } else if (ownedCount === MAX_ACTIVE_COMPANIONS) {
     stateClass = 'ready';
     stateLabel = '보유 완료';
   } else if (ownedCount > 0) {
@@ -185,7 +185,7 @@ function renderCompanionPanel() {
   const synergy = getActiveCompanionSynergy();
   content.innerHTML =
     '<div class="companion-summary-grid">' +
-      buildCompanionSummaryCard('활성 동료', activeCompanions.length + '/2') +
+      buildCompanionSummaryCard('활성 동료', activeCompanions.length + '/' + MAX_ACTIVE_COMPANIONS) +
       buildCompanionSummaryCard('수집', companions.length + '/' + getTotalCompanionCount()) +
       buildCompanionSummaryCard('사망', deadCompanions.length + '명', deadCompanions.length > 0 ? 'warn' : '') +
       buildCompanionSummaryCard('용병 슬롯', '잠김', 'lock', 'mercenary') +

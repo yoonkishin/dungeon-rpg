@@ -125,6 +125,8 @@ const TILE_PORTAL = 6;
 const TILE_EXIT = 7;
 const TILE_STONE = 8;
 
+const MAX_ACTIVE_COMPANIONS = 2;
+
 const TILE_COLORS = {
   [TILE_GRASS]: '#3d8b3d',
   [TILE_DIRT]:  '#a07040',

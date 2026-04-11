@@ -114,4 +114,5 @@ function usePotion() {
   if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
   AudioSystem.sfx.heal();
   updateHUD();
+  autoSave();
 }
