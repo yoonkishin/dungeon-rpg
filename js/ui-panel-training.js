@@ -1,0 +1,106 @@
+'use strict';
+
+// ─── Training Room Panel UI ─────────────────────────────────────────────
+const trainingPanel = document.getElementById('training-panel');
+bindTap(document.getElementById('training-panel-close'), () => closeTrainingPanel());
+
+function openTrainingPanel() {
+  trainingPanelOpen = true;
+  showPanel(trainingPanel);
+  renderTrainingPanel();
+}
+function closeTrainingPanel() {
+  trainingPanelOpen = false;
+  hidePanel(trainingPanel);
+}
+
+function buildTrainingDeltaBadges(delta, labelPrefix) {
+  if (!delta) return '<div class="training-badge-row"><span class="quest-chip done">즉시 승급 가능</span></div>';
+  const rows = [];
+  if (delta.maxHp > 0) rows.push('HP +' + delta.maxHp);
+  if (delta.maxMp > 0) rows.push('MP +' + delta.maxMp);
+  if (delta.atk > 0) rows.push('ATK +' + delta.atk);
+  if (delta.def > 0) rows.push('DEF +' + delta.def);
+  if (delta.speed > 0) rows.push('이속 +' + delta.speed.toFixed(2));
+  if (delta.critChance > 0) rows.push('치명 +' + delta.critChance.toFixed(2) + '%');
+  if (rows.length === 0) rows.push('변화 없음');
+  return '<div class="training-badge-row">' + rows.map(text => '<span class="training-delta-badge">' + labelPrefix + ' ' + text + '</span>').join('') + '</div>';
+}
+
+function buildTrainingSummaryCard(currentTier, growthLine, nextTier, promotionTarget) {
+  let html = '<div class="quest-card primary training-summary-card">';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">현재 수련 상태</div><span class="quest-chip ' + (promotionTarget ? 'done' : 'active') + '">' + (promotionTarget ? '승급 가능' : '수련 중') + '</span></div>';
+  html += '<div class="quest-focus-text">' + growthLine.lineName + ' 라인 기준으로 클래스를 단계적으로 올릴 수 있습니다.</div>';
+  html += '<div class="training-summary-grid">';
+  html += '<div class="training-summary-item"><span class="training-summary-label">현재 클래스</span><span class="training-summary-value" style="color:' + currentTier.color + '">' + currentTier.name + '</span></div>';
+  html += '<div class="training-summary-item"><span class="training-summary-label">현재 레벨</span><span class="training-summary-value">Lv ' + player.level + '</span></div>';
+  html += '<div class="training-summary-item"><span class="training-summary-label">라인</span><span class="training-summary-value">' + growthLine.lineName + '</span></div>';
+  html += '<div class="training-summary-item"><span class="training-summary-label">다음 단계</span><span class="training-summary-value">' + (nextTier ? nextTier.name : '최종 승급') + '</span></div>';
+  html += '</div></div>';
+  return html;
+}
+
+function buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, growthLine) {
+  if (!nextTier) {
+    return '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">최종 승급 완료</div><span class="quest-chip done">완료</span></div><div class="quest-focus-text">지금은 ' + currentTier.name + ' 단계야. 더 이상 승급은 없고, 장비와 동료 조합 최적화가 다음 성장 포인트다.</div></div>';
+  }
+
+  const growthDelta = promotionTarget ? getPlayerPromotionGrowthDelta() : null;
+  const statBonus = promotionTarget ? getPlayerPromotionStatBonus() : null;
+  let html = '<div class="quest-card training-promo-card">';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">다음 승급 안내</div><span class="quest-chip ' + (promotionTarget ? 'done' : 'active') + '">' + (promotionTarget ? '지금 가능' : ('Lv ' + nextTier.reqLevel + ' 필요')) + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">현재</span><span class="quest-value">' + currentTier.name + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">다음</span><span class="quest-value" style="color:' + nextTier.color + '">' + nextTier.name + '</span></div>';
+  html += '<div class="quest-row"><span class="quest-label">조건</span><span class="quest-value">Lv ' + nextTier.reqLevel + ' 이상</span></div>';
+  html += '<div class="quest-desc">' + (promotionTarget ? '조건을 만족했다. 승급을 확정하면 즉시 능력치 보너스를 받고, 이후 레벨업 성장 보정도 함께 올라간다.' : ('아직 수련이 더 필요하다. 현재 레벨은 Lv ' + player.level + '이고, ' + growthLine.lineName + ' 라인 다음 승급은 Lv ' + nextTier.reqLevel + '에서 열린다.')) + '</div>';
+  if (promotionTarget) {
+    html += '<div class="training-subtitle">즉시 보너스</div>';
+    html += buildTrainingDeltaBadges(statBonus, '즉시');
+    html += '<div class="training-subtitle">이후 레벨업 성장</div>';
+    html += buildTrainingDeltaBadges(growthDelta, '성장');
+  }
+  html += '<div class="training-action-row"><button id="training-promote-btn" class="training-promote-btn"' + (promotionTarget ? '' : ' disabled') + '>' + (promotionTarget ? ('승급 확정: ' + promotionTarget.name) : '아직 승급 불가') + '</button></div>';
+  html += '</div>';
+  return html;
+}
+
+function promotePlayerClass() {
+  const target = getPlayerPromotionTarget();
+  if (!target) {
+    showToast('아직 승급할 수 없습니다');
+    return;
+  }
+  const statBonus = getPlayerPromotionStatBonus();
+  if (statBonus) applyPromotionBonus(statBonus);
+  player.classRank = target.rank;
+  player.promotionBonusRankApplied = target.rank;
+  syncPlayerGrowthState();
+  showTierBanner(target);
+  addParticles(player.x, player.y, target.color, 28);
+  showToast(target.name + ' 승급 완료!');
+  updateHUD();
+  if (profileOpen) renderProfile();
+  autoSave();
+  renderTrainingPanel();
+}
+
+function bindTrainingActions(content) {
+  const promoteBtn = content.querySelector('#training-promote-btn');
+  if (promoteBtn && !promoteBtn.disabled) {
+    bindTap(promoteBtn, () => promotePlayerClass(), { stopPropagation: true });
+  }
+}
+
+function renderTrainingPanel() {
+  const content = document.getElementById('training-panel-content');
+  const currentTier = getCurrentTier();
+  const nextTier = getNextTier();
+  const growthLine = getGrowthLine(player.classLine || 'infantry');
+  const promotionTarget = getPlayerPromotionTarget();
+
+  content.innerHTML =
+    buildTrainingSummaryCard(currentTier, growthLine, nextTier, promotionTarget) +
+    buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, growthLine);
+
+  bindTrainingActions(content);
+}
