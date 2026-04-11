@@ -44,6 +44,50 @@ const MAIN_QUESTS = [
     reminder: ['고블린 소굴이 아직 남아 있다.', '두 번째 포탈로 들어가 고블린 왕을 처치해라.'],
     completionLines: ['훌륭하군. 이제부터는 진짜 원정대의 형태를 갖춰가게 될 거다.', '다음 던전부터는 더 강한 장비와 동료 조합을 의식해라.'],
     reward: { gold: 250, items: ['amulet1'] }
+  },
+  {
+    id: 'lava_cave_clear',
+    title: '화염 골렘 격파',
+    targetNpcId: 'sage',
+    objectiveType: 'clearDungeon',
+    objectiveTarget: 5,
+    description: '용암 동굴을 클리어하고 현자에게 보고하자.',
+    reminder: ['화산 협곡 깊은 곳에 화염 골렘이 버티고 있다.', '불꽃 공격에 대비해 방어력을 최대한 끌어올리고 입장해라.'],
+    completionLines: ['살아 돌아왔군. 화염 골렘은 원정대 전체가 힘을 합쳐야 쓰러뜨릴 수 있는 상대야.', '이제 빙설 고원 너머의 얼음 성채에서 무언가 심상치 않은 기운이 감지되고 있다.'],
+    reward: { gold: 350, items: ['iron1', 'potion_hp2'] }
+  },
+  {
+    id: 'ice_citadel_rank',
+    title: '얼음 성채를 향한 담금질',
+    targetNpcId: 'chief',
+    objectiveType: 'classRank',
+    objectiveTarget: 4,
+    description: '파이터 이상으로 승급하고 촌장에게 원정 준비를 보고하자.',
+    reminder: ['빙결 여왕의 냉기는 미숙한 자를 단번에 얼린다.', '수련의 방에서 4단 파이터 이상으로 승급을 완료하고 다시 오게.'],
+    completionLines: ['좋아, 이제 자네라면 빙결 여왕과 맞설 수 있겠어.', '얼음 성채 깊숙이 들어가 여왕을 쓰러뜨리고 돌아오게. 마을 전체가 기다리고 있네.'],
+    reward: { gold: 300, items: ['ring_atk'] }
+  },
+  {
+    id: 'dark_tower_clear',
+    title: '검은 탑의 암흑 기사',
+    targetNpcId: 'sage',
+    objectiveType: 'clearDungeon',
+    objectiveTarget: 7,
+    description: '마왕의 탑을 공략하고 현자에게 보고하자.',
+    reminder: ['암흑 기사는 근접전에 특화된 최정예 수문장이다.', '동료 조합과 스킬 타이밍을 맞춰야 버틸 수 있다. 혼자 무너지지 마라.'],
+    completionLines: ['자네가 해냈군. 암흑 기사를 쓰러뜨린 원정대는 역사에 손에 꼽을 정도야.', '이제 마지막 관문이 열렸다. 심연의 문, 최종 던전에서 마왕이 기다리고 있다.'],
+    reward: { gold: 500, items: ['amulet1', 'potion_hp2'] }
+  },
+  {
+    id: 'final_dungeon_clear',
+    title: '마왕 타도',
+    targetNpcId: 'chief',
+    objectiveType: 'clearDungeon',
+    objectiveTarget: 8,
+    description: '최종 던전을 클리어하고 촌장에게 귀환 보고를 하자.',
+    reminder: ['마왕의 파멸진은 원정대 전체를 동시에 위협한다.', '회복 아이템을 가득 채우고, 동료를 최대한 강화한 뒤 심연의 문으로 들어서라.'],
+    completionLines: ['…살아 돌아왔군. 마왕이 쓰러졌다. 자네가 이 땅의 영웅이야.', '이 마을도, 필드도, 모든 이가 자네의 이름을 오래 기억할 걸세. 최고의 보물을 받게.'],
+    reward: { gold: 800, items: ['event1', 'potion_hp2', 'potion_hp2'] }
   }
 ];
 
