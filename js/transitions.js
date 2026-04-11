@@ -182,6 +182,11 @@ function enterEmblemTrial(emblemId) {
   currentDungeonId = -1;
   currentMap = 'dungeon';
   dungeonCleared = false;
+  // Ensure the trial state is set before spawnEnemies() so isEmblemTrialActive()
+  // returns true and spawnDungeonEnemies() spawns the guardian instead of regular mobs.
+  if (!currentEmblemTrial || currentEmblemTrial.emblemId !== emblemId) {
+    currentEmblemTrial = { emblemId: emblemId };
+  }
   maps.dungeon = buildDungeon();
   player.x = 10 * TILE + TILE/2;
   player.y = 12 * TILE + TILE/2;

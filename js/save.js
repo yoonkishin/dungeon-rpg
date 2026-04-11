@@ -201,6 +201,14 @@ function loadMapState(data) {
     companionStates = {};
     currentDungeonId = -1;
   }
+
+  // Emblem trial resume policy: treat as transient, return to town on reload
+  if (currentMap === 'dungeon' && currentEmblemTrial) {
+    currentMap = 'town';
+    currentEmblemTrial = null;
+    player.x = 6 * TILE + TILE / 2;
+    player.y = 13 * TILE + TILE / 2;
+  }
 }
 
 function loadSave() {
