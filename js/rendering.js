@@ -402,6 +402,139 @@ function drawPlayer() {
   drawHpBar(sx, headY - headR - 6, player.hp, player.maxHp, 36, '#2ecc71');
 }
 
+function drawCompanion(cId, cs) {
+  const info = getCompanionRoster(cId);
+  if (!info) return;
+  const profile = getCompanionProfile(cId);
+  const unitType = profile ? profile.unitType : 'Infantry';
+  const sx = cs.x - cameraX + screenShake.x;
+  const sy = cs.y - cameraY + screenShake.y;
+  const color = (cs.flashTimer > 0 && cs.flashTimer % 4 < 2) ? '#fff' : info.color;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + 10, 8, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body by unit type
+  ctx.fillStyle = color;
+  if (unitType === 'Infantry' || unitType === 'NavalUnit') {
+    // Stocky body + shield
+    ctx.fillRect(sx - 7, sy - 6, 14, 12);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(sx - 10, sy - 4, 4, 8); // shield
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(sx - 10, sy - 4, 4, 8);
+  } else if (unitType === 'Archer') {
+    // Slim body + bow
+    ctx.fillRect(sx - 5, sy - 6, 10, 12);
+    ctx.strokeStyle = '#8b6040';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(sx + 9, sy, 8, -Math.PI * 0.6, Math.PI * 0.6);
+    ctx.stroke();
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx + 9, sy - 7); ctx.lineTo(sx + 9, sy + 7);
+    ctx.stroke();
+  } else if (unitType === 'Mage' || unitType === 'DarkPriest') {
+    // Robe (trapezoid)
+    ctx.beginPath();
+    ctx.moveTo(sx - 5, sy - 6);
+    ctx.lineTo(sx + 5, sy - 6);
+    ctx.lineTo(sx + 8, sy + 8);
+    ctx.lineTo(sx - 8, sy + 8);
+    ctx.closePath();
+    ctx.fill();
+    // Staff
+    ctx.fillStyle = '#8b6040';
+    ctx.fillRect(sx + 9, sy - 12, 2, 22);
+    ctx.fillStyle = unitType === 'DarkPriest' ? '#e74c3c' : '#74b9ff';
+    ctx.beginPath();
+    ctx.arc(sx + 10, sy - 13, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (unitType === 'Priest' || unitType === 'Monk') {
+    // Robe with cross/prayer beads
+    ctx.beginPath();
+    ctx.moveTo(sx - 5, sy - 6);
+    ctx.lineTo(sx + 5, sy - 6);
+    ctx.lineTo(sx + 7, sy + 8);
+    ctx.lineTo(sx - 7, sy + 8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(sx - 1, sy - 4, 2, 8);
+    ctx.fillRect(sx - 3, sy - 1, 6, 2);
+  } else if (unitType === 'Cavalry') {
+    // Wide body + shoulder charge
+    ctx.fillRect(sx - 8, sy - 5, 16, 11);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(sx - 10, sy - 5, 3, 5);
+    ctx.fillRect(sx + 7, sy - 5, 3, 5);
+  } else if (unitType === 'Lancer') {
+    // Slim + spear
+    ctx.fillRect(sx - 6, sy - 6, 12, 12);
+    ctx.fillStyle = '#aaa';
+    ctx.fillRect(sx + 7, sy - 16, 2, 26);
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.moveTo(sx + 8, sy - 18);
+    ctx.lineTo(sx + 5, sy - 14);
+    ctx.lineTo(sx + 11, sy - 14);
+    ctx.closePath();
+    ctx.fill();
+  } else if (unitType === 'FlyingKnight') {
+    // Small body + wings
+    ctx.fillRect(sx - 5, sy - 5, 10, 10);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    const wingFlap = Math.sin(Date.now() * 0.01) * 3;
+    ctx.beginPath();
+    ctx.moveTo(sx - 5, sy - 2);
+    ctx.lineTo(sx - 14, sy - 8 + wingFlap);
+    ctx.lineTo(sx - 5, sy + 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(sx + 5, sy - 2);
+    ctx.lineTo(sx + 14, sy - 8 + wingFlap);
+    ctx.lineTo(sx + 5, sy + 2);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    ctx.fillRect(sx - 7, sy - 7, 14, 14);
+  }
+
+  // Head (chibi round)
+  ctx.fillStyle = (cs.flashTimer > 0 && cs.flashTimer % 4 < 2) ? '#fff' : '#f5cba7';
+  ctx.beginPath();
+  ctx.arc(sx, sy - 11, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = '#2c3e50';
+  ctx.fillRect(sx - 3, sy - 12, 2, 2);
+  ctx.fillRect(sx + 1, sy - 12, 2, 2);
+
+  // HP bar
+  const hpPct = cs.hp / cs.maxHp;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(sx - 12, sy - 22, 24, 3);
+  ctx.fillStyle = hpPct > 0.3 ? '#2ecc71' : '#e74c3c';
+  ctx.fillRect(sx - 12, sy - 22, 24 * hpPct, 3);
+
+  // Name label
+  const labelW = info.name.length * 7 + 8;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(sx - labelW / 2, sy - 32, labelW, 12);
+  ctx.fillStyle = '#7dd3fc';
+  ctx.font = '8px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(info.name, sx, sy - 23);
+}
+
 function drawEnemyBody(sx, sy, e, color) {
   const shape = ENEMY_TYPES[e.typeIdx] ? ENEMY_TYPES[e.typeIdx].shape : 'humanoid';
   const hw = e.w / 2, hh = e.h / 2;
@@ -779,39 +912,7 @@ function draw() {
       const cs = companionStates[cId];
       if (cs) {
         drawBuffer.push({ y: cs.y, draw: () => {
-          // draw individual companion inline
-          const info = getCompanionRoster(cId);
-          if (!info) return;
-          const sx = cs.x - cameraX + screenShake.x;
-          const sy = cs.y - cameraY + screenShake.y;
-          ctx.fillStyle = 'rgba(0,0,0,0.2)';
-          ctx.beginPath();
-          ctx.ellipse(sx, sy + 10, 10, 4, 0, 0, Math.PI*2);
-          ctx.fill();
-          if (cs.flashTimer > 0 && cs.flashTimer % 4 < 2) ctx.fillStyle = '#fff';
-          else ctx.fillStyle = info.color;
-          ctx.fillRect(sx - 10, sy - 10, 20, 20);
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(sx - 4, sy - 6, 3, 3);
-          ctx.fillRect(sx + 1, sy - 6, 3, 3);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(sx - 3, sy - 5, 2, 2);
-          ctx.fillRect(sx + 2, sy - 5, 2, 2);
-          ctx.fillStyle = '#f1c40f';
-          ctx.font = 'bold 10px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('★', sx, sy - 14);
-          const hpPct = cs.hp / cs.maxHp;
-          ctx.fillStyle = 'rgba(0,0,0,0.6)';
-          ctx.fillRect(sx - 12, sy - 22, 24, 3);
-          ctx.fillStyle = hpPct > 0.3 ? '#2ecc71' : '#e74c3c';
-          ctx.fillRect(sx - 12, sy - 22, 24 * hpPct, 3);
-          const labelW = info.name.length * 7 + 8;
-          ctx.fillStyle = 'rgba(0,0,0,0.6)';
-          ctx.fillRect(sx - labelW/2, sy - 32, labelW, 12);
-          ctx.fillStyle = '#7dd3fc';
-          ctx.font = '8px sans-serif';
-          ctx.fillText(info.name, sx, sy - 23);
+          drawCompanion(cId, cs);
         }});
       }
     });
