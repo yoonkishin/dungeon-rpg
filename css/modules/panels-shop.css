@@ -2,7 +2,7 @@
 .shop-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   background: rgba(255,255,255,0.04);
   border-radius: 10px;
   padding: 3px;
@@ -39,11 +39,11 @@
   gap: 4px;
   min-height: 0;
   text-align: center;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 .shop-item.recommended {
-  border-color: rgba(241,196,15,0.28);
-  box-shadow: inset 0 0 0 1px rgba(241,196,15,0.10);
+  border-color: rgba(46,204,113,0.4);
+  box-shadow: inset 0 0 0 1px rgba(46,204,113,0.12), 0 0 8px rgba(46,204,113,0.08);
 }
 .shop-badge {
   position: absolute;
@@ -51,10 +51,20 @@
   right: 6px;
   padding: 3px 6px;
   border-radius: 999px;
-  background: rgba(241,196,15,0.18);
-  color: #f4d35e;
   font-size: 9px;
   font-weight: 700;
+}
+.shop-badge.upgrade {
+  background: rgba(46,204,113,0.18);
+  color: #2ecc71;
+}
+.shop-badge.first {
+  background: rgba(52,152,219,0.18);
+  color: #3498db;
+}
+.shop-badge.restock {
+  background: rgba(241,196,15,0.18);
+  color: #f4d35e;
 }
 .shop-item .icon { font-size: 24px; }
 .shop-item .name {
@@ -77,6 +87,10 @@
   font-weight: bold;
   cursor: pointer;
   pointer-events: all;
+  transition: opacity 0.12s;
+}
+.shop-item .btn.btn-upgrade {
+  background: linear-gradient(180deg, #2ecc71, #27ae60);
 }
 .shop-item .btn:disabled {
   background: rgba(255,255,255,0.15);
@@ -84,6 +98,20 @@
   cursor: not-allowed;
 }
 .shop-item .btn:not(:disabled):active { opacity: 0.7; }
+
+/* Sell tab: equipped item indicator */
+.shop-item.is-equipped {
+  opacity: 0.5;
+}
+.shop-item .equipped-tag {
+  font-size: 8px;
+  color: #f1c40f;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(241,196,15,0.12);
+}
+
 .shop-empty-card {
   grid-column: 1 / -1;
 }

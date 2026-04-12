@@ -516,29 +516,39 @@ function buildShopBuyCard(itemId) {
   if (!item) return '';
   const recommendation = getShopRecommendation(itemId);
   const affordable = player.gold >= item.price;
+  const isUpgrade = recommendation === '\uC5C5\uADF8\uB808\uC774\uB4DC';
+  const isFirst = recommendation === '\uCCAB \uC7A5\uBE44';
+  const isRestock = recommendation === '\uBCF4\uCDA9 \uCD94\uCC9C';
+  const badgeCls = isUpgrade ? 'upgrade' : isFirst ? 'first' : isRestock ? 'restock' : '';
+  const btnCls = isUpgrade ? ' btn-upgrade' : '';
   return '' +
     '<div class="shop-item' + (recommendation ? ' recommended' : '') + '">' +
-      (recommendation ? '<div class="shop-badge">' + recommendation + '</div>' : '') +
+      (recommendation ? '<div class="shop-badge ' + badgeCls + '">' + recommendation + '</div>' : '') +
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
       '<div class="price">\uD83D\uDCB0 ' + item.price + '</div>' +
-      '<div class="owned">보유 ' + getOwnedItemCount(itemId) + '</div>' +
-      '<button class="btn" data-buy-item="' + itemId + '" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '구매' : '골드 부족') + '</button>' +
+      '<div class="owned">\uBCF4\uC720 ' + getOwnedItemCount(itemId) + '</div>' +
+      '<button class="btn' + btnCls + '" data-buy-item="' + itemId + '" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '\uAD6C\uB9E4' : '\uACE8\uB4DC \uBD80\uC871') + '</button>' +
     '</div>';
+}
+
+function isItemEquipped(itemId) {
+  return Object.values(equipped).some(inst => inst && inst.itemId === itemId);
 }
 
 function buildShopSellCard(itemId, count) {
   const item = ITEMS[itemId];
   if (!item) return '';
+  const equippedMark = isItemEquipped(itemId);
   return '' +
     '<div class="shop-item">' +
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
-      '<div class="price">판매가 \uD83D\uDCB0 ' + getSellPrice(itemId) + '</div>' +
-      '<div class="owned">가방 x' + count + '</div>' +
-      '<button class="btn" data-sell-item="' + itemId + '">판매</button>' +
+      '<div class="price">\uD310\uB9E4\uAC00 \uD83D\uDCB0 ' + getSellPrice(itemId) + '</div>' +
+      '<div class="owned">\uAC00\uBC29 x' + count + (equippedMark ? ' <span class="equipped-tag">\uC7A5\uCC29\uC911</span>' : '') + '</div>' +
+      '<button class="btn" data-sell-item="' + itemId + '">\uD310\uB9E4</button>' +
     '</div>';
 }
 
