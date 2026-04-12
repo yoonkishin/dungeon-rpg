@@ -433,7 +433,7 @@ function renderInventory() {
     slotEl.classList.toggle('equipped', !!item);
     if (iconEl) iconEl.textContent = item ? item.icon : EQUIP_SLOT_META[slot].icon;
     if (labelEl) {
-      labelEl.textContent = item ? item.name : EQUIP_SLOT_META[slot].label;
+      labelEl.textContent = EQUIP_SLOT_META[slot].label;
     }
     slotEl.title = item ? (EQUIP_SLOT_META[slot].label + ': ' + item.name) : EQUIP_SLOT_META[slot].label;
   });

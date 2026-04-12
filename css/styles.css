@@ -1,13 +1,1 @@
-@import url("modules/base.css");
-@import url("modules/hud.css");
-@import url("modules/panels-common.css");
-@import url("modules/panels-skill.css");
-@import url("modules/panels-menu.css");
-@import url("modules/hud-widgets.css");
-@import url("modules/controls.css");
-@import url("modules/panels-equip.css");
-@import url("modules/panels-shop.css");
-@import url("modules/panels-misc.css");
-@import url("modules/panels-profile.css");
-@import url("modules/panels-companion.css");
-@import url("modules/panels-temple.css");
+/* CSS modules are loaded via <link> tags in index.html with cache busting */

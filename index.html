@@ -15,8 +15,15 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#000000">
 <title>던전 탐험 RPG</title>
-<link rel="stylesheet" id="main-css">
-<script>document.getElementById('main-css').href='css/styles.css?v='+Date.now();</script>
+<script>
+(function(){var v='?_='+Date.now();
+['css/modules/base.css','css/modules/hud.css','css/modules/panels-common.css',
+'css/modules/panels-skill.css','css/modules/panels-menu.css','css/modules/hud-widgets.css',
+'css/modules/controls.css','css/modules/panels-equip.css','css/modules/panels-shop.css',
+'css/modules/panels-misc.css','css/modules/panels-profile.css','css/modules/panels-companion.css',
+'css/modules/panels-temple.css'].forEach(function(c){
+document.write('<link rel="stylesheet" href="'+c+v+'">');});})();
+</script>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>

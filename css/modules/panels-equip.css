@@ -125,6 +125,11 @@
   font-weight: 600;
   letter-spacing: 0.3px;
   transition: color 0.2s;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 }
 
 /* Equipped state — base */
