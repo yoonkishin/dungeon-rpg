@@ -143,10 +143,59 @@ function drawTile(tx, ty, tile) {
     ctx.fillStyle = 'rgba(0,0,0,0.08)';
     if ((tx + ty) % 2 === 0) ctx.fillRect(sx, sy, TILE, TILE);
   } else if (tile === TILE_STONE) {
-    ctx.fillStyle = '#6d7880';
+    // Building walls
+    ctx.fillStyle = '#8a7d6b';
+    ctx.fillRect(sx, sy, TILE, TILE);
+    // Brick pattern
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(sx + 2, sy + 2, TILE / 2 - 2, TILE / 2 - 2);
+    ctx.strokeRect(sx + TILE / 2 + 1, sy + 2, TILE / 2 - 3, TILE / 2 - 2);
+    ctx.strokeRect(sx + TILE / 4, sy + TILE / 2 + 1, TILE / 2, TILE / 2 - 3);
+    // Side shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(sx + TILE - 3, sy, 3, TILE);
+    // Bottom shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(sx, sy + TILE - 3, TILE, 3);
+    // Top highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(sx, sy, TILE, 2);
+    // Window
+    const m = getMap();
+    ctx.fillStyle = '#3a3520';
+    ctx.fillRect(sx + 12, sy + 8, 16, 12);
+    ctx.fillStyle = '#5a7a9a';
+    ctx.fillRect(sx + 13, sy + 9, 14, 10);
+    ctx.strokeStyle = '#3a3520';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(sx + TILE/2, sy + TILE/2, TILE/2 - 5, 0, Math.PI*2);
-    ctx.fill();
+    ctx.moveTo(sx + 20, sy + 9); ctx.lineTo(sx + 20, sy + 19);
+    ctx.moveTo(sx + 13, sy + 14); ctx.lineTo(sx + 27, sy + 14);
+    ctx.stroke();
+    // Window light glow
+    ctx.fillStyle = 'rgba(255,220,120,0.15)';
+    ctx.fillRect(sx + 13, sy + 9, 14, 10);
+    // Roof: only if tile above is not TILE_STONE
+    const above = m[ty - 1] && m[ty - 1][tx];
+    if (above !== TILE_STONE) {
+      ctx.fillStyle = '#6b3a2a';
+      ctx.fillRect(sx - 3, sy - 4, TILE + 6, 7);
+      ctx.fillStyle = '#5a2e1e';
+      ctx.fillRect(sx - 3, sy - 4, TILE + 6, 2);
+      ctx.fillStyle = '#7a4a38';
+      ctx.fillRect(sx - 3, sy + 1, TILE + 6, 2);
+    }
+    // Door: only if tile below is not TILE_STONE
+    const below = m[ty + 1] && m[ty + 1][tx];
+    if (below !== TILE_STONE) {
+      ctx.fillStyle = '#4a3520';
+      ctx.fillRect(sx + 14, sy + TILE - 16, 12, 16);
+      ctx.fillStyle = '#3a2810';
+      ctx.fillRect(sx + 14, sy + TILE - 16, 12, 2);
+      ctx.fillStyle = '#c8a040';
+      ctx.fillRect(sx + 23, sy + TILE - 9, 2, 2);
+    }
   }
 }
 
@@ -192,19 +241,64 @@ function drawHpBar(x, y, hp, maxHp, w, color) {
 function drawNPC(npc) {
   const nx = npc.x - cameraX + screenShake.x;
   const ny = npc.y - cameraY + screenShake.y;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(nx, ny + 12, 10, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = '#3a3020';
+  ctx.fillRect(nx - 5, ny + 4, 4, 8);
+  ctx.fillRect(nx + 1, ny + 4, 4, 8);
+
+  // Body (small torso)
   ctx.fillStyle = npc.color;
-  ctx.fillRect(nx - 14, ny - 14, 28, 28);
+  ctx.fillRect(nx - 8, ny - 4, 16, 10);
+
+  // Arms
+  ctx.fillRect(nx - 11, ny - 2, 3, 8);
+  ctx.fillRect(nx + 8, ny - 2, 3, 8);
+
+  // Head (round, chibi)
   ctx.fillStyle = '#f5cba7';
-  ctx.fillRect(nx - 8, ny - 22, 16, 14);
+  ctx.beginPath();
+  ctx.arc(nx, ny - 10, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Hat
   ctx.fillStyle = npc.hat;
-  ctx.fillRect(nx - 10, ny - 28, 20, 8);
-  const labelW = npc.name.length * 8 + 8;
+  ctx.beginPath();
+  ctx.arc(nx, ny - 13, 10, Math.PI * 1.05, Math.PI * 1.95);
+  ctx.fill();
+  ctx.fillRect(nx - 12, ny - 17, 24, 5);
+
+  // Eyes
+  ctx.fillStyle = '#2c3e50';
+  ctx.fillRect(nx - 4, ny - 11, 3, 3);
+  ctx.fillRect(nx + 1, ny - 11, 3, 3);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(nx - 3, ny - 11, 1, 1);
+  ctx.fillRect(nx + 2, ny - 11, 1, 1);
+
+  // Name label
+  const labelW = npc.name.length * 8 + 10;
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
-  ctx.fillRect(nx - labelW/2, ny - 42, labelW, 14);
+  ctx.fillRect(nx - labelW / 2, ny - 32, labelW, 14);
   ctx.fillStyle = '#f1c40f';
   ctx.font = 'bold 10px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(npc.name, nx, ny - 31);
+  ctx.fillText(npc.name, nx, ny - 21);
+
+  // Interaction prompt (!) when player is nearby
+  const d = dist(player, npc);
+  if (d < 55) {
+    const bob = Math.sin(Date.now() * 0.005) * 2;
+    ctx.fillStyle = '#f1c40f';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('!', nx, ny - 38 + bob);
+  }
 }
 
 function drawPlayer() {
