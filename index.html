@@ -215,12 +215,13 @@
   <!-- Companion Panel -->
   <div id="companion-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>👥 동료</h2>
-      <button class="inv-close" id="companion-close">✕</button>
+      <h2>동료</h2>
+      <div class="inv-header-right">
+        <span class="comp-header-summary" id="comp-summary"></span>
+        <button class="inv-close" id="companion-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="companion-content"></div>
-    </div>
+    <div id="companion-content" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;"></div>
   </div>
 
   <!-- Temple Revival Panel -->
