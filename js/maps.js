@@ -2,6 +2,7 @@
 
 // Seeded RNG for deterministic map generation
 let fieldSeed = Date.now();
+let fieldSeedOriginal = fieldSeed;
 function seededRandom() {
   fieldSeed = (fieldSeed * 16807 + 0) % 2147483647;
   return (fieldSeed & 0x7fffffff) / 2147483647;
@@ -67,6 +68,8 @@ const FIELD_W = 80, FIELD_H = 60;
 function buildField(seed) {
   if (seed !== undefined) fieldSeed = seed;
   else fieldSeed = Date.now();
+  if (!fieldSeed) fieldSeed = 1;
+  fieldSeedOriginal = fieldSeed;
   const m = [];
   for (let y = 0; y < FIELD_H; y++) {
     m[y] = [];

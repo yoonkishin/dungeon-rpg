@@ -98,6 +98,7 @@ potionBtn.addEventListener('click', (e) => {
 });
 
 function usePotion() {
+  if (player.hp >= player.maxHp) return;
   const idx = inventory.findIndex(e => e.itemId === 'potion_hp2');
   const idx2 = inventory.findIndex(e => e.itemId === 'potion_hp');
   const useIdx = idx >= 0 ? idx : idx2;

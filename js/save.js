@@ -86,7 +86,7 @@ function autoSave() {
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
-      fieldSeed: fieldSeed,
+      fieldSeed: fieldSeedOriginal,
       currentEmblemTrial: currentEmblemTrial ? { ...currentEmblemTrial } : null,
       mainQuestIndex: mainQuestIndex,
       completedMainQuests: completedMainQuests.slice(),
@@ -111,8 +111,7 @@ function loadPlayerState(p) {
   player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
   player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
   player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
-  player.promotionPending = !!player.promotionPending;
-  player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+  player.xpNext = hasOwn(p, 'xpNext') ? p.xpNext : getXpToNextLevel(player.level, player.tier || player.classRank || 1);
   if (p.promotionBonusRankApplied === undefined && player.classRank > 1) {
     applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
     player.promotionBonusRankApplied = player.classRank;
