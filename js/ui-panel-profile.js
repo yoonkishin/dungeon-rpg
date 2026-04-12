@@ -13,105 +13,6 @@ function closeProfile() {
   profileOpen = false;
   hidePanel(profilePanel);
 }
-function buildProfileProgressDots(total, activeCheck, variant) {
-  let html = '';
-  for (let i = 0; i < total; i++) {
-    const active = activeCheck(i);
-    html += '<div class="profile-progress-dot ' + variant + (active ? ' active' : '') + '">' + (active ? '●' : '○') + '</div>';
-  }
-  return html;
-}
-
-function buildProfileMetric(label, value) {
-  return '<div class="profile-metric-item"><span class="profile-metric-label">' + label + '</span><span class="profile-metric-value">' + value + '</span></div>';
-}
-
-function buildProfileCharacterCard(tier, lineName, glowColor, glowSize, armorColor) {
-  return `
-    <div class="profile-character-card">
-      <div class="profile-character-glow" style="background:radial-gradient(circle at 50% 50%, ${glowColor}, transparent 60%);"></div>
-      <div class="profile-character-inner">
-        <div class="profile-character-figure">
-          ${tier.tier >= 3 ? `<div class="profile-character-aura" style="background:radial-gradient(circle, ${tier.color}33, transparent 70%); box-shadow:0 0 ${glowSize}px ${tier.color}44;"></div>` : ''}
-          <img src="./character.png" alt="캐릭터" class="profile-character-image" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <div class="profile-character-fallback">
-            <div class="profile-character-body" style="background:${armorColor || tier.bodyColor};"></div>
-          </div>
-        </div>
-        <div class="profile-character-meta">
-          <div class="profile-character-name">${lineName} 라인</div>
-          <div class="profile-character-tier" style="color:${tier.color};">⭐ ${tier.tier}단 - ${tier.name}</div>
-          <div class="profile-character-level">Lv. ${player.level}${player.level >= getPlayerLevelCap() ? ' (MAX)' : ''}</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function buildProfileStatsCard(playerStats) {
-  return `
-    <div class="profile-stats-card">
-      <div class="profile-resource-block">
-        <div class="profile-resource-row"><span class="profile-resource-label hp">HP</span><span class="profile-resource-value">${playerStats.hpText}</span></div>
-        <div class="profile-bar"><div class="profile-bar-fill hp" style="width:${playerStats.hpPct}%;"></div></div>
-      </div>
-      <div class="profile-resource-block profile-resource-gap">
-        <div class="profile-resource-row"><span class="profile-resource-label mp">MP</span><span class="profile-resource-value">${playerStats.mpText}</span></div>
-        <div class="profile-bar"><div class="profile-bar-fill mp" style="width:${playerStats.mpPct}%;"></div></div>
-      </div>
-      <div class="profile-metric-grid">
-        ${buildProfileMetric('공격력', playerStats.atk)}
-        ${buildProfileMetric('방어력', playerStats.def)}
-        ${buildProfileMetric('크리티컬', playerStats.crit + '%')}
-        ${buildProfileMetric('이동속도', playerStats.speed)}
-      </div>
-    </div>
-  `;
-}
-
-function buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, lineName) {
-  return `
-    <div class="profile-tier-card">
-      <div class="profile-tier-head">
-        <span class="profile-tier-text">클래스: <span class="profile-tier-name" style="color:${tier.color};">${tier.tier}단 ${tier.name}</span></span>
-        ${nextTier ? `<span class="profile-tier-next">다음 승급: ${nextTier.name} (Lv.${nextTier.reqLevel})</span>` : '<span class="profile-tier-next max">현재 최종 승급</span>'}
-      </div>
-      <div class="profile-bar profile-tier-progress"><div class="profile-bar-fill tier" style="width:${tierPct}%; background:linear-gradient(90deg, ${tier.color}, ${tier.bodyColor});"></div></div>
-      <div class="profile-tier-foot">${tierProgressText || `${lineName} 라인 진행 ${tierPct}%`}</div>
-    </div>
-  `;
-}
-
-function buildProfilePromotionNote(tier, nextTier, lineName) {
-  const promotionTarget = getPlayerPromotionTarget();
-  const body = promotionTarget
-    ? `${lineName} 라인 ${tier.name} 단계에서 승급 조건을 채웠어. 마을의 수련의 방에서 ${promotionTarget.name} 승급을 확정할 수 있어.`
-    : nextTier
-      ? `${lineName} 라인 ${tier.name} 단계야. 다음 승급은 ${nextTier.name}, Lv.${nextTier.reqLevel}에서 열려.`
-      : `${lineName} 라인의 최종 승급까지 왔어. 이제 장비와 동료 조합으로 후반 밸류를 올리면 돼.`;
-
-  return `
-    <div class="profile-promotion-note">
-      <div class="profile-promotion-title">성장 해석</div>
-      <div class="profile-promotion-body">${body}</div>
-    </div>
-  `;
-}
-
-function buildProfileProgressSection(dungeonCircles, companionCircles) {
-  return `
-    <div class="profile-progress-row">
-      <div class="profile-progress-card">
-        <div class="profile-progress-title">던전 ${dungeonsCleared.length}/9</div>
-        <div class="profile-progress-dots">${dungeonCircles}</div>
-      </div>
-      <div class="profile-progress-card">
-        <div class="profile-progress-title">동료 ${companions.length}/${getTotalCompanionCount()}</div>
-        <div class="profile-progress-dots">${companionCircles}</div>
-      </div>
-    </div>
-  `;
-}
 
 function renderProfile() {
   const bonus = getEquipBonus();
@@ -120,38 +21,114 @@ function renderProfile() {
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const content = document.getElementById('profile-content');
   const armorColor = equipped.armor && ITEMS[equipped.armor.itemId] ? ITEMS[equipped.armor.itemId].color : null;
-  const glowSize = Math.min(tier.tier * 4, 24);
-  const glowOpacity = Math.min(tier.tier * 0.12, 0.7);
+  const promotionTarget = getPlayerPromotionTarget();
 
+  // EXP calculation
+  const expForNext = player.xpNext || 1;
+  const expPct = expForNext > 0 ? Math.min(100, Math.floor(player.xp / expForNext * 100)) : 100;
+  const isMaxLevel = player.level >= getPlayerLevelCap();
+
+  // Tier progress
   let tierPct = 100;
-  let tierProgressText = '최고 등급 달성!';
   if (nextTier) {
     const prevReq = tier.reqLevel;
     const nextReq = nextTier.reqLevel;
     tierPct = Math.min(100, Math.floor((player.level - prevReq) / (nextReq - prevReq) * 100));
-    tierProgressText = '';
   }
 
-  const playerStats = {
-    hpPct: Math.max(0, Math.min(100, player.hp / player.maxHp * 100)),
-    mpPct: Math.max(0, Math.min(100, player.mp / player.maxMp * 100)),
-    hpText: Math.floor(player.hp) + '/' + player.maxHp,
-    mpText: Math.floor(player.mp) + '/' + player.maxMp,
-    atk: player.atk + bonus.atk,
-    def: player.def + bonus.def,
-    crit: Math.min(30, player.critChance + (bonus.critBonus || 0)),
-    speed: (player.speed + (bonus.speedBonus || 0)).toFixed(2),
-  };
-  const dungeonCircles = buildProfileProgressDots(9, (idx) => dungeonsCleared.includes(idx), 'dungeon');
-  const companionCircles = buildProfileProgressDots(getTotalCompanionCount(), (idx) => companions.includes(idx), 'companion');
-  const glowColor = `${tier.color}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')}`;
+  // Stats
+  const totalAtk = player.atk + bonus.atk;
+  const totalDef = player.def + bonus.def;
+  const totalCrit = Math.min(30, player.critChance + (bonus.critBonus || 0));
+  const totalSpeed = (player.speed + (bonus.speedBonus || 0)).toFixed(2);
+
+  // Progress
+  const dungeonCount = dungeonsCleared.length;
+  const dungeonTotal = 9;
+  const companionCount = companions.length;
+  const companionTotal = getTotalCompanionCount();
+
+  // Glow
+  const glowOpacity = Math.min(tier.tier * 0.15, 0.7);
+  const glowColor = tier.color || '#f1c40f';
 
   content.innerHTML =
-    '<div class="profile-layout">' +
-      buildProfileCharacterCard(tier, growthLine.lineName, glowColor, glowSize, armorColor) +
-      buildProfileStatsCard(playerStats) +
+    // ── Hero Card ──
+    '<div class="profile-hero">' +
+      '<div class="profile-hero-bg" style="background:linear-gradient(135deg, ' + glowColor + ', transparent);"></div>' +
+      '<div class="profile-hero-figure">' +
+        (tier.tier >= 3 ? '<div class="profile-hero-aura" style="background:radial-gradient(circle, ' + glowColor + '33, transparent 70%); box-shadow:0 0 ' + Math.min(tier.tier * 4, 24) + 'px ' + glowColor + '44;"></div>' : '') +
+        '<img src="./character.png" alt="" class="profile-hero-image" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+        '<div class="profile-hero-fallback"><div class="profile-hero-body" style="background:' + (armorColor || tier.bodyColor || '#555') + ';"></div></div>' +
+      '</div>' +
+      '<div class="profile-hero-info">' +
+        '<div class="profile-hero-class">' + growthLine.lineName + ' \u00B7 ' + tier.tier + '\uB2E8</div>' +
+        '<div class="profile-hero-name" style="color:' + glowColor + ';">' + tier.name + '</div>' +
+        '<div class="profile-hero-level">Lv. ' + player.level + (isMaxLevel ? ' <span class="max-tag">MAX</span>' : '') + '</div>' +
+        '<div class="profile-exp-row">' +
+          '<span class="profile-exp-label">EXP</span>' +
+          '<div class="profile-exp-bar"><div class="profile-exp-fill" style="width:' + (isMaxLevel ? 100 : expPct) + '%;"></div></div>' +
+          '<span class="profile-exp-text">' + (isMaxLevel ? 'MAX' : player.xp + '/' + expForNext) + '</span>' +
+        '</div>' +
+      '</div>' +
     '</div>' +
-    buildProfileTierCard(tier, nextTier, tierPct, tierProgressText, growthLine.lineName) +
-    buildProfilePromotionNote(tier, nextTier, growthLine.lineName) +
-    buildProfileProgressSection(dungeonCircles, companionCircles);
+
+    // ── Stat Chips ──
+    '<div class="profile-stats-row">' +
+      buildStatChip('\u2694\uFE0F', totalAtk, bonus.atk, '\uACF5\uACA9\uB825') +
+      buildStatChip('\uD83D\uDEE1\uFE0F', totalDef, bonus.def, '\uBC29\uC5B4\uB825') +
+      buildStatChip('\uD83C\uDFAF', totalCrit + '%', bonus.critBonus || 0, '\uD06C\uB9AC') +
+      buildStatChip('\uD83D\uDC62', totalSpeed, bonus.speedBonus || 0, '\uC18D\uB3C4') +
+    '</div>' +
+
+    // ── Promotion Card ──
+    '<div class="profile-promo-card">' +
+      '<div class="profile-promo-header">' +
+        '<span class="profile-promo-title">\uC2B9\uAE09 \uC9C4\uD589</span>' +
+        (promotionTarget
+          ? '<span class="profile-promo-badge ready">\uC2B9\uAE09 \uAC00\uB2A5!</span>'
+          : (nextTier
+            ? '<span class="profile-promo-badge locked">Lv.' + nextTier.reqLevel + ' \uD544\uC694</span>'
+            : '<span class="profile-promo-badge ready">\uCD5C\uC885 \uB2E8\uACC4</span>')) +
+      '</div>' +
+      '<div class="profile-promo-flow">' +
+        '<div class="profile-promo-tier current" style="border-color:' + glowColor + '55;">' + tier.name + '</div>' +
+        (nextTier
+          ? '<span class="profile-promo-arrow">\u25B6</span><div class="profile-promo-tier next">' + nextTier.name + '</div>'
+          : '') +
+      '</div>' +
+      '<div class="profile-promo-bar"><div class="profile-promo-fill" style="width:' + tierPct + '%; background:linear-gradient(90deg, ' + glowColor + ', ' + (tier.bodyColor || glowColor) + ');"></div></div>' +
+      '<div class="profile-promo-info">' +
+        '<span>' + growthLine.lineName + ' \uB77C\uC778</span>' +
+        '<span>' + tierPct + '%</span>' +
+      '</div>' +
+    '</div>' +
+
+    // ── Progress Cards ──
+    '<div class="profile-progress-row">' +
+      '<div class="profile-progress-card">' +
+        '<div class="profile-progress-head">' +
+          '<span class="profile-progress-title">\uB358\uC804 \uD074\uB9AC\uC5B4</span>' +
+          '<span class="profile-progress-count">' + dungeonCount + '/' + dungeonTotal + '</span>' +
+        '</div>' +
+        '<div class="profile-progress-bar"><div class="profile-progress-fill dungeon" style="width:' + Math.floor(dungeonCount / dungeonTotal * 100) + '%;"></div></div>' +
+      '</div>' +
+      '<div class="profile-progress-card">' +
+        '<div class="profile-progress-head">' +
+          '<span class="profile-progress-title">\uB3D9\uB8CC \uC218\uC9D1</span>' +
+          '<span class="profile-progress-count">' + companionCount + '/' + companionTotal + '</span>' +
+        '</div>' +
+        '<div class="profile-progress-bar"><div class="profile-progress-fill companion" style="width:' + (companionTotal > 0 ? Math.floor(companionCount / companionTotal * 100) : 0) + '%;"></div></div>' +
+      '</div>' +
+    '</div>';
+}
+
+function buildStatChip(icon, value, equipBonus, label) {
+  const bonusStr = equipBonus > 0 ? '(+' + (typeof equipBonus === 'number' && equipBonus % 1 !== 0 ? equipBonus.toFixed(2) : equipBonus) + ')' : '';
+  return '<div class="profile-stat-chip">' +
+    '<span class="profile-stat-icon">' + icon + '</span>' +
+    '<span class="profile-stat-value">' + value + '</span>' +
+    (bonusStr ? '<span class="profile-stat-bonus">' + bonusStr + '</span>' : '') +
+    '<span class="profile-stat-label">' + label + '</span>' +
+  '</div>';
 }

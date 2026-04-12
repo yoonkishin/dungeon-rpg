@@ -1,210 +1,234 @@
 /* ── Profile Panel ── */
-.profile-layout {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.profile-character-card,
-.profile-stats-card,
-.profile-tier-card,
-.profile-progress-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-}
-.profile-character-card {
+
+/* Hero Card */
+.profile-hero {
   position: relative;
-  width: 120px;
-  min-width: 120px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px 0;
-  background: linear-gradient(180deg, #0a0c14, #1a1c24, #0a0c14);
+  gap: 14px;
 }
-.profile-character-glow {
+.profile-hero-bg {
   position: absolute;
   inset: 0;
+  opacity: 0.12;
+  border-radius: 12px;
 }
-.profile-character-inner {
+.profile-hero-figure {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
 }
-.profile-character-figure {
-  position: relative;
-  width: 60px;
-  height: 60px;
-}
-.profile-character-aura {
+.profile-hero-aura {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 70px;
-  height: 70px;
+  inset: -8px;
   border-radius: 50%;
 }
-.profile-character-image {
-  width: 60px;
-  height: 60px;
+.profile-hero-image {
+  width: 64px;
+  height: 64px;
   object-fit: contain;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
 }
-.profile-character-fallback {
+.profile-hero-fallback {
   display: none;
-  width: 40px;
-  height: 45px;
-  margin: 0 auto;
+  width: 64px;
+  height: 64px;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
-.profile-character-body {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+.profile-hero-body {
+  width: 36px;
+  height: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
-.profile-character-meta {
-  text-align: center;
-  margin-top: 4px;
-}
-.profile-character-name {
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-}
-.profile-character-tier,
-.profile-character-level {
-  font-size: 9px;
-  margin-top: 1px;
-}
-.profile-character-tier {
-  font-weight: 700;
-}
-.profile-character-level,
-.profile-resource-value,
-.profile-tier-foot,
-.profile-progress-title {
-  color: #aaa;
-}
-.profile-stats-card,
-.profile-tier-card,
-.profile-progress-card {
-  padding: 8px;
-}
-.profile-stats-card {
+.profile-hero-info {
   flex: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
 }
-.profile-resource-block {
-  margin-bottom: 4px;
-}
-.profile-resource-gap {
-  margin-bottom: 6px;
-}
-.profile-resource-row,
-.profile-tier-head,
-.profile-metric-item {
-  display: flex;
-  justify-content: space-between;
-}
-.profile-resource-row {
+.profile-hero-class {
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaa;
   margin-bottom: 2px;
 }
-.profile-resource-label,
-.profile-resource-value,
-.profile-tier-text,
-.profile-tier-next,
-.profile-metric-label,
-.profile-metric-value,
-.profile-progress-title,
-.profile-progress-dot {
-  font-size: 9px;
+.profile-hero-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1px;
 }
-.profile-resource-label,
-.profile-metric-label {
-  font-weight: 700;
+.profile-hero-level {
+  font-size: 11px;
+  color: #ccc;
+  margin-bottom: 8px;
 }
-.profile-resource-label.hp { color: #e74c3c; }
-.profile-resource-label.mp { color: #3498db; }
-.profile-bar {
-  height: 6px;
-  background: rgba(0,0,0,0.5);
-  border-radius: 3px;
-  overflow: hidden;
-}
-.profile-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-}
-.profile-bar-fill.hp {
-  background: linear-gradient(90deg, #ff6b6b, #e74c3c);
-}
-.profile-bar-fill.mp {
-  background: linear-gradient(90deg, #74b9ff, #0984e3);
-}
-.profile-metric-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px;
-}
-.profile-metric-item {
-  padding: 3px 5px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-}
-.profile-metric-label {
-  color: #aaa;
-}
-.profile-metric-value,
-.profile-tier-name {
+.profile-hero-level .max-tag {
   color: #f1c40f;
   font-weight: 700;
 }
-.profile-tier-card {
-  margin-bottom: 6px;
-}
-.profile-tier-head {
-  margin-bottom: 3px;
+/* EXP bar in hero card */
+.profile-exp-row {
+  display: flex;
+  align-items: center;
   gap: 8px;
 }
-.profile-tier-text {
-  color: #ddd;
+.profile-exp-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #aaa;
+  flex-shrink: 0;
 }
-.profile-tier-next {
-  color: #888;
+.profile-exp-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 4px;
+  overflow: hidden;
 }
-.profile-tier-next.max {
-  color: #f1c40f;
+.profile-exp-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f39c12, #f1c40f);
+  transition: width 0.3s ease;
 }
-.profile-tier-foot {
-  text-align: right;
+.profile-exp-text {
+  font-size: 9px;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+/* ── Stat Chips Row ── */
+.profile-stats-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.profile-stat-chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  gap: 2px;
+}
+.profile-stat-icon {
+  font-size: 14px;
+}
+.profile-stat-value {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+.profile-stat-bonus {
   font-size: 8px;
-  margin-top: 2px;
-}
-.profile-promotion-note {
-  margin-bottom: 6px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-.profile-promotion-title {
   color: #f1c40f;
+  font-weight: 600;
+}
+.profile-stat-label {
+  font-size: 8px;
+  color: #777;
+  font-weight: 600;
+}
+
+/* ── Promotion Card ── */
+.profile-promo-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.profile-promo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.profile-promo-title {
   font-size: 10px;
   font-weight: 700;
-  margin-bottom: 4px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.profile-promotion-body {
-  color: #cfd6e6;
-  font-size: 10px;
-  line-height: 1.35;
+.profile-promo-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
 }
+.profile-promo-badge.ready {
+  background: rgba(241,196,15,0.18);
+  color: #f4d35e;
+}
+.profile-promo-badge.locked {
+  background: rgba(255,255,255,0.06);
+  color: #666;
+}
+.profile-promo-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.profile-promo-tier {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.profile-promo-tier.current {
+  border-color: rgba(241,196,15,0.3);
+}
+.profile-promo-arrow {
+  color: #555;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.profile-promo-tier.next {
+  color: #888;
+  border-style: dashed;
+  border-color: rgba(255,255,255,0.15);
+}
+.profile-promo-bar {
+  height: 8px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.profile-promo-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.profile-promo-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 9px;
+  color: #777;
+}
+
+/* ── Progress Cards ── */
 .profile-progress-row {
   display: flex;
   gap: 6px;
@@ -212,40 +236,45 @@
 }
 .profile-progress-card {
   flex: 1;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+.profile-progress-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
 }
 .profile-progress-title {
+  font-size: 10px;
   font-weight: 700;
-  margin-bottom: 4px;
+  color: #aaa;
 }
-.profile-progress-dots {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-}
-.profile-progress-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.profile-progress-count {
+  font-size: 10px;
   font-weight: 700;
-  background: rgba(255,255,255,0.08);
-  border: 2px solid rgba(255,255,255,0.15);
-  color: #555;
+  color: #f1c40f;
 }
-.profile-progress-dot.active {
-  color: #fff;
+.profile-progress-bar {
+  height: 6px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 3px;
+  overflow: hidden;
 }
-.profile-progress-dot.dungeon.active {
-  background: #2ecc71;
-  border-color: #27ae60;
+.profile-progress-fill {
+  height: 100%;
+  border-radius: 3px;
 }
-.profile-progress-dot.companion.active {
-  background: #3498db;
-  border-color: #2980b9;
+.profile-progress-fill.dungeon {
+  background: linear-gradient(90deg, #27ae60, #2ecc71);
+}
+.profile-progress-fill.companion {
+  background: linear-gradient(90deg, #2980b9, #3498db);
 }
 
+/* training-* classes used by training panel — keep here */
 .training-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
