@@ -299,35 +299,20 @@
 
 <div id="fullscreen-btn"><div class="tap-icon">⚔️</div><div>탭하면 전체화면</div><div class="sub">안 눌러도 게임은 바로 보입니다</div></div>
 
-<script src="js/error-overlay.js"></script>
-<script src="js/constants.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/maps.js"></script>
-<script src="js/data.js"></script>
-<script src="js/data-companions.js"></script>
-<script src="js/data-growth.js"></script>
-<script src="js/data-town.js"></script>
-<script src="js/data-quests.js"></script>
-<script src="js/state.js"></script>
-<script src="js/helpers.js"></script>
-<script src="js/enemies.js"></script>
-<script src="js/combat.js"></script>
-<script src="js/transitions.js"></script>
-<script src="js/skills.js"></script>
-<script src="js/companions.js"></script>
-<script src="js/rendering.js"></script>
-<script src="js/game-controls.js"></script>
-<script src="js/ui-manager.js"></script>
-<script src="js/ui-panel-profile.js"></script>
-<script src="js/ui-panel-equip.js"></script>
-<script src="js/ui-panel-companion.js"></script>
-<script src="js/ui-panel-temple.js"></script>
-<script src="js/ui-panel-skill.js"></script>
-<script src="js/ui-panel-quest.js"></script>
-<script src="js/ui-panel-training.js"></script>
-<script src="js/ui-panel-emblem.js"></script>
-<script src="js/ui-panel-village.js"></script>
-<script src="js/save.js"></script>
-<script src="js/main.js"></script>
+<script>
+// Auto cache-bust: every page load gets fresh files
+var _v='?_='+Date.now();
+[
+  'js/error-overlay.js','js/constants.js','js/audio.js','js/maps.js',
+  'js/data.js','js/data-companions.js','js/data-growth.js','js/data-town.js',
+  'js/data-quests.js','js/state.js','js/helpers.js','js/enemies.js',
+  'js/combat.js','js/transitions.js','js/skills.js','js/companions.js',
+  'js/rendering.js','js/game-controls.js','js/ui-manager.js',
+  'js/ui-panel-profile.js','js/ui-panel-equip.js','js/ui-panel-companion.js',
+  'js/ui-panel-temple.js','js/ui-panel-skill.js','js/ui-panel-quest.js',
+  'js/ui-panel-training.js','js/ui-panel-emblem.js','js/ui-panel-village.js',
+  'js/save.js','js/main.js'
+].forEach(function(s){document.write('<script src="'+s+_v+'"><\/script>');});
+</script>
 </body>
 </html>
