@@ -347,7 +347,18 @@ function updateCompanion(dt) {
     if (cs.attackTimer > 0) cs.attackTimer -= dt;
     if (cs.skillTimer > 0) cs.skillTimer = Math.max(0, cs.skillTimer - dt * behavior.skillTickMult);
 
-    const target = getCompanionPriorityEnemy(cId, cs, behavior);
+    if (cs.targetCooldown > 0) {
+      cs.targetCooldown -= dt;
+      if (cs.targetCache && (cs.targetCache.dead || dist(cs, cs.targetCache) > behavior.engageRadius * 1.5)) {
+        cs.targetCache = null;
+        cs.targetCooldown = 0;
+      }
+    }
+    if (cs.targetCooldown <= 0) {
+      cs.targetCache = getCompanionPriorityEnemy(cId, cs, behavior);
+      cs.targetCooldown = 166;
+    }
+    const target = cs.targetCache;
     const preferredRange = behavior.preferredRange;
     const attackRange = behavior.attackRange;
 

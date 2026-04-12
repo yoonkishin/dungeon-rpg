@@ -1,5 +1,7 @@
 'use strict';
 
+const drawBuffer = [];
+
 function drawDamageNumbers() {
   damageNumbers.forEach(dn => {
     const sx = dn.x - cameraX + screenShake.x;
@@ -480,16 +482,18 @@ function draw() {
     ctx.fillText(item.icon, sx, sy + 4 + bob);
   });
 
-  const entities = [
-    { y: player.y, draw: drawPlayer },
-    ...enemies.filter(e => !e.dead).map(e => ({ y: e.y, draw: () => drawEnemy(e) }))
-  ];
+  drawBuffer.length = 0;
+  drawBuffer.push({ y: player.y, draw: drawPlayer });
+  for (let i = 0; i < enemies.length; i++) {
+    const e = enemies[i];
+    if (!e.dead) drawBuffer.push({ y: e.y, draw: () => drawEnemy(e) });
+  }
   if (activeCompanions.length > 0 && currentMap === 'dungeon') {
     activeCompanions.forEach(cId => {
       if (deadCompanions.includes(cId)) return;
       const cs = companionStates[cId];
       if (cs) {
-        entities.push({ y: cs.y, draw: () => {
+        drawBuffer.push({ y: cs.y, draw: () => {
           // draw individual companion inline
           const info = getCompanionRoster(cId);
           if (!info) return;
@@ -527,8 +531,8 @@ function draw() {
       }
     });
   }
-  entities.sort((a, b) => a.y - b.y);
-  entities.forEach(e => e.draw());
+  drawBuffer.sort((a, b) => a.y - b.y);
+  for (let i = 0; i < drawBuffer.length; i++) drawBuffer[i].draw();
 
   drawEnemyEffects();
   drawParticles();

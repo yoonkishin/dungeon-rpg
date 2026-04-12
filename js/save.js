@@ -279,6 +279,10 @@ function loadSave() {
   }
 }
 
+function requestAutoSave() {
+  autoSaveTimer = AUTO_SAVE_INTERVAL;
+}
+
 // Periodic auto-save in game loop
 function tickAutoSave(dt) {
   autoSaveTimer += dt;

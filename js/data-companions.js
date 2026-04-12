@@ -194,7 +194,9 @@ function initCompanionState(cId) {
     attackTimer: 0,
     skillTimer: Math.random() * 1200,
     flashTimer: 0,
-    aiMode: getCompanionAIMode(cId)
+    aiMode: getCompanionAIMode(cId),
+    targetCache: null,
+    targetCooldown: 0
   };
   return true;
 }

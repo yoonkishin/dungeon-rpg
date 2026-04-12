@@ -231,7 +231,7 @@ function updatePickups(dt) {
       addParticles(di.x, di.y, ITEMS[di.itemId].color, 6);
       showPickupText(ITEMS[di.itemId].name);
       AudioSystem.sfx.pickup();
-      autoSave();
+      requestAutoSave();
       return false;
     }
     return true;
