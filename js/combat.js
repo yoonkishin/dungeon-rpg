@@ -40,6 +40,8 @@ function doAttack() {
       e.knockbackVy = Math.sin(angle) * kbPower;
       addParticles(e.x, e.y, '#e74c3c', isCrit ? 12 : 8);
       addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : 'normal');
+      enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:8, maxTimer:8, color: isCrit ? '#f1c40f' : '#fff' });
+      if (isCrit) hitFreezeFrames = 3;
       hitCount++;
       triggerShake(isCrit ? 14 : 9);
       if (e.hp <= 0) {
@@ -432,11 +434,16 @@ function killEnemy(e) {
       droppedItems.push({ x: e.x + (Math.random()-0.5)*20, y: e.y + (Math.random()-0.5)*20, itemId: d.itemId, timer: 600 });
     }
   });
+  addParticles(e.x, e.y, e.color, 8);
+  addParticles(e.x, e.y, '#fff', 4);
   if (e.isBoss) {
     addParticles(e.x, e.y, '#f1c40f', 30);
     addParticles(e.x, e.y, '#e74c3c', 20);
+    screenShake.timer = Math.max(screenShake.timer, 12);
+    hitFreezeFrames = Math.max(hitFreezeFrames, 5);
   } else {
     addParticles(e.x, e.y, '#f1c40f', 12);
+    screenShake.timer = Math.max(screenShake.timer, 4);
   }
   updateHUD();
 

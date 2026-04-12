@@ -335,6 +335,7 @@ function updateParticles() {
 
 // ─── Main Update ────────────────────────────────────────────────────────────
 function update(dt) {
+  if (hitFreezeFrames > 0) { hitFreezeFrames--; return; }
   if (player.dead) return;
   if (typeof isAnyPanelOpen === 'function' && isAnyPanelOpen()) return;
 
@@ -346,6 +347,7 @@ function update(dt) {
   updateCompanion(dt);
   updateEnemyAI(dt);
   updateParticles();
+  if (typeof updateAmbientParticles === 'function') updateAmbientParticles();
   if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
   if (hudDirty) updateHUD();
 }

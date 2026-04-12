@@ -109,6 +109,7 @@ let enemyEffects = [];
 let hudDirty = true;
 let skillSlotsDirty = true;
 let screenShake = { x:0, y:0, timer:0 };
+let hitFreezeFrames = 0;
 let dayNight = 0;
 let dayNightDir = 1;
 let cameraX = 0, cameraY = 0;
