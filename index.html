@@ -202,9 +202,12 @@
   <div id="profile-panel" class="overlay-panel">
     <div class="inv-header">
       <h2>프로필</h2>
-      <button class="inv-close" id="profile-close">✕</button>
+      <div class="inv-header-right">
+        <span class="inv-gold" id="profile-gold">0</span>
+        <button class="inv-close" id="profile-close">✕</button>
+      </div>
     </div>
-    <div id="profile-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain;"></div>
+    <div id="profile-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Companion Panel -->
