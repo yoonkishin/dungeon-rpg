@@ -60,11 +60,11 @@
 }
 .status-bar-row {
   position: relative;
-  height: 14px;
+  height: 12px;
   background: rgba(30,30,50,0.8);
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.2);
 }
 .status-bar-row.mp-row {
   height: 12px;
