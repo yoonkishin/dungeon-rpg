@@ -453,6 +453,11 @@ function renderInventory() {
   });
 
   bagGrid.innerHTML = '';
+  if (filteredIds.length === 0) {
+    bagGrid.innerHTML = '<div class="bag-empty"><div class="bag-empty-icon">\uD83C\uDF92</div>' +
+      (inventory.length === 0 ? '가방이 비어있습니다' : '해당 아이템이 없습니다') + '</div>';
+    return;
+  }
   filteredIds.forEach(id => {
     const item = ITEMS[id];
     if (!item) return;
