@@ -1,70 +1,121 @@
-/* ── Production Skill Panel Cards ── */
-.skill-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
-  display: flex;
+/* ── Skill Panel — 3-column page grid ── */
+.skill-page-indicator {
+  font-size: 10px;
+  color: #aaa;
+  font-weight: 600;
+}
+.skill-pages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+  height: 100%;
+}
+.skill-page-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255,255,255,0.015);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 6px;
+}
+.skill-page-col.current-page {
+  border-color: rgba(241,196,15,0.3);
+  background: rgba(241,196,15,0.03);
+}
+.skill-page-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.skill-page-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: #888;
+}
+.skill-page-title.active {
+  color: #f1c40f;
+}
+.skill-page-badge {
+  font-size: 7px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(241,196,15,0.15);
+  color: #f1c40f;
+  font-weight: 700;
+}
+.skill-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  flex: 1;
+  min-height: 0;
   transition: background 0.15s;
 }
 .skill-card:active {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
 }
 .skill-icon-circle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
   flex-shrink: 0;
   background: var(--skill-icon-bg, rgba(255,255,255,0.08));
   border: 1px solid var(--skill-icon-border, rgba(255,255,255,0.12));
 }
-.skill-info { flex: 1; min-width: 0; }
+.skill-info {
+  flex: 1;
+  min-width: 0;
+}
 .skill-name {
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: 700;
+  font-size: 10px;
   color: #eee;
-  margin-bottom: 1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.skill-desc {
-  font-size: 9px;
-  color: #777;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.skill-stats {
-  display: flex;
-  gap: 8px;
-  font-size: 9px;
-  flex-wrap: nowrap;
-  align-items: center;
-  flex-shrink: 0;
-}
-.skill-stat { display: flex; align-items: center; gap: 2px; }
-.skill-stat.mp { color: #74b9ff; }
-.skill-stat.cd { color: #ffa502; }
 .skill-type-badge {
   display: inline-block;
-  padding: 1px 5px;
-  border-radius: 6px;
-  font-size: 8px;
+  padding: 0px 4px;
+  border-radius: 4px;
+  font-size: 7px;
   font-weight: bold;
   background: var(--skill-type-bg, rgba(255,255,255,0.08));
   color: var(--skill-type-color, #ddd);
   border: 1px solid var(--skill-type-border, rgba(255,255,255,0.12));
+  margin-left: 3px;
+  vertical-align: middle;
 }
-.skill-slot-info { font-size: 8px; margin-top: 1px; color: #555; }
+.skill-desc {
+  font-size: 8px;
+  color: #666;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.skill-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 8px;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.skill-meta .mp { color: #74b9ff; font-weight: 700; }
+.skill-meta .cd { color: #ffa502; font-weight: 700; }
+.skill-slot-info { font-size: 7px; color: #555; }
 
 /* ── Quest Panel Cards ── */
 .quest-section-title {
