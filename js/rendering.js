@@ -118,19 +118,60 @@ function drawTile(tx, ty, tile) {
     ctx.fillStyle = `rgba(100,180,255,${shimmer * 0.15})`;
     ctx.fillRect(sx, sy, TILE, TILE);
   } else if (tile === TILE_PORTAL) {
-    ctx.fillStyle = `rgba(200,100,255,${0.5 + Math.sin(Date.now() * 0.004) * 0.3})`;
+    const t = Date.now() * 0.003;
+    // Dark base
+    ctx.fillStyle = '#1a0a2e';
     ctx.fillRect(sx, sy, TILE, TILE);
-    ctx.fillStyle = '#fff';
-    ctx.font = '18px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🚪', sx + TILE/2, sy + TILE/2 + 6);
+    // Swirl rings
+    const cx = sx + TILE / 2, cy = sy + TILE / 2;
+    for (let i = 0; i < 3; i++) {
+      const r = 6 + i * 5;
+      const a = 0.4 - i * 0.1 + Math.sin(t + i) * 0.15;
+      ctx.strokeStyle = `rgba(180,100,255,${a})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, t + i * 2, t + i * 2 + Math.PI * 1.4);
+      ctx.stroke();
+    }
+    // Center glow
+    ctx.fillStyle = `rgba(200,120,255,${0.35 + Math.sin(t * 1.5) * 0.15})`;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // Light rays
+    for (let i = 0; i < 4; i++) {
+      const angle = t * 0.5 + i * Math.PI / 2;
+      ctx.strokeStyle = `rgba(220,180,255,${0.2 + Math.sin(t + i) * 0.1})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * 16, cy + Math.sin(angle) * 16);
+      ctx.stroke();
+    }
   } else if (tile === TILE_EXIT) {
-    ctx.fillStyle = `rgba(50,200,100,${0.5 + Math.sin(Date.now() * 0.004) * 0.3})`;
+    const t = Date.now() * 0.003;
+    // Dark green base
+    ctx.fillStyle = '#0a2a15';
     ctx.fillRect(sx, sy, TILE, TILE);
-    ctx.fillStyle = '#fff';
-    ctx.font = '14px serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('↑', sx + TILE/2, sy + TILE/2 + 6);
+    // Upward light pillar
+    const cx = sx + TILE / 2;
+    const shimmer = 0.3 + Math.sin(t * 1.2) * 0.15;
+    ctx.fillStyle = `rgba(50,200,100,${shimmer})`;
+    ctx.fillRect(cx - 8, sy, 16, TILE);
+    ctx.fillStyle = `rgba(100,255,150,${shimmer * 0.5})`;
+    ctx.fillRect(cx - 4, sy, 8, TILE);
+    // Floating arrows
+    for (let i = 0; i < 3; i++) {
+      const ay = sy + TILE - ((Date.now() * 0.04 + i * 14) % TILE);
+      const alpha = 0.5 + Math.sin(t + i) * 0.2;
+      ctx.fillStyle = `rgba(200,255,200,${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(cx, ay - 4);
+      ctx.lineTo(cx - 4, ay + 2);
+      ctx.lineTo(cx + 4, ay + 2);
+      ctx.closePath();
+      ctx.fill();
+    }
   } else if (tile === TILE_DIRT) {
     ctx.fillStyle = 'rgba(0,0,0,0.1)';
     if ((tx * 7 + ty * 3) % 5 === 0) ctx.fillRect(sx+8, sy+8, 4, 4);
@@ -884,16 +925,41 @@ function draw() {
     if (!item) return;
     const sx = di.x - cameraX + screenShake.x;
     const sy = di.y - cameraY + screenShake.y;
-    const bob = Math.sin(Date.now() * 0.005) * 3;
-    ctx.fillStyle = 'rgba(255,255,200,0.3)';
+    const bob = Math.sin(Date.now() * 0.005 + di.x) * 3;
+    const t = Date.now() * 0.003;
+
+    // Rarity border color by price
+    const price = item.price || 0;
+    const rarityColor = price >= 400 ? '#f1c40f' : price >= 150 ? '#8e44ad' : price >= 60 ? '#3498db' : '#95a5a6';
+
+    // Ground glow
+    ctx.fillStyle = `rgba(${price >= 150 ? '255,220,100' : '200,200,150'},${0.15 + Math.sin(t) * 0.08})`;
     ctx.beginPath();
-    ctx.arc(sx, sy + bob, 14, 0, Math.PI * 2);
+    ctx.arc(sx, sy + bob + 2, 16, 0, Math.PI * 2);
     ctx.fill();
+
+    // Item box with rarity border
+    ctx.fillStyle = 'rgba(20,15,30,0.85)';
+    ctx.fillRect(sx - 9, sy - 9 + bob, 18, 18);
     ctx.fillStyle = item.color;
-    ctx.fillRect(sx - 8, sy - 8 + bob, 16, 16);
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(sx - 8, sy - 8 + bob, 16, 16);
+    ctx.fillRect(sx - 7, sy - 7 + bob, 14, 14);
+    ctx.strokeStyle = rarityColor;
+    ctx.lineWidth = price >= 150 ? 2 : 1;
+    ctx.strokeRect(sx - 9, sy - 9 + bob, 18, 18);
+
+    // Sparkle for rare+
+    if (price >= 150) {
+      const sparkAngle = t * 2;
+      ctx.fillStyle = `rgba(255,255,255,${0.4 + Math.sin(t * 2) * 0.3})`;
+      for (let i = 0; i < 2; i++) {
+        const a = sparkAngle + i * Math.PI;
+        const sparkX = sx + Math.cos(a) * 12;
+        const sparkY = sy + bob + Math.sin(a) * 12;
+        ctx.fillRect(sparkX - 1, sparkY - 1, 2, 2);
+      }
+    }
+
+    // Icon
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillStyle = '#fff';

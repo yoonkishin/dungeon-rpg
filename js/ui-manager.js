@@ -102,19 +102,21 @@ function isAnyPanelOpen() {
 
 // ─── Panel show/hide helpers (flicker-free transitions) ─────────────────────
 function showPanel(el) {
+  if (el._hideTid) { clearTimeout(el._hideTid); el._hideTid = null; }
   el.style.display = 'flex';
   el.offsetHeight; // force reflow
-  el.style.opacity = '1';
+  el.classList.add('panel-visible');
   AudioSystem.sfx.menuOpen();
 }
 
 function hidePanel(el, callback) {
-  el.style.opacity = '0';
+  el.classList.remove('panel-visible');
   AudioSystem.sfx.menuClose();
-  setTimeout(() => {
+  el._hideTid = setTimeout(() => {
+    el._hideTid = null;
     el.style.display = 'none';
     if (callback) callback();
-  }, 150);
+  }, 180);
 }
 
 function bindTap(el, handler, options = {}) {

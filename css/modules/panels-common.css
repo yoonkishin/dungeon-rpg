@@ -12,11 +12,21 @@
   padding: 8px 12px;
   overflow: hidden;
   touch-action: pan-y;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
   opacity: 0;
+  transform: scale(0.95) translateY(8px);
+}
+.overlay-panel.panel-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 /* ── Panel transitions ── */
 #menu-panel, #settings-panel {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
   opacity: 0;
+  transform: scale(0.95) translateY(8px);
+}
+#menu-panel.panel-visible, #settings-panel.panel-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
