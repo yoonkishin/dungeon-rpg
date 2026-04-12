@@ -15,15 +15,20 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#000000">
 <title>던전 탐험 RPG</title>
-<script>
-(function(){var v='?_='+Date.now();
-['css/modules/base.css','css/modules/hud.css','css/modules/panels-common.css',
-'css/modules/panels-skill.css','css/modules/panels-menu.css','css/modules/hud-widgets.css',
-'css/modules/controls.css','css/modules/panels-equip.css','css/modules/panels-shop.css',
-'css/modules/panels-misc.css','css/modules/panels-profile.css','css/modules/panels-companion.css',
-'css/modules/panels-temple.css'].forEach(function(c){
-document.write('<link rel="stylesheet" href="'+c+v+'">');});})();
-</script>
+<link rel="stylesheet" class="css-mod" href="css/modules/base.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/hud.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-common.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-skill.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-menu.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/hud-widgets.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/controls.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-equip.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-shop.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-misc.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-profile.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-companion.css">
+<link rel="stylesheet" class="css-mod" href="css/modules/panels-temple.css">
+<script>var _cv='?_='+Date.now();document.querySelectorAll('.css-mod').forEach(function(l){l.href=l.getAttribute('href')+_cv;});</script>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
