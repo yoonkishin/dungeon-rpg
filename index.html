@@ -119,30 +119,45 @@
 
   <div id="inventory-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>장비 / 가방</h2>
-      <button class="inv-close">✕</button>
+      <h2>장비</h2>
+      <div class="inv-header-right">
+        <span class="inv-gold" id="inv-gold">0</span>
+        <button class="inv-close">✕</button>
+      </div>
     </div>
     <div class="equip-layout">
-      <!-- Left: Character silhouette with equipment slots -->
+      <!-- Left: Equipment slots grid -->
       <div class="equip-character">
-        <div class="char-silhouette">
-          <div class="equip-slot" id="eq-helmet" data-slot="helmet">⛑️</div>
-          <div class="equip-slot" id="eq-weapon" data-slot="weapon">🗡️</div>
-          <div class="equip-slot" id="eq-armor" data-slot="armor">🧥</div>
-          <div class="equip-slot" id="eq-shield" data-slot="shield">🛡️</div>
-          <div class="equip-slot" id="eq-boots" data-slot="boots">👢</div>
-          <div class="equip-slot" id="eq-acc1" data-slot="accessory1">💍</div>
-          <div class="equip-slot" id="eq-acc2" data-slot="accessory2">💍</div>
-          <div class="equip-slot" id="eq-event" data-slot="event">🍀</div>
-          <!-- Silhouette body -->
-          <div class="sil-head"></div>
-          <div class="sil-body"></div>
-          <div class="sil-legs"></div>
+        <div class="equip-slots-grid">
+          <div class="equip-row equip-row-1">
+            <div class="equip-slot" id="eq-helmet" data-slot="helmet"><span class="slot-icon">⛑️</span><span class="slot-label">투구</span></div>
+          </div>
+          <div class="equip-row equip-row-2">
+            <div class="equip-slot" id="eq-weapon" data-slot="weapon"><span class="slot-icon">🗡️</span><span class="slot-label">무기</span></div>
+            <div class="equip-slot" id="eq-armor" data-slot="armor"><span class="slot-icon">🧥</span><span class="slot-label">갑옷</span></div>
+            <div class="equip-slot" id="eq-shield" data-slot="shield"><span class="slot-icon">🛡️</span><span class="slot-label">방패</span></div>
+          </div>
+          <div class="equip-row equip-row-3">
+            <div class="equip-slot" id="eq-acc1" data-slot="accessory1"><span class="slot-icon">💍</span><span class="slot-label">장신구</span></div>
+            <div class="equip-slot" id="eq-boots" data-slot="boots"><span class="slot-icon">👢</span><span class="slot-label">신발</span></div>
+            <div class="equip-slot" id="eq-acc2" data-slot="accessory2"><span class="slot-icon">💍</span><span class="slot-label">장신구</span></div>
+          </div>
+          <div class="equip-row equip-row-4">
+            <div class="equip-slot" id="eq-event" data-slot="event"><span class="slot-icon">🍀</span><span class="slot-label">특수</span></div>
+          </div>
         </div>
+        <div class="equip-stats-bar" id="equip-stats-bar"></div>
       </div>
-      <!-- Right: Item grid (icons only) -->
+      <!-- Right: Item grid -->
       <div class="equip-bag">
-        <div class="bag-title">가방 <span id="bag-count">0</span></div>
+        <div class="bag-header">
+          <div class="bag-title">가방 <span id="bag-count">0</span></div>
+          <div class="bag-filters">
+            <button class="bag-filter active" data-filter="all">전체</button>
+            <button class="bag-filter" data-filter="equip">장비</button>
+            <button class="bag-filter" data-filter="potion">포션</button>
+          </div>
+        </div>
         <div class="bag-grid" id="bag-grid"></div>
       </div>
     </div>

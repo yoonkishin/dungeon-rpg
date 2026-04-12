@@ -17,21 +17,53 @@ const shopItemsList = document.getElementById('shop-items-list');
 const shopSellList = document.getElementById('shop-sell-list');
 const shopGold = document.getElementById('shop-gold');
 const shopTitle = shopPanel.querySelector('.inv-header h2');
+const invGoldEl = document.getElementById('inv-gold');
+const equipStatsBar = document.getElementById('equip-stats-bar');
 let invOpen = false;
 let shopOpen = false;
 let activeShopNpc = null;
 let activeShopTab = 'buy';
+let activeBagFilter = 'all';
 
 const EQUIP_SLOT_META = {
-  helmet: { icon: '⛑️', label: '투구' },
-  weapon: { icon: '🗡️', label: '무기' },
-  armor: { icon: '🧥', label: '갑옷' },
-  shield: { icon: '🛡️', label: '방패' },
-  boots: { icon: '👢', label: '신발' },
-  accessory1: { icon: '💍', label: '장신구 1' },
-  accessory2: { icon: '💍', label: '장신구 2' },
-  event: { icon: '🍀', label: '특수 장비' },
+  helmet: { icon: '\u26D1\uFE0F', label: '투구' },
+  weapon: { icon: '\uD83D\uDDE1\uFE0F', label: '무기' },
+  armor: { icon: '\uD83E\uDDE5', label: '갑옷' },
+  shield: { icon: '\uD83D\uDEE1\uFE0F', label: '방패' },
+  boots: { icon: '\uD83D\uDC62', label: '신발' },
+  accessory1: { icon: '\uD83D\uDC8D', label: '장신구 1' },
+  accessory2: { icon: '\uD83D\uDC8D', label: '장신구 2' },
+  event: { icon: '\uD83C\uDF40', label: '특수 장비' },
 };
+
+// Slot type color mapping
+const SLOT_TYPE_COLOR = {
+  weapon: 'type-weapon',
+  armor: 'type-armor',
+  helmet: 'type-helmet',
+  shield: 'type-shield',
+  boots: 'type-boots',
+  accessory: 'type-accessory',
+  event: 'type-event',
+  potion: 'type-potion',
+};
+
+// Price-based tier for bag cells
+function getItemTier(item) {
+  if (!item) return 'common';
+  const price = item.price || 0;
+  if (price >= 500) return 'legendary';
+  if (price > 300) return 'epic';
+  if (price > 150) return 'rare';
+  if (price > 50) return 'uncommon';
+  return 'common';
+}
+
+function getItemTypeClass(item) {
+  if (!item) return '';
+  if (item.type === 'accessory') return 'type-accessory';
+  return SLOT_TYPE_COLOR[item.type] || '';
+}
 
 bindTap(inventoryCloseBtn, () => closeInventory());
 bindTap(shopCloseBtn, () => closeShop());
@@ -46,6 +78,15 @@ itemPopup.addEventListener('click', (e) => {
 });
 bindTap(shopTabBuy, () => switchShopTab('buy'));
 bindTap(shopTabSell, () => switchShopTab('sell'));
+
+// Bag filter buttons
+document.querySelectorAll('.bag-filter').forEach(btn => {
+  bindTap(btn, () => {
+    activeBagFilter = btn.getAttribute('data-filter') || 'all';
+    document.querySelectorAll('.bag-filter').forEach(b => b.classList.toggle('active', b === btn));
+    renderInventory();
+  });
+});
 
 Object.keys(EQUIP_SLOT_META).forEach(slot => {
   const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
@@ -76,7 +117,7 @@ function openShop(npc) {
   activeShopNpc = npc;
   activeShopTab = 'buy';
   shopOpen = true;
-  if (shopTitle) shopTitle.textContent = '🏪 ' + npc.name;
+  if (shopTitle) shopTitle.textContent = '\uD83C\uDFEA ' + npc.name;
   showPanel(shopPanel);
   renderShop();
 }
@@ -128,7 +169,7 @@ function getItemSummary(item) {
   if (item.critBonus) parts.push('치명타 +' + item.critBonus + '%');
   if (item.goldBonus) parts.push('골드 +' + item.goldBonus + '%');
   if (item.heal) parts.push('회복 ' + Math.floor(item.heal * getHealingMultiplier()));
-  return parts.length ? parts.join(' · ') : '기본 효과 없음';
+  return parts.length ? parts.join(' \u00B7 ') : '기본 효과 없음';
 }
 function compareInventoryItems(aId, bId) {
   const a = ITEMS[aId] || null;
@@ -179,6 +220,13 @@ function equipInventoryItem(invEntry) {
   if (previous) inventory.push(previous);
   AudioSystem.sfx.pickup();
   showToast(item.name + ' 장착');
+  // Trigger pulse animation on slot
+  const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
+  if (slotEl) {
+    slotEl.classList.remove('just-equipped');
+    void slotEl.offsetWidth;
+    slotEl.classList.add('just-equipped');
+  }
   updateHUD();
   autoSave();
 }
@@ -223,31 +271,6 @@ function getItemStatEntries(item) {
   ];
   return entries.filter(entry => entry.value > 0);
 }
-function buildItemStatRows(item) {
-  const entries = getItemStatEntries(item);
-  if (entries.length === 0) {
-    return '<div class="popup-stat-row"><span class="label">효과</span><span class="val same">없음</span></div>';
-  }
-  return entries.map(entry => '<div class="popup-stat-row"><span class="label">' + entry.label + '</span><span class="val">' + entry.display + '</span></div>').join('');
-}
-function buildItemDeltaRows(currentItem, newItem) {
-  const currentStatMap = new Map(getItemStatEntries(currentItem).map(entry => [entry.label, entry]));
-  const nextEntries = getItemStatEntries(newItem);
-  const labels = ['ATK', 'DEF', 'SPD', '치명타', '골드', '회복'];
-  const rows = labels.map(label => {
-    const currentValue = currentStatMap.has(label) ? currentStatMap.get(label).value : 0;
-    const nextEntry = nextEntries.find(entry => entry.label === label);
-    const nextValue = nextEntry ? nextEntry.value : 0;
-    if (currentValue === 0 && nextValue === 0) return '';
-    const diff = nextValue - currentValue;
-    const className = diff > 0 ? 'better' : diff < 0 ? 'worse' : 'same';
-    const display = diff === 0
-      ? '변화 없음'
-      : ((diff > 0 ? '+' : '') + (label === 'SPD' ? diff.toFixed(2) : diff) + (label === '치명타' || label === '골드' ? '%' : ''));
-    return '<div class="popup-stat-row popup-delta-row"><span class="label">' + label + ' 변화</span><span class="val ' + className + '">' + display + '</span></div>';
-  }).filter(Boolean);
-  return rows.length ? rows.join('') : '<div class="popup-stat-row popup-delta-row"><span class="label">비교</span><span class="val same">변화 없음</span></div>';
-}
 function getItemScore(item) {
   if (!item) return -1;
   return (item.atk || 0) * 3 + (item.def || 0) * 2 + (item.speedBonus || 0) * 20 + (item.critBonus || 0) * 1.5 + (item.goldBonus || 0) * 0.5 + (item.heal || 0) * 0.08;
@@ -272,6 +295,47 @@ function appendPopupActionButton(container, className, label, handler) {
   container.appendChild(btn);
 }
 
+// ── Stats bar rendering ──
+function renderEquipStatsBar() {
+  const bonus = getEquipBonus();
+  const chips = [
+    { icon: '\u2694', label: 'ATK', val: bonus.atk },
+    { icon: '\uD83D\uDEE1', label: 'DEF', val: bonus.def },
+    { icon: '\uD83D\uDC62', label: 'SPD', val: bonus.speedBonus ? bonus.speedBonus.toFixed(2) : '0' },
+    { icon: '\uD83C\uDFAF', label: 'CRIT', val: bonus.critBonus ? bonus.critBonus + '%' : '0' },
+    { icon: '\uD83D\uDCB0', label: 'GOLD', val: bonus.goldBonus ? bonus.goldBonus + '%' : '0' },
+  ];
+  equipStatsBar.innerHTML = chips.map(c => {
+    const hasVal = c.val && c.val !== '0' && c.val !== 0;
+    return '<div class="stat-chip"><span class="stat-icon">' + c.icon + '</span><span class="stat-val' + (hasVal ? ' has-value' : '') + '">' + c.val + '</span></div>';
+  }).join('');
+}
+
+// ── Inline comparison popup ──
+function buildInlineCompareRows(currentItem, newItem) {
+  const labels = [
+    { key: 'atk', label: 'ATK', format: v => String(v) },
+    { key: 'def', label: 'DEF', format: v => String(v) },
+    { key: 'speedBonus', label: 'SPD', format: v => v.toFixed(2) },
+    { key: 'critBonus', label: '치명타', format: v => v + '%' },
+    { key: 'goldBonus', label: '골드', format: v => v + '%' },
+  ];
+  return labels.map(l => {
+    const curVal = currentItem ? (currentItem[l.key] || 0) : 0;
+    const newVal = newItem ? (newItem[l.key] || 0) : 0;
+    if (curVal === 0 && newVal === 0) return '';
+    const diff = newVal - curVal;
+    const cls = diff > 0 ? 'better' : diff < 0 ? 'worse' : 'same';
+    const diffStr = diff === 0 ? '-' : ((diff > 0 ? '+' : '') + l.format(diff));
+    return '<tr>' +
+      '<td>' + l.label + '</td>' +
+      '<td class="col-current">' + l.format(curVal) + '</td>' +
+      '<td class="col-new">' + l.format(newVal) + '</td>' +
+      '<td class="col-delta ' + cls + '">' + diffStr + '</td>' +
+      '</tr>';
+  }).filter(Boolean).join('');
+}
+
 function openItemPopup({ itemId, source, slot, invEntry }) {
   const item = ITEMS[itemId];
   if (!item) return;
@@ -280,24 +344,49 @@ function openItemPopup({ itemId, source, slot, invEntry }) {
   const canEquip = source !== 'equipped' && !!targetSlot && item.type !== 'potion';
   const canUse = item.type === 'potion';
   const canUnequip = source === 'equipped';
+  const typeClass = getItemTypeClass(item);
+  const isUpgrade = canEquip && getItemScore(item) > getItemScore(currentItem);
+  const isDowngrade = canEquip && currentItem && getItemScore(item) < getItemScore(currentItem);
+
+  let bodyHtml = '';
+
+  if (item.type === 'potion') {
+    // Potion: simple info
+    const healVal = Math.floor(item.heal * getHealingMultiplier());
+    bodyHtml = '<div class="popup-potion-info">' +
+      '<div class="popup-potion-stat"><span>회복량</span><span class="val">HP +' + healVal + '</span></div>' +
+      '<div class="popup-potion-stat"><span>보유</span><span class="val">' + getOwnedItemCount(itemId) + '개</span></div>' +
+      '<div class="popup-potion-stat"><span>가격</span><span class="val">' + (item.price || 0) + 'G</span></div>' +
+      '</div>';
+  } else {
+    // Equipment: inline comparison table
+    const rows = buildInlineCompareRows(currentItem, item);
+    if (rows) {
+      bodyHtml = '<table class="popup-compare-table">' +
+        '<thead><tr><th></th><th class="col-current">현재</th><th class="col-new">신규</th><th class="col-delta">변화</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>';
+    } else {
+      bodyHtml = '<div class="popup-potion-info"><div class="popup-potion-stat"><span>효과</span><span class="val">없음</span></div></div>';
+    }
+  }
+
+  const slotLabel = targetSlot && EQUIP_SLOT_META[targetSlot] ? EQUIP_SLOT_META[targetSlot].label : '';
   popupContent.innerHTML = '' +
     '<div class="popup-item-header">' +
-      '<div class="popup-icon">' + item.icon + '</div>' +
+      '<div class="popup-icon ' + typeClass + '">' + item.icon + '</div>' +
       '<div>' +
         '<div class="popup-name">' + item.name + '</div>' +
-        '<div class="popup-type">' + getItemTypeLabel(item) + (targetSlot && EQUIP_SLOT_META[targetSlot] ? ' · ' + EQUIP_SLOT_META[targetSlot].label : '') + '</div>' +
+        '<span class="popup-type-badge">' + getItemTypeLabel(item) + (slotLabel ? ' \u00B7 ' + slotLabel : '') + '</span>' +
       '</div>' +
     '</div>' +
-    '<div class="popup-compare">' +
-      '<div class="popup-stat-box current"><div class="popup-stat-title">현재 장비</div><div class="popup-stat-row"><span class="label">이름</span><span class="val">' + (currentItem ? currentItem.name : '없음') + '</span></div>' + buildItemStatRows(currentItem) + '</div>' +
-      '<div class="popup-stat-box new-item"><div class="popup-stat-title">선택 아이템</div><div class="popup-stat-row"><span class="label">이름</span><span class="val">' + item.name + '</span></div>' + buildItemStatRows(item) + '</div>' +
-    '</div>' +
-    '<div class="popup-stat-box popup-delta-box"><div class="popup-stat-title">장비 비교</div>' + buildItemDeltaRows(currentItem, item) + '</div>' +
+    bodyHtml +
     '<div class="popup-btns"></div>';
 
   const btns = popupContent.querySelector('.popup-btns');
   if (canEquip) {
-    appendPopupActionButton(btns, 'equip', '장착', () => {
+    const equipClass = isUpgrade ? 'equip is-upgrade' : (isDowngrade ? 'equip is-downgrade' : 'equip');
+    const equipLabel = isUpgrade ? '\u25B2 장착' : (isDowngrade ? '\u25BC 장착' : '장착');
+    appendPopupActionButton(btns, equipClass, equipLabel, () => {
       equipInventoryItem(invEntry);
       closeItemPopup();
       renderInventory();
@@ -327,30 +416,56 @@ function closeItemPopup() {
   itemPopup.style.display = 'none';
   popupContent.innerHTML = '';
 }
+
 function renderInventory() {
   const counts = getInventoryCounts();
   bagCount.textContent = inventory.length;
+  if (invGoldEl) invGoldEl.textContent = player.gold;
 
+  // Render equip slots
   Object.keys(EQUIP_SLOT_META).forEach(slot => {
     const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
     if (!slotEl) return;
     const inst = equipped[slot];
     const item = inst ? ITEMS[inst.itemId] : null;
+    const iconEl = slotEl.querySelector('.slot-icon');
+    const labelEl = slotEl.querySelector('.slot-label');
     slotEl.classList.toggle('equipped', !!item);
-    slotEl.innerHTML = item ? item.icon : EQUIP_SLOT_META[slot].icon;
+    if (iconEl) iconEl.textContent = item ? item.icon : EQUIP_SLOT_META[slot].icon;
+    if (labelEl) {
+      labelEl.textContent = item ? item.name : EQUIP_SLOT_META[slot].label;
+    }
     slotEl.title = item ? (EQUIP_SLOT_META[slot].label + ': ' + item.name) : EQUIP_SLOT_META[slot].label;
   });
 
+  // Render stats bar
+  renderEquipStatsBar();
+
+  // Filter & sort bag items
   const sortedIds = Object.keys(counts).sort(compareInventoryItems);
+  const filteredIds = sortedIds.filter(id => {
+    if (activeBagFilter === 'all') return true;
+    const item = ITEMS[id];
+    if (!item) return false;
+    if (activeBagFilter === 'potion') return item.type === 'potion';
+    if (activeBagFilter === 'equip') return item.type !== 'potion';
+    return true;
+  });
+
   bagGrid.innerHTML = '';
-  sortedIds.forEach(id => {
+  filteredIds.forEach(id => {
     const item = ITEMS[id];
     if (!item) return;
-    // Find the first inventory entry for this itemId to pass as invEntry
     const firstEntry = inventory.find(e => e.itemId === id);
     const cell = document.createElement('button');
-    cell.className = 'bag-cell' + (item.type === 'potion' ? ' potion-cell' : '');
-    cell.innerHTML = item.icon + ((counts[id] || 0) > 1 ? '<span class="cell-count">' + counts[id] + '</span>' : '');
+    const tier = getItemTier(item);
+    const typeClass = getItemTypeClass(item);
+    cell.className = 'bag-cell tier-' + tier + (item.type === 'potion' ? ' potion-cell' : '');
+
+    // Type dot
+    const dotHtml = typeClass ? '<span class="type-dot ' + typeClass + '"></span>' : '';
+    const countHtml = (counts[id] || 0) > 1 ? '<span class="cell-count">' + counts[id] + '</span>' : '';
+    cell.innerHTML = dotHtml + item.icon + countHtml;
     cell.title = item.name;
     function handleBagTap() {
       openItemPopup({ itemId: id, source: 'inventory', invEntry: firstEntry });
@@ -402,7 +517,7 @@ function buildShopBuyCard(itemId) {
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
-      '<div class="price">💰 ' + item.price + '</div>' +
+      '<div class="price">\uD83D\uDCB0 ' + item.price + '</div>' +
       '<div class="owned">보유 ' + getOwnedItemCount(itemId) + '</div>' +
       '<button class="btn" data-buy-item="' + itemId + '" ' + (affordable ? '' : 'disabled') + '>' + (affordable ? '구매' : '골드 부족') + '</button>' +
     '</div>';
@@ -416,7 +531,7 @@ function buildShopSellCard(itemId, count) {
       '<div class="icon">' + item.icon + '</div>' +
       '<div class="name">' + item.name + '</div>' +
       '<div class="stat">' + getItemSummary(item) + '</div>' +
-      '<div class="price">판매가 💰 ' + getSellPrice(itemId) + '</div>' +
+      '<div class="price">판매가 \uD83D\uDCB0 ' + getSellPrice(itemId) + '</div>' +
       '<div class="owned">가방 x' + count + '</div>' +
       '<button class="btn" data-sell-item="' + itemId + '">판매</button>' +
     '</div>';
