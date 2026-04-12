@@ -9,10 +9,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="./manifest.json?v=20260410-2050">
+<link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#000000">
 <title>던전 탐험 RPG</title>
-<link rel="stylesheet" href="css/styles.css?v=20260413">
+<link rel="stylesheet" id="main-css">
+<script>document.getElementById('main-css').href='css/styles.css?v='+Date.now();</script>
 </head>
 <body>
 <canvas id="gameCanvas"></canvas>
@@ -295,35 +296,35 @@
 
 <div id="fullscreen-btn"><div class="tap-icon">⚔️</div><div>탭하면 전체화면</div><div class="sub">안 눌러도 게임은 바로 보입니다</div></div>
 
-<script src="js/error-overlay.js?v=20260411"></script>
-<script src="js/constants.js?v=20260411"></script>
-<script src="js/audio.js?v=20260411"></script>
-<script src="js/maps.js?v=20260411"></script>
-<script src="js/data.js?v=20260411"></script>
-<script src="js/data-companions.js?v=20260411"></script>
-<script src="js/data-growth.js?v=20260411"></script>
-<script src="js/data-town.js?v=20260411"></script>
-<script src="js/data-quests.js?v=20260411"></script>
-<script src="js/state.js?v=20260411"></script>
-<script src="js/helpers.js?v=20260411"></script>
-<script src="js/enemies.js?v=20260411"></script>
-<script src="js/combat.js?v=20260411"></script>
-<script src="js/transitions.js?v=20260411"></script>
-<script src="js/skills.js?v=20260411"></script>
-<script src="js/companions.js?v=20260411"></script>
-<script src="js/rendering.js?v=20260411"></script>
-<script src="js/game-controls.js?v=20260411"></script>
-<script src="js/ui-manager.js?v=20260411"></script>
-<script src="js/ui-panel-profile.js?v=20260411"></script>
-<script src="js/ui-panel-equip.js?v=20260411"></script>
-<script src="js/ui-panel-companion.js?v=20260411"></script>
-<script src="js/ui-panel-temple.js?v=20260411"></script>
-<script src="js/ui-panel-skill.js?v=20260411"></script>
-<script src="js/ui-panel-quest.js?v=20260411"></script>
-<script src="js/ui-panel-training.js?v=20260411"></script>
-<script src="js/ui-panel-emblem.js?v=20260411"></script>
-<script src="js/ui-panel-village.js?v=20260411"></script>
-<script src="js/save.js?v=20260411"></script>
-<script src="js/main.js?v=20260411"></script>
+<script src="js/error-overlay.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/data.js"></script>
+<script src="js/data-companions.js"></script>
+<script src="js/data-growth.js"></script>
+<script src="js/data-town.js"></script>
+<script src="js/data-quests.js"></script>
+<script src="js/state.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/transitions.js"></script>
+<script src="js/skills.js"></script>
+<script src="js/companions.js"></script>
+<script src="js/rendering.js"></script>
+<script src="js/game-controls.js"></script>
+<script src="js/ui-manager.js"></script>
+<script src="js/ui-panel-profile.js"></script>
+<script src="js/ui-panel-equip.js"></script>
+<script src="js/ui-panel-companion.js"></script>
+<script src="js/ui-panel-temple.js"></script>
+<script src="js/ui-panel-skill.js"></script>
+<script src="js/ui-panel-quest.js"></script>
+<script src="js/ui-panel-training.js"></script>
+<script src="js/ui-panel-emblem.js"></script>
+<script src="js/ui-panel-village.js"></script>
+<script src="js/save.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
