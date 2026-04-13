@@ -26,8 +26,10 @@ function requireMatch(text, regex, label) {
 const dataJs = read('js/data.js');
 const dataCompanionsJs = exists('js/data-companions.js') ? read('js/data-companions.js') : '';
 const dataGrowthJs = exists('js/data-growth.js') ? read('js/data-growth.js') : '';
+const growthRuntimeJs = exists('js/growth-runtime.js') ? read('js/growth-runtime.js') : '';
 const dataTownJs = exists('js/data-town.js') ? read('js/data-town.js') : '';
 const dataQuestsJs = exists('js/data-quests.js') ? read('js/data-quests.js') : '';
+const questRuntimeJs = exists('js/quest-runtime.js') ? read('js/quest-runtime.js') : '';
 const saveJs = read('js/save.js');
 const stateJs = read('js/state.js');
 const enemiesJs = read('js/enemies.js');
@@ -67,12 +69,12 @@ const aiModes = [...aiBlock.matchAll(/^\s+([a-z]+):\s*\{/gm)].map(m => m[1]);
 const hudActions = [...indexHtml.matchAll(/class="[^"]*\bhud-quick-btn\b[^"]*"\s+data-action="([^"]+)"/g)].map(m => m[1]);
 const minimapTop = (minimapBlock.match(/top:\s*([^;]+);/) || [null, 'unknown'])[1].trim();
 const minimapRight = (minimapBlock.match(/right:\s*([^;]+);/) || [null, 'unknown'])[1].trim();
-const stateLoaded = /<script src="js\/state\.js\?v=/.test(indexHtml);
+const stateLoaded = /'js\/state\.js'/.test(indexHtml);
 const aiSaveLoad = /companionAIModes:\s*\{/.test(saveJs) && /data\.companionAIModes/.test(saveJs);
-const growthStateDetected = /classLine:\s*'/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && (/'classLine'/.test(saveJs) || /classLine:\s*player\.classLine/.test(saveJs));
+const growthStateDetected = /classLine:\s*'/.test(stateJs) && /classRank:\s*\d+/.test(stateJs) && /promotionPending:\s*(true|false)/.test(stateJs) && /classLine:\s*'infantry'/.test(saveJs);
 const companionModuleDetected = /const COMPANION_ROSTER = \{/.test(dataCompanionsJs) && /const COMPANION_CLASS_PROFILES = \{/.test(dataCompanionsJs) && /getActiveCompanionSynergy\(/.test(dataCompanionsJs);
 const townModuleDetected = /const TOWN_NPCS = \[/.test(dataTownJs) && /const TOWN_UPGRADES = \{/.test(dataTownJs) && /getVillageUpgradeCost\(/.test(dataTownJs);
-const questModuleDetected = /const MAIN_QUESTS = \[/.test(dataQuestsJs) && /const SUBQUESTS = \[/.test(dataQuestsJs) && /getNpcInteractionLines\(/.test(dataQuestsJs);
+const questModuleDetected = /const MAIN_QUESTS = \[/.test(dataQuestsJs) && /const SUBQUESTS = \[/.test(dataQuestsJs) && /getNpcInteractionLines\(/.test(questRuntimeJs);
 const trainingRoomDetected = /id="training-panel"/.test(indexHtml) && /openTrainingPanel\s*\(/.test(uiPanelTrainingJs);
 const emblemRoomDetected = /id="emblem-room-panel"/.test(indexHtml) && /openEmblemRoomPanel\s*\(/.test(uiPanelEmblemJs) && (/EMBLEM_DEFS/.test(dataJs) || /EMBLEM_DEFS/.test(dataGrowthJs));
 const minimapTogglePersist = /localStorage\.getItem\('rpg_minimap_visible'\)/.test(uiManagerJs);
@@ -96,7 +98,7 @@ const snapshotBullets = [
     ? '- 마을 NPC와 시설 업그레이드 로직이 `data-town.js`로 분리된 것이 감지됐다.'
     : '- 마을 NPC / 시설 업그레이드 분리 여부를 자동 감지하지 못했다.',
   questModuleDetected
-    ? '- 퀘스트 정의와 퀘스트 흐름 헬퍼가 `data-quests.js`로 분리된 것이 감지됐다.'
+    ? '- 퀘스트 정의는 `data-quests.js`, 흐름 헬퍼는 `quest-runtime.js`로 분리된 것이 감지됐다.'
     : '- 퀘스트 정의 / 흐름 헬퍼 분리 여부를 자동 감지하지 못했다.',
   `- 동료 시스템은 ${rosterCount}명 roster / ${classNames.length}개 병종 프로필 구조로 감지됐다: ${classNames.join(', ')}.`,
   `- 동료 AI 모드는 ${aiModes.map(m => `\`${m}\``).join(', ')} 로 감지됐다${aiSaveLoad ? '고 save/load 연동도 확인됐다' : '지만 save/load 연동은 확인되지 않았다'}.`,
@@ -148,7 +150,7 @@ const implementedStateDoc = [
     ? '- [x] Town NPCs and village upgrade helpers are split into `data-town.js`.'
     : '- [ ] Town NPC / village upgrade helper split could not be fully detected.',
   questModuleDetected
-    ? '- [x] Quest definitions and quest flow helpers are split into `data-quests.js`.'
+    ? '- [x] Quest definitions are split into `data-quests.js`, with runtime flow helpers in `quest-runtime.js`.'
     : '- [ ] Quest definitions / quest flow helper split could not be fully detected.',
   '- [x] Core game data is split across `data.js`, `data-companions.js`, `data-growth.js`, `data-town.js`, and `data-quests.js`.',
   '',
@@ -197,8 +199,10 @@ const implementedStateDoc = [
   '- `js/data.js`',
   '- `js/data-companions.js`',
   '- `js/data-growth.js`',
+  '- `js/growth-runtime.js`',
   '- `js/data-town.js`',
   '- `js/data-quests.js`',
+  '- `js/quest-runtime.js`',
   '- `js/state.js`',
   '- `js/save.js`',
   '- `js/enemies.js`',

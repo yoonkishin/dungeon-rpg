@@ -81,12 +81,7 @@ function damageCompanionById(cId, dmg, hitX, hitY) {
   addDamageNumber(hitX ?? cs.x, hitY ?? cs.y, dmg, 'received');
   addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 4);
   if (cs.hp <= 0) {
-    cs.hp = 0;
-    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-    activeCompanions = activeCompanions.filter(id => id !== cId);
-    const cInfo = getCompanionRoster(cId);
-    showToast((cInfo ? cInfo.name : '동료') + ' 쓰러짐!');
-    addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 15);
+    markCompanionDead(cId, { hitX, hitY });
   }
   return true;
 }

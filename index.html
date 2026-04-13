@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <meta name="theme-color" content="#000000">
 <title>던전 탐험 RPG</title>
 <link rel="stylesheet" class="css-mod" href="css/modules/base.css">
@@ -341,14 +342,15 @@
 var _v='?_='+Date.now();
 [
   'js/error-overlay.js','js/constants.js','js/audio.js','js/maps.js',
-  'js/data.js','js/data-companions.js','js/data-growth.js','js/data-town.js',
-  'js/data-quests.js','js/state.js','js/helpers.js','js/enemies.js',
+  'js/data.js','js/data-companions.js','js/data-growth.js','js/growth-runtime.js','js/data-town.js',
+  'js/data-quests.js','js/quest-runtime.js','js/state.js','js/helpers.js','js/enemies.js',
   'js/combat.js','js/transitions.js','js/skills.js','js/companions.js',
-  'js/rendering.js','js/game-controls.js','js/ui-manager.js',
+  'js/render-map.js','js/render-entities.js','js/render-effects.js','js/render-minimap.js','js/rendering.js',
+  'js/game-controls.js','js/ui-manager.js',
   'js/ui-panel-profile.js','js/ui-panel-equip.js','js/ui-panel-shop.js','js/ui-panel-companion.js',
   'js/ui-panel-temple.js','js/ui-panel-skill.js','js/ui-panel-quest.js',
   'js/ui-panel-training.js','js/ui-panel-emblem.js','js/ui-panel-village.js',
-  'js/save.js','js/main.js'
+  'js/save.js','js/main.js','js/pwa.js'
 ].forEach(function(s){document.write('<script src="'+s+_v+'"><\/script>');});
 </script>
 </body>

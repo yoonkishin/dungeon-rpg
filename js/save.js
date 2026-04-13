@@ -174,9 +174,7 @@ function loadCompanionState(data) {
   companions.forEach(cId => {
     if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);
   });
-  activeCompanions = activeCompanions.filter(cId => !deadCompanions.includes(cId));
-  companionStates = {};
-  activeCompanions.forEach(cId => initCompanionState(cId));
+  restoreActiveCompanionStates();
 }
 
 function loadQuestState(data) {
@@ -233,11 +231,7 @@ function loadMapState(data) {
       player.x = 40 * TILE;
       player.y = (FIELD_H - 3) * TILE + TILE / 2;
     }
-    activeCompanions.forEach(cId => {
-      if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-    });
-    activeCompanions = [];
-    companionStates = {};
+    clearActiveCompanions({ markDead: true });
     currentDungeonId = -1;
   }
 

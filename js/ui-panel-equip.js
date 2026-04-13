@@ -203,21 +203,12 @@ function unequipSlot(slot) {
 }
 function consumeInventoryItem(invEntry) {
   const item = ITEMS[invEntry.itemId];
-  const idx = inventory.indexOf(invEntry);
-  if (!item || item.type !== 'potion' || idx === -1) return;
+  if (!item || item.type !== 'potion') return;
   if (player.hp >= player.maxHp) {
     showToast('HP가 이미 가득합니다');
     return;
   }
-  const boostedHeal = Math.floor(item.heal * getHealingMultiplier());
-  const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
-  player.hp = Math.min(player.maxHp, player.hp + boostedHeal);
-  inventory.splice(idx, 1);
-  if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
-  AudioSystem.sfx.heal();
-  showToast(item.name + ' 사용');
-  updateHUD();
-  autoSave();
+  consumePotionEntry(invEntry, { saveMode: 'immediate' });
 }
 function getItemStatEntries(item) {
   if (!item) return [];

@@ -98,22 +98,5 @@ potionBtn.addEventListener('click', (e) => {
 });
 
 function usePotion() {
-  if (player.hp >= player.maxHp) return;
-  const idx = inventory.findIndex(e => e.itemId === 'potion_hp2');
-  const idx2 = inventory.findIndex(e => e.itemId === 'potion_hp');
-  const useIdx = idx >= 0 ? idx : idx2;
-  if (useIdx < 0) return;
-  const entry = inventory[useIdx];
-  const itemId = entry.itemId;
-  const item = ITEMS[itemId];
-  if (!item || item.type !== 'potion') return;
-  const boostedHeal = Math.floor(item.heal * getHealingMultiplier());
-  const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
-  player.hp = Math.min(player.hp + boostedHeal, player.maxHp);
-  inventory.splice(useIdx, 1);
-  addParticles(player.x, player.y, '#e74c3c', 10);
-  if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
-  AudioSystem.sfx.heal();
-  updateHUD();
-  requestAutoSave();
+  useBestPotion({ saveMode: 'request' });
 }

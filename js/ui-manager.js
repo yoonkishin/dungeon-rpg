@@ -209,11 +209,7 @@ function handleHudAction(action) {
         if (!shouldReturn) return;
 
         // Companions die when leaving dungeon early
-        activeCompanions.forEach(cId => {
-          if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-        });
-        activeCompanions = [];
-        companionStates = {};
+        clearActiveCompanions({ markDead: true });
       }
       enterTown();
       showToast('마을로 귀환했습니다');

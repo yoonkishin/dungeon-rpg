@@ -8,7 +8,7 @@
 - [x] Player growth runtime fields (`classLine`, `classRank`, `promotionPending`) and save/load persistence detected.
 - [x] Companion roster, AI, and synergy helpers are split into `data-companions.js`.
 - [x] Town NPCs and village upgrade helpers are split into `data-town.js`.
-- [x] Quest definitions and quest flow helpers are split into `data-quests.js`.
+- [x] Quest definitions are split into `data-quests.js`, with runtime flow helpers in `quest-runtime.js`.
 - [x] Core game data is split across `data.js`, `data-companions.js`, `data-growth.js`, `data-town.js`, and `data-quests.js`.
 
 ## Companion System
@@ -22,7 +22,7 @@
 
 - [x] Minimap HUD slot detected at **top 56px / right 12px**.
 - [x] Minimap visibility persistence detected via `localStorage`.
-- [x] HUD quick actions detected: `profile`, `equipment`, `companion`, `quests`, `skill`, `town-return`.
+- [x] HUD quick actions detected: `equipment`, `companion`, `quests`, `skill`, `town-return`.
 - [x] Training room / promotion panel detected.
 - [x] Emblem room panel and emblem data foundations detected.
 - [x] Dungeon elite enemies and boss phase gimmicks detected.
@@ -40,8 +40,10 @@
 - `js/data.js`
 - `js/data-companions.js`
 - `js/data-growth.js`
+- `js/growth-runtime.js`
 - `js/data-town.js`
 - `js/data-quests.js`
+- `js/quest-runtime.js`
 - `js/state.js`
 - `js/save.js`
 - `js/enemies.js`

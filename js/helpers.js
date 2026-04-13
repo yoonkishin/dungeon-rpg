@@ -89,4 +89,51 @@ function addDamageNumber(x, y, amount, type) {
   if (damageNumbers.length > 50) damageNumbers.splice(0, damageNumbers.length - 50);
 }
 
-// ─── Kill Enemy Helper ───────────────────────────────────────────────────────
+function findBestPotionEntry() {
+  const preferredIds = ['potion_hp2', 'potion_hp'];
+  for (const itemId of preferredIds) {
+    const entry = inventory.find(item => item.itemId === itemId);
+    if (entry) return entry;
+  }
+  return inventory.find(item => {
+    const def = ITEMS[item.itemId];
+    return !!(def && def.type === 'potion');
+  }) || null;
+}
+
+function consumePotionEntry(invEntry, options = {}) {
+  const {
+    skipIfFullHp = true,
+    saveMode = 'request',
+  } = options;
+
+  if (!invEntry) return false;
+  const idx = inventory.indexOf(invEntry);
+  if (idx === -1) return false;
+
+  const item = ITEMS[invEntry.itemId];
+  if (!item || item.type !== 'potion') return false;
+  if (skipIfFullHp && player.hp >= player.maxHp) return false;
+
+  const boostedHeal = Math.floor(item.heal * getHealingMultiplier());
+  const healAmt = Math.min(boostedHeal, player.maxHp - player.hp);
+  player.hp = Math.min(player.maxHp, player.hp + boostedHeal);
+  inventory.splice(idx, 1);
+
+  addParticles(player.x, player.y, '#e74c3c', 10);
+  if (healAmt > 0) addDamageNumber(player.x, player.y, healAmt, 'heal');
+  AudioSystem.sfx.heal();
+  showToast(item.name + ' 사용');
+  updateHUD();
+
+  if (saveMode === 'immediate') autoSave();
+  else if (saveMode !== 'none') requestAutoSave();
+
+  return true;
+}
+
+function useBestPotion(options = {}) {
+  const entry = findBestPotionEntry();
+  if (!entry) return false;
+  return consumePotionEntry(entry, options);
+}

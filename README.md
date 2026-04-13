@@ -49,16 +49,23 @@
 ```text
 index.html
 css/styles.css
+js/state.js
+js/helpers.js
 js/main.js
+js/transitions.js
 js/combat.js
 js/enemies.js
 js/companions.js
 js/maps.js
+js/render-map.js
+js/render-entities.js
+js/render-effects.js
+js/render-minimap.js
 js/rendering.js
 js/save.js
 js/skills.js
-js/ui-controls.js
-js/ui-panels.js
+js/ui-manager.js
+js/ui-panel-*.js
 js/audio.js
 ```
 
@@ -130,6 +137,48 @@ http://localhost:8000
 
 ---
 
+## PWA 직접 테스트
+
+이 repo는 `manifest.json` + `sw.js` + `js/pwa.js` 조합으로 **설치 가능한 PWA 테스트 경로**를 제공한다.
+
+### 로컬 테스트
+
+PWA 설치/오프라인 캐시는 `https://` 또는 `localhost` 에서만 안정적으로 동작한다.
+
+```bash
+python3 -m http.server 8000
+```
+
+- 접속: `http://localhost:8000`
+- Chrome DevTools → **Application**
+  - **Manifest** 인식 확인
+  - **Service Workers** 등록 확인
+  - **Offline** 상태에서도 재접속 가능한지 확인
+
+### GitHub Pages 테스트
+
+이 저장소는 `.github/workflows/deploy-pages.yml` 로 `master` 브랜치 push 시 정적 사이트를 배포하도록 준비돼 있다.
+
+예상 URL:
+
+```text
+https://yoonkishin.github.io/dungeon-rpg/
+```
+
+#### 처음 한 번 확인할 것
+
+GitHub 저장소의 **Settings → Pages** 에서 source/build가 **GitHub Actions** 로 설정되어 있어야 한다.
+
+그 뒤에는:
+
+```bash
+git push origin master
+```
+
+후 Actions 배포가 끝나면 모바일 브라우저에서 설치/홈 화면 추가를 직접 테스트할 수 있다.
+
+---
+
 ## 조작
 
 기본 조작은 모바일 터치 우선이다.
@@ -142,7 +191,7 @@ http://localhost:8000
 - 방향키 또는 WASD: 이동
 - 나머지 키 입력은 구현 상태에 따라 다를 수 있음
 
-정확한 조작은 현재 `js/ui-controls.js` 및 실제 UI 배치 기준으로 확인한다.
+정확한 조작은 현재 `js/game-controls.js` 및 실제 UI 배치 기준으로 확인한다.
 
 ---
 

@@ -42,7 +42,7 @@ function reviveCompanionFromTemple(cId) {
   const cost = getReviveCost(cId);
   if (player.gold < cost) return;
   player.gold -= cost;
-  deadCompanions = deadCompanions.filter(id => id !== cId);
+  reviveCompanion(cId);
   AudioSystem.sfx.heal();
   const cInfo = getCompanionRoster(cId);
   showToast((cInfo ? cInfo.name : '동료') + ' 부활!');
@@ -54,7 +54,7 @@ function reviveCompanionFromTemple(cId) {
 function reviveAllCompanionsFromTemple(totalCost) {
   if (player.gold < totalCost) return;
   player.gold -= totalCost;
-  deadCompanions = [];
+  reviveAllCompanions();
   AudioSystem.sfx.tierUp();
   showToast('모든 동료가 부활했습니다!');
   updateHUD();

@@ -4,26 +4,94 @@
 // Player progression (gainXP) lives in combat.js where XP rewards originate.
 
 // ─── Portal / Transition ──────────────────────────────────────────────────────
+function getPlayerTilePosition() {
+  return {
+    tx: Math.floor(player.x / TILE),
+    ty: Math.floor(player.y / TILE),
+  };
+}
+
+function getPlayerCurrentTile() {
+  const { tx, ty } = getPlayerTilePosition();
+  return getMap()[ty] && getMap()[ty][tx];
+}
+
+function tryHandleExitTileTransition() {
+  const tile = getPlayerCurrentTile();
+  if (tile !== TILE_EXIT) return false;
+  if (currentMap === 'town') enterField();
+  else if (currentMap === 'field') enterTown();
+  else if (currentMap === 'dungeon') exitDungeon();
+  else return false;
+  return true;
+}
+
+function tryOpenNearbyShop() {
+  if (currentMap !== 'town') return false;
+  for (const npc of NPCS) {
+    if (dist(player, npc) < 50) {
+      openShop(npc);
+      return true;
+    }
+  }
+  return false;
+}
+
+function tryOpenNearbyTownNpcInteraction() {
+  if (currentMap !== 'town') return false;
+  for (const npc of TOWN_NPCS) {
+    if (dist(player, npc) < 50) {
+      if (npc.isTemple) openTemple();
+      else if (npc.isTrainingRoom) openTrainingPanel();
+      else if (npc.isEmblemRoom) openEmblemRoomPanel();
+      else openDialogue(npc);
+      return true;
+    }
+  }
+  return false;
+}
+
+function tryHandlePrimaryContextAction() {
+  if (tryOpenNearbyShop()) return true;
+  if (tryOpenNearbyTownNpcInteraction()) return true;
+
+  const tile = getPlayerCurrentTile();
+  if (currentMap === 'field' && tile === TILE_PORTAL) {
+    checkPortal();
+    return true;
+  }
+
+  return false;
+}
+
+function tryHandleInteractKeyAction() {
+  if (tryOpenNearbyShop()) return true;
+  return checkPortal();
+}
+
 function checkPortal() {
-  const tx = Math.floor(player.x / TILE);
-  const ty = Math.floor(player.y / TILE);
-  const tile = getMap()[ty] && getMap()[ty][tx];
+  const { tx, ty } = getPlayerTilePosition();
+  const tile = getPlayerCurrentTile();
 
   if (currentMap === 'town' && tile === TILE_EXIT) {
     enterField();
+    return true;
   } else if (currentMap === 'field' && tile === TILE_EXIT) {
     enterTown();
+    return true;
   } else if (currentMap === 'field' && tile === TILE_PORTAL) {
     // Find which dungeon portal
     for (const info of DUNGEON_INFO) {
       if ((tx === info.portalX || tx === info.portalX + 1) && ty === info.portalY) {
         enterDungeon(info.id);
-        return;
+        return true;
       }
     }
   } else if (currentMap === 'dungeon' && tile === TILE_EXIT) {
     exitDungeon();
+    return true;
   }
+  return false;
 }
 
 function enterField() {
@@ -70,14 +138,7 @@ function enterDungeon(dungeonId) {
   }
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('dungeon');
-  // Initialize companion states for dungeon
-  activeCompanions.forEach(cId => {
-    if (!deadCompanions.includes(cId)) {
-      initCompanionState(cId);
-    }
-  });
-  // Remove dead ones from active
-  activeCompanions = activeCompanions.filter(cId => !deadCompanions.includes(cId));
+  initActiveCompanionsForDungeon();
   autoSave();
   updateHUD();
 }
@@ -143,11 +204,7 @@ function returnPlayerToTownAfterDeath() {
   const deathScreen = document.getElementById('death-screen');
   if (deathScreen) deathScreen.style.display = 'none';
 
-  activeCompanions.forEach(cId => {
-    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
-  });
-  activeCompanions = [];
-  companionStates = {};
+  clearActiveCompanions({ markDead: true });
   player.hp = player.maxHp;
   player.mp = player.maxMp;
   player.dead = false;

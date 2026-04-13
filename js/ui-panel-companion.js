@@ -96,13 +96,9 @@ function handleCompanionAiTap(cId) {
 
 function handleCompanionAction(cId, action) {
   if (action === 'activate') {
-    if (activeCompanions.length < MAX_ACTIVE_COMPANIONS) {
-      activeCompanions.push(cId);
-      initCompanionState(cId);
-    }
+    activateCompanion(cId);
   } else if (action === 'deactivate') {
-    activeCompanions = activeCompanions.filter(id => id !== cId);
-    delete companionStates[cId];
+    deactivateCompanion(cId);
   } else {
     return;
   }

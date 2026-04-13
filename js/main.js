@@ -160,66 +160,22 @@ function updateMovement(dt) {
     }
   }
 
-  // Auto-transition on EXIT tiles
-  const ptx = Math.floor(player.x / TILE);
-  const pty = Math.floor(player.y / TILE);
-  const ptile = getMap()[pty] && getMap()[pty][ptx];
-  if (ptile === TILE_EXIT) {
-    if (currentMap === 'town') { enterField(); return true; }
-    else if (currentMap === 'field') { enterTown(); return true; }
-    else if (currentMap === 'dungeon') { exitDungeon(); return true; }
-  }
-  return false;
+  return typeof tryHandleExitTileTransition === 'function' ? tryHandleExitTileTransition() : false;
 }
 
 function updateInput() {
-  const ptx = Math.floor(player.x / TILE);
-  const pty = Math.floor(player.y / TILE);
-  const ptile = getMap()[pty] && getMap()[pty][ptx];
-
   if (attackQueued || keys[' '] || keys['z']) {
-    let handled = false;
-    if (currentMap === 'town') {
-      for (const npc of NPCS) {
-        if (dist(player, npc) < 50) {
-          openShop(npc);
-          attackQueued = false;
-          handled = true;
-          break;
-        }
-      }
-      if (!handled) {
-        for (const npc of TOWN_NPCS) {
-          if (dist(player, npc) < 50) {
-            if (npc.isTemple) openTemple();
-            else if (npc.isTrainingRoom) openTrainingPanel();
-            else if (npc.isEmblemRoom) openEmblemRoomPanel();
-            else openDialogue(npc);
-            attackQueued = false;
-            handled = true;
-            break;
-          }
-        }
-      }
-    }
-    if (!handled && currentMap === 'field' && ptile === TILE_PORTAL) {
-      checkPortal();
-      attackQueued = false;
-      handled = true;
-    }
+    const handled = typeof tryHandlePrimaryContextAction === 'function' && tryHandlePrimaryContextAction();
     if (!handled) {
       doAttack();
-      attackQueued = false;
     }
+    attackQueued = false;
   }
 
   if (keys['e']) {
-    if (currentMap === 'town') {
-      for (const npc of NPCS) {
-        if (dist(player, npc) < 50) { openShop(npc); break; }
-      }
+    if (typeof tryHandleInteractKeyAction !== 'function' || !tryHandleInteractKeyAction()) {
+      checkPortal();
     }
-    checkPortal();
   }
 }
 
