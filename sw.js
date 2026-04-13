@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dungeon-rpg-pwa-v1';
+const CACHE_NAME = 'dungeon-rpg-pwa-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -60,11 +60,27 @@ const APP_SHELL = [
   './js/pwa.js',
 ];
 
-function normalizeUrl(input) {
+function toCacheKey(input) {
   const url = new URL(input, self.location.origin);
   url.hash = '';
   url.search = '';
   return url.href;
+}
+
+function isSameOriginGet(request) {
+  if (request.method !== 'GET') return false;
+  const url = new URL(request.url);
+  return url.origin === self.location.origin;
+}
+
+function isImageRequest(url) {
+  return /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(url.pathname);
+}
+
+async function putInCache(cache, request, response) {
+  if (!response || !response.ok) return response;
+  await cache.put(toCacheKey(request.url), response.clone());
+  return response;
 }
 
 self.addEventListener('install', event => {
@@ -85,37 +101,47 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const { request } = event;
-  if (request.method !== 'GET') return;
+  if (!isSameOriginGet(request)) return;
 
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
+  const cacheKey = toCacheKey(request.url);
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
       try {
-        const response = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put(normalizeUrl('./index.html'), response.clone());
+        const response = await fetch(request, { cache: 'no-store' });
+        await putInCache(cache, './index.html', response);
         return response;
       } catch (error) {
-        const cached = await caches.match(normalizeUrl('./index.html'));
-        if (cached) return cached;
-        throw error;
+        return (await caches.match(cacheKey)) || (await caches.match(toCacheKey('./index.html')));
       }
     })());
     return;
   }
 
-  event.respondWith((async () => {
-    const normalized = normalizeUrl(request.url);
-    const cached = await caches.match(normalized);
-    if (cached) return cached;
-
-    const response = await fetch(request);
-    if (response && response.ok) {
+  if (isImageRequest(url)) {
+    event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.put(normalized, response.clone());
+      const cached = await caches.match(cacheKey);
+      if (cached) return cached;
+      const response = await fetch(request);
+      await putInCache(cache, request, response);
+      return response;
+    })());
+    return;
+  }
+
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    try {
+      const response = await fetch(request, { cache: 'no-store' });
+      await putInCache(cache, request, response);
+      return response;
+    } catch (error) {
+      const cached = await caches.match(cacheKey);
+      if (cached) return cached;
+      throw error;
     }
-    return response;
   })());
 });
