@@ -137,14 +137,14 @@ function drawPlayer() {
     ctx.fillRect(sx - 5, headY - 1, 3, 3);
     ctx.fillStyle = '#fff';
     ctx.fillRect(sx - 4, headY - 1, 1, 1);
-  } else if (player.dir === 2) {
+  } else if (player.dir === 3) {
     ctx.fillRect(sx - 4, headY - 2, 3, 3);
     ctx.fillRect(sx + 1, headY - 2, 3, 3);
     ctx.fillStyle = '#fff';
     ctx.fillRect(sx - 3, headY - 2, 1, 1);
     ctx.fillRect(sx + 2, headY - 2, 1, 1);
   } else {
-    // facing down — no eyes visible, just hair
+    // facing up — no eyes visible, just hair/back of head
   }
 
   // Attack animation
