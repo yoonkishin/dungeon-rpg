@@ -95,8 +95,3 @@
   margin-top: 10px;
   text-align: center;
 }
-@media (max-width: 720px) {
-  .companion-summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}

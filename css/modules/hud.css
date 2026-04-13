@@ -108,8 +108,6 @@
   white-space: nowrap;
   line-height: 1;
 }
-#status-gold { display: none; }
-
 /* ── Gold Display (top-right) ── */
 #gold-display {
   position: absolute;

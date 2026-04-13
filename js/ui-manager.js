@@ -137,8 +137,6 @@ function bindTap(el, handler, options = {}) {
   if (!touchOnly) el.addEventListener('click', wrapped);
 }
 
-bindTap(document.getElementById('menu-btn'), () => openMenu());
-
 // Click status bar to open profile
 bindTap(document.getElementById('player-status'), () => {
   if (!profileOpen) openProfile();

@@ -14,72 +14,15 @@ function closeEmblemRoomPanel() {
   hidePanel(emblemRoomPanel);
 }
 
-function buildEmblemRequirementChip(ok, text) {
-  return '<span class="quest-chip ' + (ok ? 'done' : 'active') + '">' + text + '</span>';
-}
-
-function buildEmblemRoomSummaryCard() {
-  const lineLabel = getOriginalLineLabel(player.classLine || 'infantry');
-  const levelCap = getPlayerLevelCap();
-  return '<div class="quest-card primary training-summary-card">' +
-    '<div class="quest-focus-head"><div class="quest-focus-title">문장의방 진입 현황</div><span class="quest-chip active">원본형 성장 루프</span></div>' +
-    '<div class="quest-focus-text">7단 Lv35와 충분한 공격력/방어력을 만족하면 병종별 기본 문장 시험 전투에 도전할 수 있다.</div>' +
-    '<div class="training-summary-grid">' +
-      '<div class="training-summary-item"><span class="training-summary-label">현재 라인</span><span class="training-summary-value">' + lineLabel + '</span></div>' +
-      '<div class="training-summary-item"><span class="training-summary-label">현재 단수</span><span class="training-summary-value">' + (player.tier || 1) + '단</span></div>' +
-      '<div class="training-summary-item"><span class="training-summary-label">현재 레벨</span><span class="training-summary-value">Lv ' + player.level + ' / ' + levelCap + '</span></div>' +
-      '<div class="training-summary-item"><span class="training-summary-label">전투 수치</span><span class="training-summary-value">ATK ' + playerAtk() + ' · DEF ' + playerDef() + '</span></div>' +
-    '</div>' +
-  '</div>';
-}
-
-function buildUnitEmblemCard(emblem) {
-  const status = getPlayerEmblemTrialStatus(emblem.id);
-  const chips = [
-    buildEmblemRequirementChip(status.lineOk, '라인 ' + getOriginalLineLabel(emblem.targetLine)),
-    buildEmblemRequirementChip(status.tierOk, '단수 ' + emblem.requiredTier + '+'),
-    buildEmblemRequirementChip(status.levelOk, 'Lv ' + emblem.requiredLevel + '+'),
-    buildEmblemRequirementChip(status.attackOk, 'ATK ' + emblem.requiredAttack),
-    buildEmblemRequirementChip(status.defenseOk, 'DEF ' + emblem.requiredDefense),
-  ].join('');
-  const bonusRows = [];
-  if (emblem.bonus.atk) bonusRows.push('ATK +' + emblem.bonus.atk);
-  if (emblem.bonus.def) bonusRows.push('DEF +' + emblem.bonus.def);
-  if (emblem.bonus.maxHp) bonusRows.push('HP +' + emblem.bonus.maxHp);
-  if (emblem.bonus.maxMp) bonusRows.push('MP +' + emblem.bonus.maxMp);
-  if (emblem.bonus.speed) bonusRows.push('이속 +' + emblem.bonus.speed.toFixed(2));
-  if (emblem.bonus.critChance) bonusRows.push('치명 +' + emblem.bonus.critChance + '%');
-  const actionLabel = status.owned ? '보유 완료' : (status.canEnter ? '시험 전투 시작' : '조건 부족');
-  return '<div class="quest-card training-promo-card">' +
-    '<div class="quest-focus-head"><div class="quest-focus-title">' + emblem.name + '</div><span class="quest-chip ' + (status.owned ? 'done' : (status.canEnter ? 'done' : 'active')) + '">' + (status.owned ? '보유 중' : (status.canEnter ? '도전 가능' : '잠김')) + '</span></div>' +
-    '<div class="quest-desc">대상 라인: ' + getOriginalLineLabel(emblem.targetLine) + '</div>' +
-    '<div class="training-badge-row">' + chips + '</div>' +
-    '<div class="quest-desc">기본 보너스: ' + bonusRows.join(' / ') + '</div>' +
-    '<div class="training-action-row"><button class="training-promote-btn emblem-claim-btn" data-emblem-id="' + emblem.id + '"' + (status.canEnter && !status.owned ? '' : ' disabled') + '>' + actionLabel + '</button></div>' +
-  '</div>';
-}
-
-function buildMasterEmblemCard(emblem) {
-  const owned = playerHasEmblem(emblem.id);
-  const ready = canPlayerFuseMasterEmblem(emblem.id);
-  const materials = (emblem.fusionMaterials || []).map(id => {
-    const material = getEmblemDef(id);
-    return '<span class="quest-chip ' + (playerHasEmblem(id) ? 'done' : 'active') + '">' + (material ? material.name : id) + '</span>';
-  }).join('');
-  const bonusRows = [];
-  if (emblem.bonus.atk) bonusRows.push('ATK +' + emblem.bonus.atk);
-  if (emblem.bonus.def) bonusRows.push('DEF +' + emblem.bonus.def);
-  if (emblem.bonus.maxHp) bonusRows.push('HP +' + emblem.bonus.maxHp);
-  if (emblem.bonus.maxMp) bonusRows.push('MP +' + emblem.bonus.maxMp);
-  if (emblem.bonus.critChance) bonusRows.push('치명 +' + emblem.bonus.critChance + '%');
-  const actionLabel = owned ? '융합 완료' : (ready ? '마스터 문장 융합' : '재료 부족');
-  return '<div class="quest-card">' +
-    '<div class="quest-focus-head"><div class="quest-focus-title">' + emblem.name + '</div><span class="quest-chip ' + (owned ? 'done' : (ready ? 'done' : 'active')) + '">' + (owned ? '보유 중' : (ready ? '융합 가능' : '잠김')) + '</span></div>' +
-    '<div class="quest-desc">계열: ' + getOriginalLineLabel(emblem.targetLine) + '</div>' +
-    '<div class="training-badge-row">' + materials + '</div>' +
-    '<div class="quest-desc">마스터 보너스: ' + bonusRows.join(' / ') + '</div>' +
-    '<div class="training-action-row"><button class="training-promote-btn emblem-fuse-btn" data-emblem-id="' + emblem.id + '"' + (ready && !owned ? '' : ' disabled') + '>' + actionLabel + '</button></div>' +
-  '</div>';
+function formatEmblemBonus(bonus) {
+  const parts = [];
+  if (bonus.atk) parts.push('ATK+' + bonus.atk);
+  if (bonus.def) parts.push('DEF+' + bonus.def);
+  if (bonus.maxHp) parts.push('HP+' + bonus.maxHp);
+  if (bonus.maxMp) parts.push('MP+' + bonus.maxMp);
+  if (bonus.speed) parts.push('SPD+' + bonus.speed.toFixed(2));
+  if (bonus.critChance) parts.push('CRIT+' + bonus.critChance + '%');
+  return parts.join(' ');
 }
 
 function bindEmblemRoomActions(content) {
@@ -116,19 +59,12 @@ function bindEmblemRoomActions(content) {
 
 function buildEmblemCompactRow(emblem) {
   const status = getPlayerEmblemTrialStatus(emblem.id);
-  const bonusParts = [];
-  if (emblem.bonus.atk) bonusParts.push('ATK+' + emblem.bonus.atk);
-  if (emblem.bonus.def) bonusParts.push('DEF+' + emblem.bonus.def);
-  if (emblem.bonus.maxHp) bonusParts.push('HP+' + emblem.bonus.maxHp);
-  if (emblem.bonus.maxMp) bonusParts.push('MP+' + emblem.bonus.maxMp);
-  if (emblem.bonus.speed) bonusParts.push('SPD+' + emblem.bonus.speed.toFixed(2));
-  if (emblem.bonus.critChance) bonusParts.push('CRIT+' + emblem.bonus.critChance + '%');
   const statusLabel = status.owned ? '\u2705' : status.canEnter ? '\u25B6' : '\uD83D\uDD12';
   const cls = status.owned ? 'done' : status.canEnter ? 'next' : '';
   return '<div class="emblem-row ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
-    '<span class="emb-bonus">' + bonusParts.join(' ') + '</span>' +
+    '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (status.canEnter && !status.owned ? '<button class="emb-btn emblem-claim-btn" data-emblem-id="' + emblem.id + '">\uB3C4\uC804</button>' : '') +
   '</div>';
@@ -139,17 +75,12 @@ function buildMasterEmblemCompactRow(emblem) {
   const ready = canPlayerFuseMasterEmblem(emblem.id);
   const matCount = (emblem.fusionMaterials || []).filter(id => playerHasEmblem(id)).length;
   const matTotal = (emblem.fusionMaterials || []).length;
-  const bonusParts = [];
-  if (emblem.bonus.atk) bonusParts.push('ATK+' + emblem.bonus.atk);
-  if (emblem.bonus.def) bonusParts.push('DEF+' + emblem.bonus.def);
-  if (emblem.bonus.maxHp) bonusParts.push('HP+' + emblem.bonus.maxHp);
-  if (emblem.bonus.critChance) bonusParts.push('CRIT+' + emblem.bonus.critChance + '%');
   const statusLabel = owned ? '\u2705' : ready ? '\u25B6' : matCount + '/' + matTotal;
   const cls = owned ? 'done' : ready ? 'next' : '';
   return '<div class="emblem-row master ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
-    '<span class="emb-bonus">' + bonusParts.join(' ') + '</span>' +
+    '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (ready && !owned ? '<button class="emb-btn emblem-fuse-btn" data-emblem-id="' + emblem.id + '">\uC735\uD569</button>' : '') +
   '</div>';
