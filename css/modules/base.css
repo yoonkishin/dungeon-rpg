@@ -6,6 +6,10 @@ html, body {
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button, [role="button"], .top-circle-btn, .bag-cell, .equip-slot, .comp-act-btn, .popup-btn {
+  -webkit-tap-highlight-color: transparent;
 }
 canvas {
   display: block;

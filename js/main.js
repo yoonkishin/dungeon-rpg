@@ -42,9 +42,10 @@ fsBtn.addEventListener('touchstart', goFullscreen, { passive: false });
 fsBtn.addEventListener('click', goFullscreen);
 window.addEventListener('touchstart', bootstrapInteraction, { passive: true, once: true });
 window.addEventListener('click', bootstrapInteraction, { once: true });
+// Auto-dismiss quickly — any interaction hides it
 setTimeout(() => {
   if (!firstInteractionBooted) dismissStartHint();
-}, 1200);
+}, 800);
 
 // ─── Canvas Setup ─────────────────────────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
