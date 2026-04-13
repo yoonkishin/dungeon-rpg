@@ -141,6 +141,9 @@ function bindVillageUpgradeActions(content) {
 
 function renderVillagePanel() {
   const content = document.getElementById('village-panel-content');
+  const villageGoldEl = document.getElementById('village-gold');
+  if (villageGoldEl) villageGoldEl.textContent = player.gold.toLocaleString();
+
   const upgrades = getVillageUpgradeDefinitions();
   const tierLabel = getVillageTierLabel();
   const completionPct = Math.min(100, Math.round((dungeonsCleared.length / DUNGEON_INFO.length) * 100));
@@ -152,8 +155,7 @@ function renderVillagePanel() {
 
   content.innerHTML =
     buildVillageOverviewCard(tierLabel, completionPct, totalUpgradeLevel, nextUpgrade) +
-    '<div class="quest-section-title">시설 업그레이드</div>' +
-    upgrades.map(buildVillageUpgradeCard).join('');
+    '<div class="village-grid-2x2">' + upgrades.map(buildVillageUpgradeCard).join('') + '</div>';
 
   bindVillageUpgradeActions(content);
 }

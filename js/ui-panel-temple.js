@@ -80,6 +80,8 @@ function bindTempleActions(content, totalCost) {
 
 function renderTemple() {
   const content = document.getElementById('temple-content');
+  const templeGoldEl = document.getElementById('temple-gold');
+  if (templeGoldEl) templeGoldEl.textContent = player.gold.toLocaleString();
 
   if (deadCompanions.length === 0) {
     content.innerHTML = buildTempleEmptyState();
@@ -90,11 +92,10 @@ function renderTemple() {
   const canAffordAll = player.gold >= totalCost && deadCompanions.length > 1;
 
   content.innerHTML =
-    '<div class="temple-note">쓰러진 동료를 골드를 사용하여 부활시킬 수 있습니다.</div>' +
-    '<div class="temple-gold">💰 보유 골드: ' + player.gold + '</div>' +
+    '<div class="temple-note">\uC4F0\uB7EC\uC9C4 \uB3D9\uB8CC\uB97C \uACE8\uB4DC\uB97C \uC0AC\uC6A9\uD558\uC5EC \uBD80\uD65C\uC2DC\uD0AC \uC218 \uC788\uC2B5\uB2C8\uB2E4.</div>' +
     deadCompanions.map(buildTempleReviveRow).join('') +
     '<div class="temple-actions">' +
-      '<button id="temple-revive-all" class="temple-revive-all-btn"' + (canAffordAll ? '' : ' disabled') + '>전체 부활 (💰 ' + totalCost + ')</button>' +
+      '<button id="temple-revive-all" class="temple-revive-all-btn"' + (canAffordAll ? '' : ' disabled') + '>\uC804\uCCB4 \uBD80\uD65C (\uD83D\uDCB0 ' + totalCost + ')</button>' +
     '</div>';
 
   bindTempleActions(content, totalCost);

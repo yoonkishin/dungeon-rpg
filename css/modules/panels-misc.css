@@ -74,6 +74,121 @@
   pointer-events: all;
 }
 
+/* ── Emblem Panel compact ── */
+.emblem-header-info, .training-header-info {
+  font-size: 10px;
+  font-weight: 600;
+}
+.emblem-columns {
+  display: flex;
+  gap: 8px;
+  height: 100%;
+}
+.emblem-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.emblem-col-right {
+  max-width: 260px;
+}
+.emblem-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow-y: auto;
+}
+.emblem-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  min-height: 22px;
+  font-size: 9px;
+}
+.emblem-row.done { opacity: 0.6; }
+.emblem-row.next {
+  border-color: rgba(46,204,113,0.35);
+  background: rgba(46,204,113,0.05);
+}
+.emblem-row.master {
+  border-color: rgba(241,196,15,0.15);
+}
+.emb-name {
+  color: #eee;
+  font-weight: 700;
+  width: 72px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.emb-line {
+  color: #888;
+  width: 36px;
+  flex-shrink: 0;
+}
+.emb-bonus {
+  color: #aaa;
+  flex: 1;
+  font-size: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.emb-status {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.emb-btn {
+  padding: 2px 6px;
+  border: none;
+  border-radius: 4px;
+  font-size: 8px;
+  font-weight: 700;
+  color: #fff;
+  background: #2ecc71;
+  cursor: pointer;
+  pointer-events: all;
+  flex-shrink: 0;
+}
+.emb-btn:active { opacity: 0.7; }
+.emblem-info-box {
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.emb-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #aaa;
+  padding: 1px 0;
+}
+.emb-info-row span:last-child {
+  color: #ddd;
+  font-weight: 600;
+}
+
+/* ── Village 2x2 grid ── */
+.village-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.village-grid-2x2 .village-upgrade-card {
+  margin-bottom: 0;
+}
+
 /* ── Dungeon Clear Banner ── */
 #dungeon-clear-banner {
   position: absolute;

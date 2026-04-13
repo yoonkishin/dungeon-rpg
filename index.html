@@ -227,12 +227,13 @@
   <!-- Temple Revival Panel -->
   <div id="temple-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>⛪ 신전 - 동료 부활</h2>
-      <button class="inv-close" id="temple-close">✕</button>
+      <h2>신전</h2>
+      <div class="inv-header-right">
+        <span class="inv-gold" id="temple-gold">0</span>
+        <button class="inv-close" id="temple-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="temple-content"></div>
-    </div>
+    <div id="temple-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Skill Panel -->
@@ -262,34 +263,37 @@
   <!-- Village Progress Panel -->
   <div id="village-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>🏘️ 마을 발전</h2>
-      <button class="inv-close" id="village-panel-close">✕</button>
+      <h2>마을 발전</h2>
+      <div class="inv-header-right">
+        <span class="inv-gold" id="village-gold">0</span>
+        <button class="inv-close" id="village-panel-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="village-panel-content"></div>
-    </div>
+    <div id="village-panel-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Training Room Panel -->
   <div id="training-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>🏯 수련의 방</h2>
-      <button class="inv-close" id="training-panel-close">✕</button>
+      <h2>수련의 방</h2>
+      <div class="inv-header-right">
+        <span class="training-header-info" id="training-summary"></span>
+        <button class="inv-close" id="training-panel-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="training-panel-content"></div>
-    </div>
+    <div id="training-panel-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Emblem Room Panel -->
   <div id="emblem-room-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>🜂 문장의방</h2>
-      <button class="inv-close" id="emblem-room-panel-close">✕</button>
+      <h2>문장의방</h2>
+      <div class="inv-header-right">
+        <span class="emblem-header-info" id="emblem-summary"></span>
+        <button class="inv-close" id="emblem-room-panel-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="emblem-room-panel-content"></div>
-    </div>
+    <div id="emblem-room-panel-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Dialogue Panel -->

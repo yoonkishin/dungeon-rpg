@@ -93,10 +93,16 @@ function bindTrainingActions(content) {
 
 function renderTrainingPanel() {
   const content = document.getElementById('training-panel-content');
+  const summaryEl = document.getElementById('training-summary');
   const currentTier = getCurrentTier();
   const nextTier = getNextTier();
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const promotionTarget = getPlayerPromotionTarget();
+
+  if (summaryEl) {
+    summaryEl.textContent = currentTier.name + ' \u00B7 ' + growthLine.lineName + (promotionTarget ? ' \u00B7 \uC2B9\uAE09\uAC00\uB2A5' : '');
+    summaryEl.style.color = promotionTarget ? '#2ecc71' : '#aaa';
+  }
 
   content.innerHTML =
     buildTrainingSummaryCard(currentTier, growthLine, nextTier, promotionTarget) +

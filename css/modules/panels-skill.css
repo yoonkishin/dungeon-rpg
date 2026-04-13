@@ -117,6 +117,90 @@
 .skill-meta .cd { color: #ffa502; font-weight: 700; }
 .skill-slot-info { font-size: 7px; color: #555; }
 
+/* ── Shared card styles (used by quest, village, training, emblem) ── */
+.quest-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+.quest-card.primary {
+  border-color: rgba(241,196,15,0.28);
+  background: linear-gradient(180deg, rgba(241,196,15,0.08), rgba(255,255,255,0.03));
+}
+.quest-focus-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.quest-focus-title {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.quest-focus-text {
+  color: #999;
+  font-size: 9px;
+  line-height: 1.4;
+}
+.quest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
+}
+.quest-chip.done { background: rgba(46,204,113,0.16); color: #2ecc71; }
+.quest-chip.active { background: rgba(52,152,219,0.18); color: #74b9ff; }
+.quest-chip.warn { background: rgba(241,196,15,0.16); color: #f1c40f; }
+.quest-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  padding: 2px 0;
+}
+.quest-row + .quest-row { border-top: 1px solid rgba(255,255,255,0.04); }
+.quest-label { color: #aaa; }
+.quest-value { color: #f1c40f; font-weight: bold; text-align: right; }
+.quest-desc {
+  color: #888;
+  font-size: 9px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+.village-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+.village-summary-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 5px 7px;
+}
+.village-summary-label {
+  display: block;
+  color: #777;
+  font-size: 8px;
+  margin-bottom: 2px;
+}
+.village-summary-value {
+  display: block;
+  color: #f5f7fb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* ── Quest Panel — 2-column no-scroll ── */
 .quest-header-summary {
   font-size: 10px;

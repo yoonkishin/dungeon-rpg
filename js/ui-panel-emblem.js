@@ -114,17 +114,78 @@ function bindEmblemRoomActions(content) {
   });
 }
 
+function buildEmblemCompactRow(emblem) {
+  const status = getPlayerEmblemTrialStatus(emblem.id);
+  const bonusParts = [];
+  if (emblem.bonus.atk) bonusParts.push('ATK+' + emblem.bonus.atk);
+  if (emblem.bonus.def) bonusParts.push('DEF+' + emblem.bonus.def);
+  if (emblem.bonus.maxHp) bonusParts.push('HP+' + emblem.bonus.maxHp);
+  if (emblem.bonus.maxMp) bonusParts.push('MP+' + emblem.bonus.maxMp);
+  if (emblem.bonus.speed) bonusParts.push('SPD+' + emblem.bonus.speed.toFixed(2));
+  if (emblem.bonus.critChance) bonusParts.push('CRIT+' + emblem.bonus.critChance + '%');
+  const statusLabel = status.owned ? '\u2705' : status.canEnter ? '\u25B6' : '\uD83D\uDD12';
+  const cls = status.owned ? 'done' : status.canEnter ? 'next' : '';
+  return '<div class="emblem-row ' + cls + '">' +
+    '<span class="emb-name">' + emblem.name + '</span>' +
+    '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
+    '<span class="emb-bonus">' + bonusParts.join(' ') + '</span>' +
+    '<span class="emb-status">' + statusLabel + '</span>' +
+    (status.canEnter && !status.owned ? '<button class="emb-btn emblem-claim-btn" data-emblem-id="' + emblem.id + '">\uB3C4\uC804</button>' : '') +
+  '</div>';
+}
+
+function buildMasterEmblemCompactRow(emblem) {
+  const owned = playerHasEmblem(emblem.id);
+  const ready = canPlayerFuseMasterEmblem(emblem.id);
+  const matCount = (emblem.fusionMaterials || []).filter(id => playerHasEmblem(id)).length;
+  const matTotal = (emblem.fusionMaterials || []).length;
+  const bonusParts = [];
+  if (emblem.bonus.atk) bonusParts.push('ATK+' + emblem.bonus.atk);
+  if (emblem.bonus.def) bonusParts.push('DEF+' + emblem.bonus.def);
+  if (emblem.bonus.maxHp) bonusParts.push('HP+' + emblem.bonus.maxHp);
+  if (emblem.bonus.critChance) bonusParts.push('CRIT+' + emblem.bonus.critChance + '%');
+  const statusLabel = owned ? '\u2705' : ready ? '\u25B6' : matCount + '/' + matTotal;
+  const cls = owned ? 'done' : ready ? 'next' : '';
+  return '<div class="emblem-row master ' + cls + '">' +
+    '<span class="emb-name">' + emblem.name + '</span>' +
+    '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
+    '<span class="emb-bonus">' + bonusParts.join(' ') + '</span>' +
+    '<span class="emb-status">' + statusLabel + '</span>' +
+    (ready && !owned ? '<button class="emb-btn emblem-fuse-btn" data-emblem-id="' + emblem.id + '">\uC735\uD569</button>' : '') +
+  '</div>';
+}
+
 function renderEmblemRoomPanel() {
   const content = document.getElementById('emblem-room-panel-content');
+  const summaryEl = document.getElementById('emblem-summary');
   const unitEmblems = getAllEmblemDefs().filter(def => def.type === EMBLEM_TYPES.unit);
   const masterEmblems = getAllEmblemDefs().filter(def => def.type === EMBLEM_TYPES.master);
+  const ownedCount = (player.emblemIds || []).length;
+
+  if (summaryEl) {
+    summaryEl.textContent = '\uBCF4\uC720 ' + ownedCount + '/' + (unitEmblems.length + masterEmblems.length);
+    summaryEl.style.color = '#aaa';
+  }
 
   content.innerHTML =
-    buildEmblemRoomSummaryCard() +
-    '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">기본 문장 시험</div><span class="quest-chip active">10종</span></div><div class="quest-focus-text">조건을 만족한 문장은 즉시 지급되지 않고, 전용 시험 전투에서 수호자를 쓰러뜨려야 획득할 수 있다.</div></div>' +
-    unitEmblems.map(buildUnitEmblemCard).join('') +
-    '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">마스터 문장 융합</div><span class="quest-chip active">3종</span></div><div class="quest-focus-text">라인별 기본 문장을 모두 모으면 배틀마스터 / 택틱스마스터 / 매직마스터 문장으로 융합할 수 있다.</div></div>' +
-    masterEmblems.map(buildMasterEmblemCard).join('');
+    '<div class="emblem-columns">' +
+      '<div class="emblem-col">' +
+        '<div class="quest-section-label">\uAE30\uBCF8 \uBB38\uC7A5 ' + unitEmblems.length + '\uC885</div>' +
+        '<div class="emblem-table">' + unitEmblems.map(buildEmblemCompactRow).join('') + '</div>' +
+      '</div>' +
+      '<div class="emblem-col emblem-col-right">' +
+        '<div class="quest-section-label">\uB9C8\uC2A4\uD130 \uBB38\uC7A5 ' + masterEmblems.length + '\uC885</div>' +
+        '<div class="emblem-table">' + masterEmblems.map(buildMasterEmblemCompactRow).join('') + '</div>' +
+        '<div class="emblem-info-box">' +
+          '<div class="quest-section-label">\uD604\uC7AC \uC0C1\uD0DC</div>' +
+          '<div class="emb-info-row"><span>\uB77C\uC778</span><span>' + getOriginalLineLabel(player.classLine || 'infantry') + '</span></div>' +
+          '<div class="emb-info-row"><span>\uB2E8\uC218</span><span>' + (player.tier || 1) + '\uB2E8</span></div>' +
+          '<div class="emb-info-row"><span>\uB808\uBCA8</span><span>Lv.' + player.level + '</span></div>' +
+          '<div class="emb-info-row"><span>ATK</span><span>' + playerAtk() + '</span></div>' +
+          '<div class="emb-info-row"><span>DEF</span><span>' + playerDef() + '</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 
   bindEmblemRoomActions(content);
 }
