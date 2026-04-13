@@ -132,8 +132,6 @@ function renderProfile() {
         profileStatRow('\uD83D\uDEE1', '\uBC29\uC5B4\uB825', totalDef, totalEquipDef || null) +
         profileStatRow('\uD83C\uDFAF', '\uD06C\uB9AC\uD2F0\uCEEC', totalCrit + '%', bonus.critBonus || null) +
         profileStatRow('\uD83D\uDC62', '\uC774\uB3D9\uC18D\uB3C4', totalSpeed, bonus.speedBonus ? bonus.speedBonus.toFixed(2) : null) +
-        profileStatRow('\u2764', '\uCD5C\uB300HP', player.maxHp, null) +
-        profileStatRow('\uD83D\uDCA7', '\uCD5C\uB300MP', player.maxMp, null) +
         profileStatRow('\u23F1', '\uACF5\uACA9\uC18D\uB3C4', atkCooldown + '\uCD08', null) +
         profileStatRow('\uD83D\uDCB0', '\uACE8\uB4DC\uBCF4\uB108\uC2A4', goldBonusPct > 0 ? '+' + goldBonusPct + '%' : '0%', null) +
         profileStatRow('\uD83D\uDC9A', '\uD68C\uBCF5\uBC30\uC728', '\u00D7' + healMult.toFixed(2), healMult > 1 ? ('+' + ((healMult - 1) * 100).toFixed(0) + '%') : null) +
