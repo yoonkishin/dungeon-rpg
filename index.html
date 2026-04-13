@@ -250,12 +250,13 @@
   <!-- Quest Panel -->
   <div id="quest-panel" class="overlay-panel">
     <div class="inv-header">
-      <h2>📜 퀘스트</h2>
-      <button class="inv-close" id="quest-panel-close">✕</button>
+      <h2>퀘스트</h2>
+      <div class="inv-header-right">
+        <span class="quest-header-summary" id="quest-summary"></span>
+        <button class="inv-close" id="quest-panel-close">✕</button>
+      </div>
     </div>
-    <div class="panel-scroll">
-    <div id="quest-panel-content"></div>
-    </div>
+    <div id="quest-panel-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Village Progress Panel -->

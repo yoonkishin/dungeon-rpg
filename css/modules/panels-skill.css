@@ -117,185 +117,204 @@
 .skill-meta .cd { color: #ffa502; font-weight: 700; }
 .skill-slot-info { font-size: 7px; color: #555; }
 
-/* ── Quest Panel Cards ── */
-.quest-section-title {
-  color: #f1c40f;
-  font-size: 12px;
-  font-weight: bold;
-  margin: 10px 0 7px;
-}
-.quest-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.quest-card.primary {
-  border-color: rgba(241,196,15,0.28);
-  background: linear-gradient(180deg, rgba(241,196,15,0.10), rgba(255,255,255,0.03));
-}
-.quest-focus-card {
-  margin-bottom: 10px;
-}
-.quest-focus-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.quest-focus-title {
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-}
-.quest-focus-text {
-  color: #d9dee7;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.quest-summary-grid,
-.village-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-.quest-summary-item,
-.village-summary-item {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-  padding: 8px 9px;
-  min-width: 0;
-}
-.quest-summary-label,
-.village-summary-label {
-  display: block;
-  color: #97a3b6;
-  font-size: 9px;
-  margin-bottom: 4px;
-}
-.quest-summary-value,
-.village-summary-value {
-  display: block;
-  color: #f5f7fb;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-.quest-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  color: #ddd;
-  font-size: 11px;
-  padding: 5px 0;
-}
-.quest-row + .quest-row {
-  border-top: 1px solid rgba(255,255,255,0.05);
-}
-.quest-label {
-  color: #aaa;
-  min-width: 72px;
-}
-.quest-value {
-  color: #f1c40f;
-  font-weight: bold;
-  text-align: right;
-}
-.quest-desc {
-  color: #c1c8d3;
-  font-size: 11px;
-  line-height: 1.5;
-  margin-top: 6px;
-}
-.quest-desc-emphasis {
-  color: #dce3ee;
-}
-.quest-desc-emphasis.ready {
-  color: #f1c40f;
-}
-.quest-desc-emphasis.pending {
-  color: #9aa3b2;
-}
-.quest-chip-row {
-  margin-bottom: 4px;
-}
-.quest-inline-highlight {
-  color: #f1c40f;
-  font-weight: 700;
-}
-.quest-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 999px;
+/* ── Quest Panel — 2-column no-scroll ── */
+.quest-header-summary {
   font-size: 10px;
-  font-weight: bold;
-  margin-right: 5px;
-  margin-top: 4px;
-  background: rgba(255,255,255,0.06);
-  color: #ddd;
+  color: #aaa;
+  font-weight: 600;
 }
-.quest-chip.done {
-  background: rgba(46,204,113,0.16);
+.quest-focus-line {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-bottom: 6px;
+}
+.quest-focus-line.focus-ready {
+  background: rgba(46,204,113,0.10);
+  border: 1px solid rgba(46,204,113,0.2);
   color: #2ecc71;
 }
-.quest-chip.active {
-  background: rgba(52,152,219,0.18);
-  color: #74b9ff;
+.quest-focus-line.focus-active {
+  background: rgba(241,196,15,0.08);
+  border: 1px solid rgba(241,196,15,0.18);
+  color: #f4d35e;
 }
-.quest-chip.warn {
-  background: rgba(241,196,15,0.16);
-  color: #f1c40f;
+.quest-focus-line.focus-done {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #888;
 }
-.quest-dungeon-list {
+.quest-columns {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+.quest-left {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
+  overflow-y: auto;
 }
-.quest-dungeon-item {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px;
-  padding: 10px 12px;
+.quest-right {
+  width: 340px;
+  min-width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.quest-dungeon-item.next {
-  border-color: rgba(116,185,255,0.45);
-  box-shadow: inset 0 0 0 1px rgba(116,185,255,0.12);
+.quest-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
 }
-.quest-dungeon-item.done {
-  opacity: 0.82;
+.quest-compact-card {
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
 }
-.quest-dungeon-head {
+.quest-compact-card.main {
+  border-color: rgba(241,196,15,0.2);
+}
+.quest-compact-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 8px;
+  margin-top: 4px;
+}
+.qc-row {
   display: flex;
   justify-content: space-between;
+  font-size: 9px;
+  padding: 1px 0;
+}
+.qc-label { color: #777; }
+.qc-val { color: #ddd; font-weight: 600; }
+.qc-val.ready { color: #2ecc71; }
+.qc-val.gold { color: #f1c40f; }
+.quest-compact-desc {
+  font-size: 8px;
+  color: #666;
+  margin-top: 3px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.quest-compact-body {
+  font-size: 9px;
+  color: #666;
+  padding: 4px 0;
+}
+
+/* Sub quest rows */
+.quest-sub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.quest-sub-row {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  font-size: 9px;
 }
-.quest-dungeon-name {
-  color: #fff;
-  font-size: 12px;
-  font-weight: bold;
+.quest-sub-row.ready {
+  background: rgba(46,204,113,0.06);
 }
-.quest-dungeon-meta {
-  color: #9aa3b2;
-  font-size: 10px;
-  margin-top: 4px;
+.qs-name {
+  flex: 1;
+  min-width: 0;
+  color: #ccc;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.quest-dungeon-reward {
-  color: #ddd;
-  font-size: 11px;
-  margin-top: 6px;
+.qs-progress {
+  color: #888;
+  flex-shrink: 0;
+  font-size: 8px;
 }
-.quest-dungeon-boss {
-  color: #bbb;
-  font-size: 11px;
-  margin-top: 4px;
+.qs-status {
+  color: #f1c40f;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-size: 8px;
+}
+.quest-sub-row.ready .qs-status { color: #2ecc71; }
+
+/* Dungeon table */
+.quest-dungeon-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.quest-dg-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  font-size: 9px;
+  min-height: 22px;
+}
+.quest-dg-row.done {
+  opacity: 0.6;
+}
+.quest-dg-row.next {
+  border-color: rgba(116,185,255,0.35);
+  background: rgba(116,185,255,0.06);
+}
+.dg-name {
+  color: #eee;
+  font-weight: 700;
+  width: 64px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dg-level {
+  color: #888;
+  width: 32px;
+  flex-shrink: 0;
+}
+.dg-boss {
+  color: #aaa;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dg-reward {
+  color: #7dd3fc;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+.dg-status {
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
 }
 .village-overview-card {
   margin-bottom: 10px;
