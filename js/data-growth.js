@@ -541,8 +541,8 @@ function getPlayerEmblemTrialStatus(id) {
   const lineOk = (player.classLine || 'infantry') === emblem.targetLine;
   const attackValue = playerAtk();
   const defenseValue = playerDef();
-  const attackOk = attackValue >= emblem.requiredAttack;
-  const defenseOk = defenseValue >= emblem.requiredDefense;
+  const attackOk = true;
+  const defenseOk = true;
   return {
     emblem,
     owned: playerHasEmblem(id),
