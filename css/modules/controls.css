@@ -106,15 +106,15 @@
   pointer-events: none;
   z-index: 1;
 }
-#skill-slot-0 { bottom: 132px; right: 224px; }
-#skill-slot-1 { bottom: 152px; right: 160px; }
-#skill-slot-2 { bottom: 152px; right: 96px; }
-#skill-slot-3 { bottom: 132px; right: 32px; }
+#skill-slot-0 { bottom: 156px; right: 154px; }
+#skill-slot-1 { bottom: 178px; right: 82px; }
+#skill-slot-2 { bottom: 108px; right: 210px; }
+#skill-slot-3 { bottom: 44px; right: 224px; }
 
 /* ── Swap Button ── */
 #skill-swap-btn {
   position: absolute;
-  bottom: 138px; right: 294px;
+  bottom: 108px; right: 292px;
   width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(10,12,20,0.88);
@@ -140,13 +140,13 @@
     height: 54px;
     font-size: 20px;
   }
-  #skill-slot-0 { bottom: 122px; right: 214px; }
-  #skill-slot-1 { bottom: 140px; right: 154px; }
-  #skill-slot-2 { bottom: 140px; right: 94px; }
-  #skill-slot-3 { bottom: 122px; right: 34px; }
+  #skill-slot-0 { bottom: 144px; right: 146px; }
+  #skill-slot-1 { bottom: 164px; right: 82px; }
+  #skill-slot-2 { bottom: 102px; right: 196px; }
+  #skill-slot-3 { bottom: 48px; right: 208px; }
   #skill-swap-btn {
-    bottom: 126px;
-    right: 278px;
+    bottom: 102px;
+    right: 270px;
     width: 40px;
     height: 40px;
     font-size: 11px;
