@@ -49,6 +49,99 @@ const ITEMS = {
   event1:    { id:'event1',    name:'행운의 부적', type:'event',     atk:0,  def:0,  price:500, color:'#f1c40f', icon:'🍀', critBonus:5, goldBonus:20 },
 };
 
+[
+  { id:'weapon_t4', name:'기사의 검', type:'weapon', atk:40, def:4, price:260, color:'#95a5a6', icon:'⚔️', tierNumber:4 },
+  { id:'weapon_t5', name:'로열 블레이드', type:'weapon', atk:70, def:6, price:520, color:'#d35400', icon:'⚔️', tierNumber:5 },
+  { id:'weapon_t6', name:'시시리오 랜스', type:'weapon', atk:120, def:10, price:1100, color:'#9b59b6', icon:'🗡️', tierNumber:6 },
+  { id:'weapon_t7', name:'황혼의 전쟁검', type:'weapon', atk:180, def:14, price:2100, color:'#8e44ad', icon:'⚔️', tierNumber:7 },
+  { id:'weapon_t8', name:'엔트리아 성검', type:'weapon', atk:260, def:20, price:4200, color:'#f1c40f', icon:'⚔️', tierNumber:8, critBonus:4 },
+  { id:'weapon_t9', name:'그랑 소드', type:'weapon', atk:360, def:26, price:8600, color:'#1abc9c', icon:'⚔️', tierNumber:9, critBonus:6 },
+  { id:'weapon_t10', name:'그랜드 소드', type:'weapon', atk:520, def:34, price:16000, color:'#e74c3c', icon:'⚔️', tierNumber:10, critBonus:8 },
+  { id:'armor_t4', name:'기사 갑옷', type:'armor', atk:0, def:28, price:260, color:'#7f8c8d', icon:'🧥', tierNumber:4 },
+  { id:'armor_t5', name:'로열 플레이트', type:'armor', atk:6, def:46, price:560, color:'#5d6d7e', icon:'🛡️', tierNumber:5 },
+  { id:'armor_t6', name:'시시리오 워메일', type:'armor', atk:10, def:70, price:1200, color:'#6c3483', icon:'🧥', tierNumber:6 },
+  { id:'armor_t7', name:'용린 갑주', type:'armor', atk:14, def:96, price:2200, color:'#884ea0', icon:'🛡️', tierNumber:7 },
+  { id:'armor_t8', name:'엔트리아 성갑', type:'armor', atk:18, def:132, price:4400, color:'#d4ac0d', icon:'🧥', tierNumber:8 },
+  { id:'armor_t9', name:'그랑 아머', type:'armor', atk:22, def:170, price:9000, color:'#16a085', icon:'🛡️', tierNumber:9 },
+  { id:'armor_t10', name:'그랜드 아머', type:'armor', atk:28, def:220, price:18000, color:'#c0392b', icon:'🧥', tierNumber:10 },
+  { id:'helmet_t4', name:'기사 투구', type:'helmet', atk:0, def:14, price:180, color:'#95a5a6', icon:'⛑️', tierNumber:4 },
+  { id:'helmet_t6', name:'시시리오 투구', type:'helmet', atk:4, def:26, price:900, color:'#8e44ad', icon:'⛑️', tierNumber:6 },
+  { id:'helmet_t8', name:'엔트리아 관', type:'helmet', atk:10, def:40, price:3200, color:'#f1c40f', icon:'👑', tierNumber:8, critBonus:3 },
+  { id:'helmet_t10', name:'그랜드 헬름', type:'helmet', atk:18, def:64, price:12000, color:'#e74c3c', icon:'👑', tierNumber:10, critBonus:5 },
+  { id:'boots_t4', name:'기사 장화', type:'boots', atk:0, def:10, price:170, color:'#8b6914', icon:'👢', tierNumber:4, speedBonus:0.12 },
+  { id:'boots_t6', name:'시시리오 장화', type:'boots', atk:2, def:18, price:850, color:'#7d3c98', icon:'👢', tierNumber:6, speedBonus:0.18 },
+  { id:'boots_t8', name:'엔트리아 장화', type:'boots', atk:6, def:28, price:3000, color:'#d4ac0d', icon:'👢', tierNumber:8, speedBonus:0.24 },
+  { id:'boots_t10', name:'그랜드 장화', type:'boots', atk:10, def:42, price:11000, color:'#c0392b', icon:'👢', tierNumber:10, speedBonus:0.32 },
+  { id:'shield_t4', name:'기사 방패', type:'shield', atk:0, def:20, price:220, color:'#95a5a6', icon:'🛡️', tierNumber:4 },
+  { id:'shield_t6', name:'시시리오 방패', type:'shield', atk:4, def:36, price:980, color:'#8e44ad', icon:'🛡️', tierNumber:6 },
+  { id:'shield_t8', name:'엔트리아 방패', type:'shield', atk:8, def:56, price:3600, color:'#f1c40f', icon:'🛡️', tierNumber:8 },
+  { id:'shield_t10', name:'그랜드 방패', type:'shield', atk:14, def:88, price:13000, color:'#e74c3c', icon:'🛡️', tierNumber:10 },
+  { id:'ring_t5', name:'왕실 공격 반지', type:'accessory', atk:22, def:8, price:900, color:'#e67e22', icon:'💍', tierNumber:5 },
+  { id:'ring_t7', name:'용맹의 문양 반지', type:'accessory', atk:38, def:14, price:2400, color:'#9b59b6', icon:'💍', tierNumber:7, critBonus:4 },
+  { id:'ring_t9', name:'그랑 파워 링', type:'accessory', atk:56, def:22, price:9200, color:'#1abc9c', icon:'💍', tierNumber:9, critBonus:6 },
+  { id:'amulet_t5', name:'수호 부적', type:'accessory', atk:10, def:24, price:900, color:'#3498db', icon:'📿', tierNumber:5 },
+  { id:'amulet_t7', name:'황혼 성휘 부적', type:'accessory', atk:18, def:42, price:2600, color:'#8e44ad', icon:'📿', tierNumber:7 },
+  { id:'amulet_t9', name:'그랜드 수호 부적', type:'accessory', atk:26, def:68, price:9800, color:'#16a085', icon:'📿', tierNumber:9, goldBonus:15 },
+  { id:'potion_t6', name:'상급 치유 비약', type:'potion', atk:0, def:0, price:220, color:'#c0392b', icon:'🧪', tierNumber:6, heal:260 },
+  { id:'potion_t8', name:'엔트리아 치유 영약', type:'potion', atk:0, def:0, price:520, color:'#8e44ad', icon:'🧪', tierNumber:8, heal:520 },
+  { id:'potion_t10', name:'그랜드 회복 영약', type:'potion', atk:0, def:0, price:1100, color:'#e74c3c', icon:'🧪', tierNumber:10, heal:960 },
+].forEach(item => { ITEMS[item.id] = item; });
+
+const SHOP_PROGRESS_BANDS = {
+  general: {
+    1: ['potion_hp', 'potion_hp2'],
+    2: ['potion_hp', 'potion_hp2', 'potion_t6'],
+    3: ['potion_hp2', 'potion_t6', 'potion_t8'],
+    4: ['potion_t6', 'potion_t8', 'potion_t10'],
+    5: ['potion_t8', 'potion_t10'],
+  },
+  weapon: {
+    1: ['sword1', 'sword2', 'dagger1', 'axe1', 'weapon_t4'],
+    2: ['weapon_t4', 'weapon_t5'],
+    3: ['weapon_t6', 'weapon_t7'],
+    4: ['weapon_t8'],
+    5: ['weapon_t9', 'weapon_t10'],
+  },
+  armor: {
+    1: ['leather1', 'iron1', 'robe1', 'helmet1', 'helmet2', 'boots1', 'boots2', 'shield1', 'shield2'],
+    2: ['armor_t4', 'armor_t5', 'helmet_t4', 'boots_t4', 'shield_t4'],
+    3: ['armor_t6', 'armor_t7', 'helmet_t6', 'boots_t6', 'shield_t6'],
+    4: ['armor_t8', 'helmet_t8', 'boots_t8', 'shield_t8'],
+    5: ['armor_t9', 'armor_t10', 'helmet_t10', 'boots_t10', 'shield_t10'],
+  },
+  accessory: {
+    1: ['ring_atk', 'ring_def', 'amulet1', 'event1'],
+    2: ['ring_t5', 'amulet_t5', 'event1'],
+    3: ['ring_t7', 'amulet_t7', 'event1'],
+    4: ['ring_t7', 'amulet_t7', 'ring_t9'],
+    5: ['ring_t9', 'amulet_t9', 'event1'],
+  },
+};
+
+function getShopProgressBand() {
+  const tier = player && (player.tier || player.classRank) || 1;
+  if (tier >= 9) return 5;
+  if (tier >= 8) return 4;
+  if (tier >= 6) return 3;
+  if (tier >= 4) return 2;
+  return 1;
+}
+
+function getNpcShopItems(npc) {
+  if (!npc) return [];
+  const band = getShopProgressBand();
+  const base = Array.isArray(npc.shopItems) ? npc.shopItems.slice() : [];
+  const dynamic = SHOP_PROGRESS_BANDS[npc.id] || null;
+  if (!dynamic) return base;
+  const merged = [];
+  for (let idx = 1; idx <= band; idx++) {
+    (dynamic[idx] || []).forEach(itemId => {
+      if (!merged.includes(itemId)) merged.push(itemId);
+    });
+  }
+  return merged;
+}
+
 const DROP_TABLE = {
   0: [{ itemId:'dagger1', chance:0.08 }, { itemId:'potion_hp', chance:0.15 }],
   1: [{ itemId:'dagger1', chance:0.12 }, { itemId:'leather1', chance:0.06 }, { itemId:'potion_hp', chance:0.15 }, { itemId:'helmet1', chance:0.05 }, { itemId:'boots1', chance:0.05 }],
@@ -60,6 +153,29 @@ const DROP_TABLE = {
   7: [{ itemId:'axe1', chance:0.12 }, { itemId:'iron1', chance:0.12 }, { itemId:'ring_atk', chance:0.08 }, { itemId:'ring_def', chance:0.08 }, { itemId:'potion_hp2', chance:0.20 }, { itemId:'helmet2', chance:0.07 }, { itemId:'boots2', chance:0.07 }, { itemId:'shield2', chance:0.08 }, { itemId:'amulet1', chance:0.06 }, { itemId:'event1', chance:0.05 }],
   8: [{ itemId:'axe1', chance:0.15 }, { itemId:'iron1', chance:0.15 }, { itemId:'robe1', chance:0.10 }, { itemId:'ring_atk', chance:0.10 }, { itemId:'ring_def', chance:0.10 }, { itemId:'potion_hp2', chance:0.25 }, { itemId:'helmet2', chance:0.08 }, { itemId:'boots2', chance:0.08 }, { itemId:'shield2', chance:0.10 }, { itemId:'amulet1', chance:0.08 }, { itemId:'event1', chance:0.08 }],
 };
+
+const DUNGEON_DROP_POOLS = {
+  0: [{ itemId: 'weapon_t4', chance: 0.05 }, { itemId: 'armor_t4', chance: 0.05 }, { itemId: 'helmet_t4', chance: 0.04 }],
+  1: [{ itemId: 'weapon_t4', chance: 0.06 }, { itemId: 'armor_t4', chance: 0.05 }, { itemId: 'ring_t5', chance: 0.03 }],
+  2: [{ itemId: 'weapon_t5', chance: 0.06 }, { itemId: 'armor_t5', chance: 0.05 }, { itemId: 'amulet_t5', chance: 0.04 }],
+  3: [{ itemId: 'weapon_t6', chance: 0.07 }, { itemId: 'armor_t6', chance: 0.06 }, { itemId: 'shield_t6', chance: 0.05 }],
+  4: [{ itemId: 'weapon_t7', chance: 0.07 }, { itemId: 'armor_t7', chance: 0.06 }, { itemId: 'ring_t7', chance: 0.04 }],
+  5: [{ itemId: 'weapon_t8', chance: 0.08 }, { itemId: 'armor_t8', chance: 0.07 }, { itemId: 'helmet_t8', chance: 0.05 }, { itemId: 'potion_t8', chance: 0.1 }],
+  6: [{ itemId: 'weapon_t8', chance: 0.09 }, { itemId: 'shield_t8', chance: 0.07 }, { itemId: 'amulet_t7', chance: 0.05 }],
+  7: [{ itemId: 'weapon_t9', chance: 0.09 }, { itemId: 'armor_t9', chance: 0.08 }, { itemId: 'ring_t9', chance: 0.06 }],
+  8: [{ itemId: 'weapon_t10', chance: 0.1 }, { itemId: 'armor_t10', chance: 0.08 }, { itemId: 'helmet_t10', chance: 0.06 }, { itemId: 'amulet_t9', chance: 0.05 }, { itemId: 'potion_t10', chance: 0.12 }],
+};
+
+function getDungeonDropPool() {
+  if (currentDungeonId === undefined || currentDungeonId === null || currentDungeonId < 0) return [];
+  return DUNGEON_DROP_POOLS[currentDungeonId] || [];
+}
+
+function getDungeonRewardMultiplier() {
+  const multipliers = [1, 1.5, 2.5, 4, 6, 10, 16, 30, 60];
+  if (currentDungeonId === undefined || currentDungeonId === null || currentDungeonId < 0) return 1;
+  return multipliers[currentDungeonId] || 1;
+}
 
 const EQUIP_SLOTS = ['weapon','armor','helmet','boots','accessory1','accessory2','shield','event'];
 

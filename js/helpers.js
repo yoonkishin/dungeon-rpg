@@ -90,7 +90,7 @@ function addDamageNumber(x, y, amount, type) {
 }
 
 function findBestPotionEntry() {
-  const preferredIds = ['potion_hp2', 'potion_hp'];
+  const preferredIds = ['potion_t10', 'potion_t8', 'potion_t6', 'potion_hp2', 'potion_hp'];
   for (const itemId of preferredIds) {
     const entry = inventory.find(item => item.itemId === itemId);
     if (entry) return entry;
@@ -137,3 +137,78 @@ function useBestPotion(options = {}) {
   if (!entry) return false;
   return consumePotionEntry(entry, options);
 }
+
+window.__rpgDebug = {
+  addGold(amount = 1000) {
+    player.gold += amount;
+    updateHUD();
+    autoSave();
+  },
+  addItem(itemId, count = 1) {
+    for (let i = 0; i < count; i++) inventory.push(createItemInstance(itemId));
+    if (invOpen && typeof renderInventory === 'function') renderInventory();
+    autoSave();
+  },
+  grantXp(amount = 1000) {
+    if (typeof gainXP === 'function') gainXP(amount);
+  },
+  setLine(lineId = 'infantry') {
+    player.classLine = lineId;
+    syncPlayerGrowthState();
+    updateHUD();
+    autoSave();
+  },
+  setLevel(level = 36) {
+    player.level = level;
+    syncPlayerGrowthState();
+    player.xp = 0;
+    player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+    updateHUD();
+    autoSave();
+  },
+  prepareEmblemTrial(lineId = 'infantry') {
+    player.classLine = lineId;
+    player.level = 36;
+    player.classRank = 7;
+    player.tier = 7;
+    player.gold += 20000;
+    ['weapon_t8', 'armor_t8', 'helmet_t8', 'boots_t8', 'shield_t8', 'ring_t7', 'amulet_t7'].forEach(itemId => {
+      inventory.push(createItemInstance(itemId));
+    });
+    syncPlayerGrowthState();
+    updateHUD();
+    autoSave();
+  },
+  prepareFusion(masterId = 'battle_master_emblem') {
+    const emblem = getEmblemDef(masterId);
+    if (!emblem || !Array.isArray(emblem.fusionMaterials)) return false;
+    player.level = 36;
+    player.classRank = 7;
+    player.tier = 7;
+    emblem.fusionMaterials.forEach(id => {
+      if (!player.emblemIds.includes(id)) player.emblemIds.push(id);
+    });
+    syncPlayerGrowthState();
+    ensurePlayerEmblemBonusesApplied();
+    autoSave();
+    return true;
+  },
+  prepareTier(tier = 8, lineId = 'battleMaster') {
+    const targets = {
+      8: { level: 100, gear: ['weapon_t8', 'armor_t8', 'helmet_t8', 'boots_t8', 'shield_t8', 'ring_t7', 'amulet_t7'] },
+      9: { level: 200, gear: ['weapon_t9', 'armor_t9', 'boots_t10', 'shield_t8', 'ring_t9', 'amulet_t9'] },
+      10: { level: 300, gear: ['weapon_t10', 'armor_t10', 'helmet_t10', 'boots_t10', 'shield_t10', 'ring_t9', 'amulet_t9'] },
+    };
+    const target = targets[tier];
+    if (!target) return false;
+    player.classLine = lineId;
+    player.level = target.level;
+    player.classRank = tier;
+    player.tier = tier;
+    target.gear.forEach(itemId => inventory.push(createItemInstance(itemId)));
+    syncPlayerGrowthState();
+    updateHUD();
+    autoSave();
+    return true;
+  },
+};

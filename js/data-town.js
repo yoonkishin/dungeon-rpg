@@ -13,7 +13,7 @@ const TOWN_NPCS = [
   { id:'training', name:'🏯 수련의 방', x:14*40+20, y:10*40+20, color:'#f8c471', hat:'#8e5a2b', isTrainingRoom:true,
     dialogue:['승급 자격이 생기면 이곳에서 클래스를 올릴 수 있습니다.'] },
   { id:'emblem_room', name:'🜂 문장의방', x:5*40+20, y:13*40+20, color:'#d6b3ff', hat:'#6c5ce7', isEmblemRoom:true,
-    dialogue:['7단 Lv35와 충분한 전투 능력을 갖춘 자만 이곳의 시험에 도전할 수 있습니다.'] },
+    dialogue:['7단 Lv36과 충분한 전투 능력을 갖춘 자만 이곳의 시험에 도전할 수 있습니다.'] },
 ];
 
 const TOWN_UPGRADES = {

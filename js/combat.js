@@ -418,8 +418,9 @@ function gainXP(amount) {
 function killEnemy(e) {
   e.dead = true;
   AudioSystem.sfx.enemyDeath();
-  gainXP(e.xp);
-  const earnedGold = Math.max(1, Math.floor(e.gold * getVillageGoldMultiplier()));
+  const rewardMultiplier = getDungeonRewardMultiplier();
+  gainXP(Math.max(1, Math.floor(e.xp * rewardMultiplier)));
+  const earnedGold = Math.max(1, Math.floor(e.gold * getVillageGoldMultiplier() * rewardMultiplier));
   player.gold += earnedGold;
   totalGoldEarned += earnedGold;
   totalEnemiesKilled++;
@@ -429,6 +430,21 @@ function killEnemy(e) {
       droppedItems.push({ x: e.x + (Math.random()-0.5)*20, y: e.y + (Math.random()-0.5)*20, itemId: d.itemId, timer: 600 });
     }
   });
+  getDungeonDropPool().forEach(d => {
+    if (Math.random() < d.chance) {
+      droppedItems.push({ x: e.x + (Math.random()-0.5)*24, y: e.y + (Math.random()-0.5)*24, itemId: d.itemId, timer: 800 });
+    }
+  });
+  if (e.isBoss) {
+    const rewardPool = getDungeonDropPool();
+    if (rewardPool.length > 0) {
+      const guaranteed = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+      droppedItems.push({ x: e.x + (Math.random()-0.5)*18, y: e.y + (Math.random()-0.5)*18, itemId: guaranteed.itemId, timer: 1200 });
+      if (typeof showToast === 'function' && ITEMS[guaranteed.itemId]) {
+        setTimeout(() => showToast('보스 전리품: ' + ITEMS[guaranteed.itemId].name), 200);
+      }
+    }
+  }
   addParticles(e.x, e.y, e.color, 8);
   addParticles(e.x, e.y, '#fff', 4);
   if (e.isBoss) {

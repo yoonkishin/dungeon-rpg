@@ -191,3 +191,61 @@
   transition: transform 0.1s;
 }
 #settings-close:active { transform: scale(0.92); }
+
+/* ── Developer Panel ── */
+.developer-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.developer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.developer-summary-item {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.developer-summary-item .dev-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.developer-summary-item .dev-value {
+  font-size: 14px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.developer-action-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 12px;
+  background: linear-gradient(135deg, rgba(241,196,15,0.95), rgba(243,156,18,0.95));
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.developer-action-btn:active {
+  transform: scale(0.98);
+}
+
+.developer-help-text {
+  color: #bbb;
+  font-size: 12px;
+  line-height: 1.5;
+}

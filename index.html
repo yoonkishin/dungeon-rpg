@@ -114,6 +114,9 @@
       <div class="settings-row" data-setting="reset">
         <span class="s-icon">🗑️</span><span class="s-label">데이터 초기화</span><span class="s-toggle">→</span>
       </div>
+      <div class="settings-row" data-setting="developer">
+        <span class="s-icon">🛠️</span><span class="s-label">개발 메뉴</span><span class="s-toggle">→</span>
+      </div>
       <div class="settings-row" data-setting="exit">
         <span class="s-icon">🚪</span><span class="s-label">게임 종료</span><span class="s-toggle"></span>
       </div>
@@ -141,7 +144,7 @@
       <div class="equip-character">
         <div class="equip-slots-grid">
           <div class="equip-row equip-row-1">
-            <div class="equip-slot" id="eq-helmet" data-slot="helmet"><span class="slot-icon">⛑️</span><span class="slot-label">투구</span></div>
+            <div class="equip-slot" id="eq-helmet" data-slot="helmet"><span class="slot-icon">⛑️</span><span class="slot-label">머리/문장</span></div>
           </div>
           <div class="equip-row equip-row-2">
             <div class="equip-slot" id="eq-weapon" data-slot="weapon"><span class="slot-icon">🗡️</span><span class="slot-label">무기</span></div>
@@ -294,6 +297,18 @@
       </div>
     </div>
     <div id="emblem-room-panel-content" style="flex:1;min-height:0;"></div>
+  </div>
+
+  <!-- Developer Panel -->
+  <div id="developer-panel" class="overlay-panel">
+    <div class="inv-header">
+      <h2>개발 메뉴</h2>
+      <div class="inv-header-right">
+        <span class="developer-header-info" id="developer-summary"></span>
+        <button class="inv-close" id="developer-panel-close">✕</button>
+      </div>
+    </div>
+    <div id="developer-panel-content" style="flex:1;min-height:0;"></div>
   </div>
 
   <!-- Dialogue Panel -->

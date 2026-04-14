@@ -55,6 +55,7 @@ const player = {
   classHistory: ['infantry_rank1'],
   emblemIds: [],
   appliedEmblemBonusIds: [],
+  activeEmblemId: null,
   masterEmblemId: null,
   emblemFusionHistory: [],
   promotionPending: false,

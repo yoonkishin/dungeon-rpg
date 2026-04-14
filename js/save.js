@@ -48,6 +48,7 @@ function serializePlayer() {
     out[k] = Array.isArray(player[k]) ? player[k].slice() : [];
   }
   // Nullable singleton — preserve explicit null when absent/falsy.
+  out.activeEmblemId = player.activeEmblemId || null;
   out.masterEmblemId = player.masterEmblemId || null;
   return out;
 }
@@ -109,11 +110,24 @@ function loadPlayerState(p) {
   player.classHistory = Array.isArray(p.classHistory) && p.classHistory.length ? p.classHistory.slice() : [player.currentClassKey];
   player.emblemIds = Array.isArray(p.emblemIds) ? p.emblemIds.filter(id => !!getEmblemDef(id)) : [];
   player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
+  player.activeEmblemId = p.activeEmblemId && getEmblemDef(p.activeEmblemId) && player.emblemIds.includes(p.activeEmblemId)
+    ? p.activeEmblemId
+    : null;
   player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
   player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
   player.xpNext = hasOwn(p, 'xpNext') ? p.xpNext : getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+  if (player.appliedEmblemBonusIds.length && typeof removeLegacyAppliedEmblemBonuses === 'function') {
+    removeLegacyAppliedEmblemBonuses(player.appliedEmblemBonusIds);
+    player.appliedEmblemBonusIds = [];
+  }
+  if (!player.activeEmblemId && player.masterEmblemId && player.emblemIds.includes(player.masterEmblemId)) {
+    player.activeEmblemId = player.masterEmblemId;
+  } else if (!player.activeEmblemId && player.emblemIds.length > 0) {
+    player.activeEmblemId = player.emblemIds[0];
+  }
   if (p.promotionBonusRankApplied === undefined && player.classRank > 1) {
-    applyPromotionBonus(getPromotionBonusDelta(player.classLine, 1, player.classRank));
+    const baseRank = getGrowthLine(player.classLine).ranks[0].rank;
+    applyPromotionBonus(getPromotionBonusDelta(player.classLine, baseRank, player.classRank));
     player.promotionBonusRankApplied = player.classRank;
   }
   if (typeof ensurePlayerEmblemBonusesApplied === 'function') ensurePlayerEmblemBonusesApplied();
@@ -155,6 +169,10 @@ function loadInventoryState(data) {
     } else {
       equipped.accessory1 = loadSlot(readValue(data.equipped, 'accessory', null));
       equipped.accessory2 = null;
+    }
+    if (player.activeEmblemId && equipped.helmet) {
+      inventory.push(equipped.helmet);
+      equipped.helmet = null;
     }
   }
 }

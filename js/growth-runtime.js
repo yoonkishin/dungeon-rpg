@@ -24,15 +24,82 @@ function removeEmblemBonus(emblem) {
   player.critChance = Math.max(0, player.critChance - (emblem.bonus.critChance || 0));
 }
 
-function ensurePlayerEmblemBonusesApplied() {
-  if (!Array.isArray(player.appliedEmblemBonusIds)) player.appliedEmblemBonusIds = [];
-  (player.emblemIds || []).forEach(id => {
-    if (player.appliedEmblemBonusIds.includes(id)) return;
+function removeLegacyAppliedEmblemBonuses(appliedIds) {
+  (appliedIds || []).forEach(id => {
     const emblem = getEmblemDef(id);
     if (!emblem) return;
-    applyEmblemBonus(emblem);
-    player.appliedEmblemBonusIds.push(id);
+    removeEmblemBonus(emblem);
   });
+}
+
+function getActivePlayerEmblem() {
+  if (!player.activeEmblemId) return null;
+  const emblem = getEmblemDef(player.activeEmblemId);
+  if (!emblem || !playerHasEmblem(player.activeEmblemId)) return null;
+  return emblem;
+}
+
+function ensurePlayerEmblemBonusesApplied() {
+  if (!Array.isArray(player.appliedEmblemBonusIds)) player.appliedEmblemBonusIds = [];
+  if (!Array.isArray(player.emblemIds)) player.emblemIds = [];
+  if (player.activeEmblemId && !playerHasEmblem(player.activeEmblemId)) {
+    player.activeEmblemId = null;
+  }
+  if (!player.activeEmblemId && player.masterEmblemId && playerHasEmblem(player.masterEmblemId)) {
+    player.activeEmblemId = player.masterEmblemId;
+  } else if (!player.activeEmblemId && player.emblemIds.length > 0) {
+    player.activeEmblemId = player.emblemIds[0];
+  }
+  const desiredIds = player.activeEmblemId ? [player.activeEmblemId] : [];
+  player.appliedEmblemBonusIds
+    .filter(id => !desiredIds.includes(id))
+    .forEach(id => removeEmblemBonus(getEmblemDef(id)));
+  desiredIds
+    .filter(id => !player.appliedEmblemBonusIds.includes(id))
+    .forEach(id => applyEmblemBonus(getEmblemDef(id)));
+  player.appliedEmblemBonusIds = desiredIds.slice();
+}
+
+function equipPlayerEmblem(id, options = {}) {
+  if (!playerHasEmblem(id)) return false;
+  if (player.activeEmblemId && player.activeEmblemId !== id) {
+    const current = getEmblemDef(player.activeEmblemId);
+    if (current) removeEmblemBonus(current);
+  }
+  if (equipped.helmet) {
+    inventory.push(equipped.helmet);
+    equipped.helmet = null;
+  }
+  player.activeEmblemId = id;
+  const emblem = getEmblemDef(id);
+  if (!player.appliedEmblemBonusIds.includes(id) && emblem) {
+    applyEmblemBonus(emblem);
+  }
+  player.appliedEmblemBonusIds = [id];
+  if (!options.silent && typeof showToast === 'function') {
+    showToast((emblem ? emblem.name : '문장') + ' 장착');
+  }
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof renderInventory === 'function' && invOpen) renderInventory();
+  if (typeof renderProfile === 'function' && profileOpen) renderProfile();
+  autoSave();
+  return true;
+}
+
+function unequipPlayerEmblem(options = {}) {
+  if (!player.activeEmblemId) return false;
+  const emblem = getEmblemDef(player.activeEmblemId);
+  if (emblem) removeEmblemBonus(emblem);
+  player.activeEmblemId = null;
+  player.appliedEmblemBonusIds = [];
+  if (!options.silent && typeof showToast === 'function') {
+    showToast((emblem ? emblem.name : '문장') + ' 해제');
+  }
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof renderInventory === 'function' && invOpen) renderInventory();
+  if (typeof renderProfile === 'function' && profileOpen) renderProfile();
+  autoSave();
+  return true;
 }
 
 function grantPlayerEmblem(id) {
@@ -40,6 +107,7 @@ function grantPlayerEmblem(id) {
   if (!emblem || emblem.type !== EMBLEM_TYPES.unit || playerHasEmblem(id) || !canPlayerEnterEmblemTrial(id)) return false;
   if (!Array.isArray(player.emblemIds)) player.emblemIds = [];
   player.emblemIds.push(id);
+  if (!player.activeEmblemId) equipPlayerEmblem(id, { silent: true });
   ensurePlayerEmblemBonusesApplied();
   autoSave();
   return true;
@@ -66,10 +134,11 @@ function fusePlayerMasterEmblem(id) {
   const emblem = getEmblemDef(id);
   if (!emblem || emblem.type !== EMBLEM_TYPES.master || !canPlayerFuseMasterEmblem(id)) return false;
   emblem.fusionMaterials.forEach(materialId => {
-    const material = getEmblemDef(materialId);
-    if (player.appliedEmblemBonusIds && player.appliedEmblemBonusIds.includes(materialId)) {
-      removeEmblemBonus(material);
-      player.appliedEmblemBonusIds = player.appliedEmblemBonusIds.filter(entry => entry !== materialId);
+    if (player.activeEmblemId === materialId) {
+      const current = getEmblemDef(materialId);
+      if (current) removeEmblemBonus(current);
+      player.activeEmblemId = null;
+      player.appliedEmblemBonusIds = [];
     }
     player.emblemIds = (player.emblemIds || []).filter(entry => entry !== materialId);
   });
@@ -78,7 +147,12 @@ function fusePlayerMasterEmblem(id) {
   player.masterEmblemId = id;
   if (!Array.isArray(player.emblemFusionHistory)) player.emblemFusionHistory = [];
   player.emblemFusionHistory.push(id);
+  const promotedTier = typeof promotePlayerToMasterLine === 'function' ? promotePlayerToMasterLine(emblem.targetLine) : null;
+  equipPlayerEmblem(id, { silent: true });
   ensurePlayerEmblemBonusesApplied();
+  if (promotedTier && typeof showTierBanner === 'function') {
+    showTierBanner(promotedTier);
+  }
   autoSave();
   return true;
 }

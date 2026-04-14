@@ -13,7 +13,7 @@ let invOpen = false;
 let activeBagFilter = 'all';
 
 const EQUIP_SLOT_META = {
-  helmet: { icon: '\u26D1\uFE0F', label: '투구' },
+  helmet: { icon: '\u26D1\uFE0F', label: '머리/문장' },
   weapon: { icon: '\uD83D\uDDE1\uFE0F', label: '무기' },
   armor: { icon: '\uD83E\uDDE5', label: '갑옷' },
   shield: { icon: '\uD83D\uDEE1\uFE0F', label: '방패' },
@@ -38,6 +38,12 @@ const SLOT_TYPE_COLOR = {
 // Price-based tier for bag cells
 function getItemTier(item) {
   if (!item) return 'common';
+  if (item.tierNumber) {
+    if (item.tierNumber >= 10) return 'legendary';
+    if (item.tierNumber >= 8) return 'epic';
+    if (item.tierNumber >= 6) return 'rare';
+    if (item.tierNumber >= 4) return 'uncommon';
+  }
   const price = item.price || 0;
   if (price >= 500) return 'legendary';
   if (price > 300) return 'epic';
@@ -177,6 +183,9 @@ function equipInventoryItem(invEntry) {
   if (invIdx === -1) return;
   const previous = equipped[slot];
   inventory.splice(invIdx, 1);
+  if (slot === 'helmet' && player.activeEmblemId && typeof unequipPlayerEmblem === 'function') {
+    unequipPlayerEmblem({ silent: true });
+  }
   equipped[slot] = invEntry;
   if (previous) inventory.push(previous);
   AudioSystem.sfx.pickup();
@@ -380,14 +389,17 @@ function renderInventory() {
     if (!slotEl) return;
     const inst = equipped[slot];
     const item = inst ? ITEMS[inst.itemId] : null;
+    const activeEmblem = slot === 'helmet' && !item && typeof getActivePlayerEmblem === 'function' ? getActivePlayerEmblem() : null;
     const iconEl = slotEl.querySelector('.slot-icon');
     const labelEl = slotEl.querySelector('.slot-label');
-    slotEl.classList.toggle('equipped', !!item);
-    if (iconEl) iconEl.textContent = item ? item.icon : EQUIP_SLOT_META[slot].icon;
+    slotEl.classList.toggle('equipped', !!item || !!activeEmblem);
+    if (iconEl) iconEl.textContent = item ? item.icon : (activeEmblem ? '✦' : EQUIP_SLOT_META[slot].icon);
     if (labelEl) {
-      labelEl.textContent = EQUIP_SLOT_META[slot].label;
+      labelEl.textContent = item ? item.name : (activeEmblem ? activeEmblem.name : EQUIP_SLOT_META[slot].label);
     }
-    slotEl.title = item ? (EQUIP_SLOT_META[slot].label + ': ' + item.name) : EQUIP_SLOT_META[slot].label;
+    slotEl.title = item
+      ? (EQUIP_SLOT_META[slot].label + ': ' + item.name)
+      : (activeEmblem ? (EQUIP_SLOT_META[slot].label + ': ' + activeEmblem.name) : EQUIP_SLOT_META[slot].label);
   });
 
   // Render stats bar

@@ -64,6 +64,62 @@ function buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, grow
   return html;
 }
 
+function getBaseLineSwitchOptions() {
+  return [
+    'infantry',
+    'flyingKnight',
+    'cavalry',
+    'navalUnit',
+    'lancer',
+    'archer',
+    'monk',
+    'priest',
+    'mage',
+    'darkPriest',
+  ];
+}
+
+function canSwitchBaseLine() {
+  return !player.masterEmblemId && (player.tier || player.classRank || 1) >= 7;
+}
+
+function switchPlayerGrowthLine(lineId) {
+  if (!canSwitchBaseLine()) {
+    showToast('지금은 라인을 바꿀 수 없습니다');
+    return;
+  }
+  if (player.classLine === lineId) return;
+  player.classLine = lineId;
+  syncPlayerGrowthState();
+  showToast(getOriginalLineLabel(lineId) + ' 라인으로 전환');
+  updateHUD();
+  if (profileOpen) renderProfile();
+  if (emblemRoomPanelOpen) renderEmblemRoomPanel();
+  autoSave();
+  renderTrainingPanel();
+}
+
+function buildTrainingLineSwitchCard() {
+  if (!canSwitchBaseLine()) {
+    if (player.masterEmblemId) {
+      const master = getEmblemDef(player.masterEmblemId);
+      return '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">라인 고정</div><span class="quest-chip done">마스터 계열</span></div><div class="quest-focus-text">' +
+        (master ? master.name : '마스터 문장') + '과 동기화된 계열이라 기본 병종 라인 전환은 잠겨 있다.</div></div>';
+    }
+    return '';
+  }
+  const options = getBaseLineSwitchOptions();
+  return '<div class="quest-card training-line-card">' +
+    '<div class="quest-focus-head"><div class="quest-focus-title">원형 병종 라인 전환</div><span class="quest-chip active">문장 수집 준비</span></div>' +
+    '<div class="quest-desc">7단 이후에는 기본 병종 라인을 바꿔 각 문장의방 시험을 준비할 수 있다. 마스터 문장 융합 전까지 자유롭게 전환 가능하다.</div>' +
+    '<div class="training-badge-row">' +
+    options.map(lineId => {
+      const active = player.classLine === lineId;
+      return '<button class="training-line-btn' + (active ? ' active' : '') + '" data-line-id="' + lineId + '">' + getOriginalLineLabel(lineId) + '</button>';
+    }).join('') +
+    '</div></div>';
+}
+
 function promotePlayerClass() {
   const target = getPlayerPromotionTarget();
   if (!target) {
@@ -89,6 +145,12 @@ function bindTrainingActions(content) {
   if (promoteBtn && !promoteBtn.disabled) {
     bindTap(promoteBtn, () => promotePlayerClass(), { stopPropagation: true });
   }
+  content.querySelectorAll('.training-line-btn').forEach(btn => {
+    bindTap(btn, () => {
+      const lineId = btn.getAttribute('data-line-id');
+      switchPlayerGrowthLine(lineId);
+    }, { stopPropagation: true });
+  });
 }
 
 function renderTrainingPanel() {
@@ -106,7 +168,8 @@ function renderTrainingPanel() {
 
   content.innerHTML =
     buildTrainingSummaryCard(currentTier, growthLine, nextTier, promotionTarget) +
-    buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, growthLine);
+    buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, growthLine) +
+    buildTrainingLineSwitchCard();
 
   bindTrainingActions(content);
 }

@@ -55,34 +55,60 @@ function bindEmblemRoomActions(content) {
       renderEmblemRoomPanel();
     }, { stopPropagation: true });
   });
+
+  content.querySelectorAll('.emblem-equip-btn').forEach(btn => {
+    if (btn.disabled) return;
+    bindTap(btn, () => {
+      const emblemId = btn.getAttribute('data-emblem-id');
+      if (!equipPlayerEmblem(emblemId, { silent: false })) {
+        showToast('문장을 장착할 수 없다');
+        return;
+      }
+      renderEmblemRoomPanel();
+    }, { stopPropagation: true });
+  });
+
+  content.querySelectorAll('.emblem-unequip-btn').forEach(btn => {
+    if (btn.disabled) return;
+    bindTap(btn, () => {
+      if (!unequipPlayerEmblem({ silent: false })) return;
+      renderEmblemRoomPanel();
+    }, { stopPropagation: true });
+  });
 }
 
 function buildEmblemCompactRow(emblem) {
   const status = getPlayerEmblemTrialStatus(emblem.id);
-  const statusLabel = status.owned ? '\u2705' : status.canEnter ? '\u25B6' : '\uD83D\uDD12';
-  const cls = status.owned ? 'done' : status.canEnter ? 'next' : '';
+  const isActive = player.activeEmblemId === emblem.id;
+  const statusLabel = isActive ? '\u2694' : status.owned ? '\u2705' : status.canEnter ? '\u25B6' : '\uD83D\uDD12';
+  const cls = isActive ? 'next' : status.owned ? 'done' : status.canEnter ? 'next' : '';
   return '<div class="emblem-row ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
     '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (status.canEnter && !status.owned ? '<button class="emb-btn emblem-claim-btn" data-emblem-id="' + emblem.id + '">\uB3C4\uC804</button>' : '') +
+    (status.owned && !isActive ? '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
+    (isActive ? '<button class="emb-btn emblem-unequip-btn" data-emblem-id="' + emblem.id + '">\uD574\uC81C</button>' : '') +
   '</div>';
 }
 
 function buildMasterEmblemCompactRow(emblem) {
   const owned = playerHasEmblem(emblem.id);
   const ready = canPlayerFuseMasterEmblem(emblem.id);
+  const isActive = player.activeEmblemId === emblem.id;
   const matCount = (emblem.fusionMaterials || []).filter(id => playerHasEmblem(id)).length;
   const matTotal = (emblem.fusionMaterials || []).length;
-  const statusLabel = owned ? '\u2705' : ready ? '\u25B6' : matCount + '/' + matTotal;
-  const cls = owned ? 'done' : ready ? 'next' : '';
+  const statusLabel = isActive ? '\u2694' : owned ? '\u2705' : ready ? '\u25B6' : matCount + '/' + matTotal;
+  const cls = isActive ? 'next' : owned ? 'done' : ready ? 'next' : '';
   return '<div class="emblem-row master ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
     '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (ready && !owned ? '<button class="emb-btn emblem-fuse-btn" data-emblem-id="' + emblem.id + '">\uC735\uD569</button>' : '') +
+    (owned && !isActive ? '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
+    (isActive ? '<button class="emb-btn emblem-unequip-btn" data-emblem-id="' + emblem.id + '">\uD574\uC81C</button>' : '') +
   '</div>';
 }
 
@@ -92,6 +118,7 @@ function renderEmblemRoomPanel() {
   const unitEmblems = getAllEmblemDefs().filter(def => def.type === EMBLEM_TYPES.unit);
   const masterEmblems = getAllEmblemDefs().filter(def => def.type === EMBLEM_TYPES.master);
   const ownedCount = (player.emblemIds || []).length;
+  const activeEmblem = typeof getActivePlayerEmblem === 'function' ? getActivePlayerEmblem() : null;
 
   if (summaryEl) {
     summaryEl.textContent = '\uBCF4\uC720 ' + ownedCount + '/' + (unitEmblems.length + masterEmblems.length);
@@ -112,6 +139,7 @@ function renderEmblemRoomPanel() {
           '<div class="emb-info-row"><span>\uB77C\uC778</span><span>' + getOriginalLineLabel(player.classLine || 'infantry') + '</span></div>' +
           '<div class="emb-info-row"><span>\uB2E8\uC218</span><span>' + (player.tier || 1) + '\uB2E8</span></div>' +
           '<div class="emb-info-row"><span>\uB808\uBCA8</span><span>Lv.' + player.level + '</span></div>' +
+          '<div class="emb-info-row"><span>\uD65C\uC131 \uBB38\uC7A5</span><span>' + (activeEmblem ? activeEmblem.name : '\uC5C6\uC74C') + '</span></div>' +
           '<div class="emb-info-row"><span>ATK</span><span>' + playerAtk() + '</span></div>' +
           '<div class="emb-info-row"><span>DEF</span><span>' + playerDef() + '</span></div>' +
         '</div>' +

@@ -176,7 +176,7 @@ function renderProfile() {
         profileMetaItem('\uBCF4\uC720 \uACE8\uB4DC', player.gold.toLocaleString(), 'gold') +
         profileMetaItem('\uCD1D \uCC98\uCE58', totalEnemiesKilled.toLocaleString(), '') +
         profileMetaItem('\uCD1D \uD68D\uB4DD \uACE8\uB4DC', totalGoldEarned.toLocaleString(), 'gold') +
-        profileMetaItem('\uC7A5\uBE44 \uC2AC\uB86F', Object.values(equipped).filter(Boolean).length + '/8', '') +
+        profileMetaItem('\uC7A5\uBE44 \uC2AC\uB86F', (Object.values(equipped).filter(Boolean).length + (player.activeEmblemId ? 1 : 0)) + '/8', '') +
         profileMetaItem('\uAC00\uBC29 \uC544\uC774\uD15C', inventory.length + '\uAC1C', '') +
         profileMetaItem('\uBB38\uC7A5 \uC218\uC9D1', (player.emblemIds || []).length + '\uAC1C', '') +
       '</div>' +

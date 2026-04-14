@@ -129,7 +129,13 @@ function bindShopActions() {
 function renderShop() {
   switchShopTab(activeShopTab);
   shopGold.textContent = player.gold;
-  const shopItems = activeShopNpc && Array.isArray(activeShopNpc.shopItems) ? activeShopNpc.shopItems : [];
+  if (shopTitle && activeShopNpc) {
+    const band = typeof getShopProgressBand === 'function' ? getShopProgressBand() : 1;
+    shopTitle.textContent = '\uD83C\uDFEA ' + activeShopNpc.name + ' · T' + band;
+  }
+  const shopItems = typeof getNpcShopItems === 'function'
+    ? getNpcShopItems(activeShopNpc)
+    : (activeShopNpc && Array.isArray(activeShopNpc.shopItems) ? activeShopNpc.shopItems : []);
   shopItemsList.innerHTML = shopItems.map(buildShopBuyCard).join('');
   const counts = getInventoryCounts();
   const sellIds = Object.keys(counts).sort(compareInventoryItems);
