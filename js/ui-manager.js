@@ -150,6 +150,7 @@ bindTap(document.getElementById('player-status'), () => {
 });
 
 bindTap(document.getElementById('settings-btn'), () => openSettings());
+bindTap(document.getElementById('developer-btn'), () => openDeveloperPanel());
 bindTap(promotionShortcutBtn, () => openTrainingPanel(), { stopPropagation: true });
 
 bindTap(document.getElementById('menu-close'), () => closeMenu());
@@ -259,9 +260,6 @@ document.querySelectorAll('.settings-row').forEach(row => {
         try { localStorage.removeItem(SAVE_KEY); } catch(ex) {}
         location.reload();
       }
-    } else if (setting === 'developer') {
-      closeSettings();
-      openDeveloperPanel();
     } else {
       showToast('준비 중...');
     }
