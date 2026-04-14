@@ -106,15 +106,15 @@
   pointer-events: none;
   z-index: 1;
 }
-#skill-slot-0 { bottom: 132px; right: 124px; }
-#skill-slot-1 { bottom: 144px; right: 54px; }
-#skill-slot-2 { bottom: 70px; right: 138px; }
-#skill-slot-3 { bottom: 52px; right: 212px; }
+#skill-slot-0 { bottom: 132px; right: 224px; }
+#skill-slot-1 { bottom: 152px; right: 160px; }
+#skill-slot-2 { bottom: 152px; right: 96px; }
+#skill-slot-3 { bottom: 132px; right: 32px; }
 
 /* ── Swap Button ── */
 #skill-swap-btn {
   position: absolute;
-  bottom: 18px; right: 138px;
+  bottom: 138px; right: 294px;
   width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(10,12,20,0.88);
@@ -133,6 +133,25 @@
   text-shadow: 0 1px 2px rgba(0,0,0,0.6);
 }
 #skill-swap-btn:active { transform: scale(0.92); }
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .skill-slot {
+    width: 54px;
+    height: 54px;
+    font-size: 20px;
+  }
+  #skill-slot-0 { bottom: 122px; right: 214px; }
+  #skill-slot-1 { bottom: 140px; right: 154px; }
+  #skill-slot-2 { bottom: 140px; right: 94px; }
+  #skill-slot-3 { bottom: 122px; right: 34px; }
+  #skill-swap-btn {
+    bottom: 126px;
+    right: 278px;
+    width: 40px;
+    height: 40px;
+    font-size: 11px;
+  }
+}
 
 /* ── Potion Button (moved to left side, above joystick) ── */
 #potion-btn {
