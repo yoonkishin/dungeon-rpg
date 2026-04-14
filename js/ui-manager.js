@@ -17,6 +17,7 @@ const menuPanel = document.getElementById('menu-panel');
 const settingsPanel = document.getElementById('settings-panel');
 const toastEl = document.getElementById('toast');
 const promotionShortcutBtn = document.getElementById('promotion-shortcut-btn');
+const pwaRefreshBtn = document.getElementById('pwa-refresh-btn');
 let toastTimeout = null;
 
 function showToast(msg) {
@@ -152,6 +153,15 @@ bindTap(document.getElementById('player-status'), () => {
 bindTap(document.getElementById('settings-btn'), () => openSettings());
 bindTap(document.getElementById('developer-btn'), () => openDeveloperPanel());
 bindTap(promotionShortcutBtn, () => openTrainingPanel(), { stopPropagation: true });
+bindTap(pwaRefreshBtn, async () => {
+  if (typeof window.triggerPwaSync === 'function') {
+    const ok = await window.triggerPwaSync();
+    if (!ok) showToast('이 환경에서는 업데이트 동기화를 지원하지 않습니다');
+  } else {
+    showToast('업데이트 동기화를 준비 중입니다');
+    window.location.reload();
+  }
+}, { stopPropagation: true });
 
 bindTap(document.getElementById('menu-close'), () => closeMenu());
 
