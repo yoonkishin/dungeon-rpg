@@ -12,9 +12,9 @@
   padding: 8px 12px;
   overflow: hidden;
   touch-action: pan-y;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   opacity: 0;
-  transform: scale(0.95) translateY(8px);
+  transform: scale(0.94) translateY(16px);
 }
 .overlay-panel.panel-visible {
   opacity: 1;
@@ -22,9 +22,9 @@
 }
 /* ── Panel transitions ── */
 #menu-panel, #settings-panel {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   opacity: 0;
-  transform: scale(0.95) translateY(8px);
+  transform: scale(0.94) translateY(16px);
 }
 #menu-panel.panel-visible, #settings-panel.panel-visible {
   opacity: 1;

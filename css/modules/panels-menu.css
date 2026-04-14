@@ -22,6 +22,19 @@
   gap: 5px;
   pointer-events: all;
 }
+#top-right-btns .system-group-start {
+  margin-left: 10px;
+  position: relative;
+}
+#top-right-btns .system-group-start::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: rgba(255,255,255,0.18);
+}
 .top-circle-btn {
   width: 36px; height: 36px;
   border-radius: 50%;

@@ -73,6 +73,10 @@
   overflow: hidden;
 }
 .skill-slot:active { transform: scale(0.92); }
+.skill-slot.ready {
+  border-color: rgba(241,196,15,0.75);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4), 0 0 10px rgba(241,196,15,0.35);
+}
 .skill-slot.empty-slot {
   border-style: dashed;
   border-color: rgba(255,255,255,0.15);
@@ -162,7 +166,7 @@
   bottom: 176px; left: 26px;
   width: 64px; height: 64px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #e74c3c, #922b21);
+  background: linear-gradient(180deg, #27ae60, #1e8449);
   border: 3px solid rgba(255,255,255,0.4);
   color: #fff;
   font-size: 12px;
@@ -171,9 +175,13 @@
   align-items: center;
   justify-content: center;
   pointer-events: all;
-  box-shadow: 0 3px 10px rgba(231,76,60,0.4);
+  box-shadow: 0 3px 10px rgba(39,174,96,0.45);
   cursor: pointer;
   text-align: center;
   line-height: 1.2;
 }
-#potion-btn:active { transform: scale(0.9); }
+#potion-btn:active {
+  transform: scale(0.9);
+  background: linear-gradient(180deg, #1e8449, #14532d);
+  box-shadow: 0 2px 6px rgba(39,174,96,0.6);
+}

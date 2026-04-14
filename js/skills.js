@@ -28,7 +28,7 @@ function renderSkillSlots() {
       const cd = skillCooldowns[skillId] || 0;
       const cdPct = cd > 0 ? (cd / skill.cooldown * 100) : 0;
       const cdSec = cd > 0 ? (cd / 1000).toFixed(1) : '';
-      el.className = 'skill-slot';
+      el.className = cd > 0 ? 'skill-slot' : 'skill-slot ready';
       el.innerHTML =
         '<span style="position:relative;z-index:1;font-size:22px;">' + skill.icon + '</span>' +
         '<div class="skill-cd-overlay" style="height:' + cdPct + '%;"></div>' +

@@ -60,7 +60,7 @@
 }
 .status-bar-row {
   position: relative;
-  height: 10px;
+  height: 12px;
   background: rgba(30,30,50,0.8);
   border-radius: 6px;
   overflow: hidden;
@@ -112,7 +112,8 @@
 #gold-display {
   position: absolute;
   top: 12px;
-  right: 348px;
+  /* top-right-btns: 8 buttons x 36 + 7 gaps x 5 + system-group margin 10 + right offset 8 + padding ≈ 320 */
+  right: 340px;
   background: none;
   border: none;
   padding: 0;
