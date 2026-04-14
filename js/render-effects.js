@@ -139,6 +139,133 @@ function drawEnemyEffects() {
   });
 }
 
+function drawSkillEffects() {
+  skillEffects.forEach(fx => {
+    const sx = fx.x - cameraX + screenShake.x;
+    const sy = fx.y - cameraY + screenShake.y;
+    const pct = Math.max(0, fx.timer / fx.maxTimer);
+    const pulse = 0.5 + 0.5 * Math.sin((1 - pct) * Math.PI);
+
+    ctx.save();
+    if (fx.glow) { ctx.shadowColor = fx.glow; ctx.shadowBlur = 20; }
+    ctx.strokeStyle = fx.color;
+    ctx.fillStyle = fx.color;
+
+    if (fx.kind === 'projectile') {
+      const cx = (fx.cx ?? fx.x) - cameraX + screenShake.x;
+      const cy = (fx.cy ?? fx.y) - cameraY + screenShake.y;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.arc(cx, cy, fx.size || 12, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.arc(cx, cy, (fx.size || 12) * 1.6, 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'ring') {
+      ctx.globalAlpha = pct * 0.8;
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius * (1 + (1 - pct) * 0.8), 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = pct * 0.3;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius * (1 + (1 - pct) * 0.8), 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'aura') {
+      ctx.globalAlpha = 0.25 + pulse * 0.3;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius + pulse * 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 0.12;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius + pulse * 6, 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'arc') {
+      ctx.globalAlpha = pct * 0.95;
+      ctx.lineWidth = 6;
+      const spread = 1.0;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius * (0.8 + (1 - pct) * 0.4), fx.angle - spread, fx.angle + spread); ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = pct * 0.5;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius * (1.0 + (1 - pct) * 0.3), fx.angle - spread * 0.7, fx.angle + spread * 0.7); ctx.stroke();
+    } else if (fx.kind === 'barrier') {
+      ctx.globalAlpha = 0.35 + pulse * 0.25;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx, sy, fx.radius, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = (1 - pct) * Math.PI * 2 + i * Math.PI / 3;
+        const rx = sx + Math.cos(a) * fx.radius;
+        const ry = sy + Math.sin(a) * fx.radius;
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.arc(rx, ry, 3, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (fx.kind === 'cloud') {
+      ctx.globalAlpha = pct * 0.45;
+      for (let i = 0; i < 5; i++) {
+        const a = (1 - pct) * Math.PI * 1.5 + i * (Math.PI * 2 / 5);
+        const r = fx.radius * (0.5 + 0.3 * Math.sin((1 - pct) * Math.PI * 2 + i));
+        ctx.beginPath(); ctx.arc(sx + Math.cos(a) * r * 0.5, sy + Math.sin(a) * r * 0.5, fx.radius * 0.45, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (fx.kind === 'bolt') {
+      ctx.globalAlpha = pct;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      let bx = sx, by = sy - 200;
+      ctx.moveTo(bx, by);
+      for (let i = 1; i <= 6; i++) {
+        bx = sx + (Math.random() - 0.5) * 16;
+        by = sy - 200 + (200 / 6) * i;
+        ctx.lineTo(bx, by);
+      }
+      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = pct * 0.6;
+      ctx.beginPath(); ctx.arc(sx, sy, 14 + (1 - pct) * 8, 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'beam') {
+      const ex = fx.tx - cameraX + screenShake.x;
+      const ey = fx.ty - cameraY + screenShake.y;
+      ctx.globalAlpha = pct * 0.85;
+      ctx.lineWidth = 4 + pulse * 2;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = pct * 0.4;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.beginPath(); ctx.arc(ex, ey, 8, 0, Math.PI * 2); ctx.fill();
+    } else if (fx.kind === 'whirl') {
+      ctx.globalAlpha = pct * 0.75;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        const off = (1 - pct) * Math.PI * 4 + i * (Math.PI * 2 / 3);
+        ctx.beginPath();
+        ctx.arc(sx, sy, fx.radius * (0.6 + i * 0.2), off, off + Math.PI * 1.1);
+        ctx.stroke();
+      }
+    } else if (fx.kind === 'meteor') {
+      const fall = Math.max(0, fx.timer - fx.maxTimer * 0.35);
+      if (fall > 0) {
+        const fp = fall / (fx.maxTimer * 0.65);
+        const fy = sy - 260 * fp;
+        ctx.globalAlpha = 0.95;
+        ctx.beginPath(); ctx.arc(sx, fy, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 0.4;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(sx, fy); ctx.lineTo(sx, fy - 36); ctx.stroke();
+      } else {
+        const ip = 1 - fx.timer / (fx.maxTimer * 0.35);
+        ctx.globalAlpha = (1 - ip) * 0.9;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(sx, sy, 20 + ip * 60, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = (1 - ip) * 0.4;
+        ctx.beginPath(); ctx.arc(sx, sy, 20 + ip * 60, 0, Math.PI * 2); ctx.fill();
+      }
+    } else if (fx.kind === 'hex') {
+      ctx.globalAlpha = 0.4 + pulse * 0.3;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (1 - pct) * Math.PI + i * Math.PI / 3;
+        const rx = sx + Math.cos(a) * fx.radius;
+        const ry = sy + Math.sin(a) * fx.radius;
+        if (i === 0) ctx.moveTo(rx, ry); else ctx.lineTo(rx, ry);
+      }
+      ctx.closePath(); ctx.stroke();
+    }
+
+    ctx.restore();
+  });
+  ctx.globalAlpha = 1;
+}
+
 function drawParticles() {
   particles.forEach(p => {
     const alpha = p.life / 50;

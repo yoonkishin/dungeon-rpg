@@ -112,6 +112,7 @@ let enemies = [];
 let particles = [];
 let damageNumbers = [];
 let enemyEffects = [];
+let skillEffects = [];
 let hudDirty = true;
 let skillSlotsDirty = true;
 let screenShake = { x:0, y:0, timer:0 };

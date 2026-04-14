@@ -82,6 +82,7 @@ function draw() {
   for (let i = 0; i < drawBuffer.length; i++) drawBuffer[i].draw();
 
   drawEnemyEffects();
+  drawSkillEffects();
   drawParticles();
   drawDamageNumbers();
   drawDayNight();

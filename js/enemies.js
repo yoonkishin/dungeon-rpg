@@ -247,3 +247,74 @@ function spawnBossReinforcements(boss, count, typeIdx) {
 }
 
 
+function updateEnemyAI(dt) {
+  enemies.forEach(e => {
+    if (e.dead) return;
+    const d = dist(player, e);
+
+    if (e.flashTimer > 0) e.flashTimer--;
+    if (e.attackTimer > 0) e.attackTimer -= dt;
+    if (e.isBoss && e.specialTimer > 0) e.specialTimer -= dt;
+    if (e.isBoss && typeof triggerBossPhaseGimmick === 'function') triggerBossPhaseGimmick(e);
+
+    e.frameTimer += dt;
+    if (e.frameTimer > 300) { e.frameTimer = 0; e.frame = 1 - e.frame; }
+
+    if (e.hitStun > 0) {
+      e.hitStun -= dt;
+      const pos = resolveCollision(e, e.x + e.knockbackVx, e.y + e.knockbackVy);
+      e.x = pos.x; e.y = pos.y;
+      e.knockbackVx *= 0.86;
+      e.knockbackVy *= 0.86;
+      return;
+    }
+
+    if (e.state === 'wander') {
+      e.wanderTimer -= dt;
+      if (e.wanderTimer <= 0) {
+        e.wanderTimer = 1000 + Math.random() * 2000;
+        const angle = Math.random() * Math.PI * 2;
+        e.wanderDx = Math.cos(angle) * e.speed * 0.5;
+        e.wanderDy = Math.sin(angle) * e.speed * 0.5;
+      }
+      const pos = resolveCollision(e, e.x + e.wanderDx, e.y + e.wanderDy);
+      e.x = pos.x; e.y = pos.y;
+      if (d < e.aggroRange) e.state = 'chase';
+    } else if (e.state === 'chase') {
+      if (d > e.aggroRange * 1.35) {
+        e.state = 'wander';
+        e.attackWindup = 0;
+        return;
+      }
+      if (e.isBoss && e.specialTimer <= 0 && d < 220) {
+        queueBossSpecial(e);
+        e.specialTimer = e.specialCooldown;
+      }
+      if (d > e.attackRange + 8) {
+        e.attackWindup = 0;
+        const angle = Math.atan2(player.y - e.y, player.x - e.x);
+        const pos = resolveCollision(e, e.x + Math.cos(angle) * e.speed * 1.55, e.y + Math.sin(angle) * e.speed * 1.55);
+        e.x = pos.x; e.y = pos.y;
+      } else {
+        if (e.attackWindup > 0) {
+          e.attackWindup -= dt;
+          if (d > e.attackRange + 18) {
+            e.attackWindup = 0;
+          } else if (e.attackWindup <= 0) {
+            e.attackTimer = e.attackCooldown;
+            performEnemyAttack(e);
+          }
+        } else if (e.attackTimer <= 0) {
+          e.attackWindup = e.isBoss ? 420 : 240;
+        }
+      }
+    }
+  });
+
+  updateEnemyEffects(dt);
+  enemies = enemies.filter(e => !e.dead || e.flashTimer > 0);
+
+  if (currentMap === 'dungeon' && !dungeonCleared) {
+    checkDungeonClear();
+  }
+}
