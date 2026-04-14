@@ -27,7 +27,7 @@
 }
 #attack-btn {
   position: absolute;
-  bottom: 28px; right: 24px;
+  bottom: 28px; right: 60px;
   width: 88px; height: 88px;
   border-radius: 50%;
   background: linear-gradient(180deg, #e74c3c, #922b21);
@@ -106,15 +106,17 @@
   pointer-events: none;
   z-index: 1;
 }
-#skill-slot-0 { bottom: 146px; right: 124px; }
-#skill-slot-1 { bottom: 164px; right: 60px; }
-#skill-slot-2 { bottom: 102px; right: 174px; }
-#skill-slot-3 { bottom: 54px; right: 182px; }
+/* Fan arc around attack button: R=88, θ=35°/75°/115°/155° (center right:104, bottom:72) */
+#skill-slot-0 { bottom: 94px;  right: 3px;   }
+#skill-slot-1 { bottom: 128px; right: 52px;  }
+#skill-slot-2 { bottom: 123px; right: 112px; }
+#skill-slot-3 { bottom: 80px;  right: 155px; }
 
 /* ── Swap Button ── */
 #skill-swap-btn {
   position: absolute;
-  bottom: 104px; right: 246px;
+  /* Top cap above arc center (θ=95°, R=143) */
+  bottom: 192px; right: 94px;
   width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(10,12,20,0.88);
@@ -140,13 +142,14 @@
     height: 54px;
     font-size: 20px;
   }
-  #skill-slot-0 { bottom: 136px; right: 118px; }
-  #skill-slot-1 { bottom: 152px; right: 62px; }
-  #skill-slot-2 { bottom: 98px; right: 164px; }
-  #skill-slot-3 { bottom: 56px; right: 172px; }
+  /* Landscape short: R=82 arc, swap R=133 @θ=95° */
+  #skill-slot-0 { bottom: 92px;  right: 10px;  }
+  #skill-slot-1 { bottom: 124px; right: 56px;  }
+  #skill-slot-2 { bottom: 119px; right: 112px; }
+  #skill-slot-3 { bottom: 80px;  right: 151px; }
   #skill-swap-btn {
-    bottom: 98px;
-    right: 228px;
+    bottom: 185px;
+    right: 96px;
     width: 40px;
     height: 40px;
     font-size: 11px;
