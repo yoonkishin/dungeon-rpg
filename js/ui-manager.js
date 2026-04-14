@@ -16,6 +16,7 @@ let developerPanelOpen = false;
 const menuPanel = document.getElementById('menu-panel');
 const settingsPanel = document.getElementById('settings-panel');
 const toastEl = document.getElementById('toast');
+const promotionShortcutBtn = document.getElementById('promotion-shortcut-btn');
 let toastTimeout = null;
 
 function showToast(msg) {
@@ -45,6 +46,10 @@ function updateHUD() {
     statusClassNextEl.textContent = promotionTarget
       ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
       : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
+  }
+  if (promotionShortcutBtn) {
+    promotionShortcutBtn.style.display = promotionTarget ? 'block' : 'none';
+    promotionShortcutBtn.textContent = promotionTarget ? `승급: ${promotionTarget.name}` : '승급 가능';
   }
 
   const xpPct = player.xpNext > 0 ? (player.xp / player.xpNext * 100) : 0;
@@ -145,6 +150,7 @@ bindTap(document.getElementById('player-status'), () => {
 });
 
 bindTap(document.getElementById('settings-btn'), () => openSettings());
+bindTap(promotionShortcutBtn, () => openTrainingPanel(), { stopPropagation: true });
 
 bindTap(document.getElementById('menu-close'), () => closeMenu());
 

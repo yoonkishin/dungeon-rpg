@@ -194,67 +194,120 @@
   font-size: 10px;
   font-weight: 600;
 }
+#training-panel-content {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 8px;
+  align-content: start;
+  overflow: hidden;
+}
+#training-panel-content .quest-card {
+  margin-bottom: 0;
+  min-width: 0;
+}
+#training-panel-content .training-line-card,
+#training-panel-content .training-line-card:only-child {
+  grid-column: 1 / -1;
+}
 .training-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
 }
 .training-summary-item {
-  padding: 6px 8px;
+  padding: 5px 7px;
   border-radius: 8px;
   background: rgba(255,255,255,0.04);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 .training-summary-label {
-  font-size: 9px;
+  font-size: 8px;
   color: #9fb0d1;
 }
 .training-summary-value {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: #f5f7fb;
 }
 .training-subtitle {
   color: #f1f5f9;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  margin-top: 8px;
-  margin-bottom: 3px;
+  margin-top: 6px;
+  margin-bottom: 2px;
 }
 .training-badge-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 6px;
+  gap: 4px;
+  margin-top: 4px;
 }
 .training-delta-badge {
-  padding: 4px 7px;
+  padding: 3px 6px;
   border-radius: 999px;
   background: rgba(241,196,15,0.12);
   border: 1px solid rgba(241,196,15,0.22);
   color: #f6d46b;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
 }
 .training-action-row {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 .training-promote-btn {
   width: 100%;
-  padding: 9px 12px;
+  padding: 8px 10px;
   border-radius: 10px;
   border: 0;
   background: linear-gradient(135deg, #f1c40f, #e67e22);
   color: #1a1a1a;
   font-weight: 800;
-  font-size: 12px;
+  font-size: 11px;
 }
 .training-promote-btn:disabled {
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.4);
+}
+.training-line-btn {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: #ddd;
+  border-radius: 999px;
+  padding: 4px 7px;
+  font-size: 8px;
+  font-weight: 700;
+}
+.training-line-btn.active {
+  background: rgba(241,196,15,0.15);
+  border-color: rgba(241,196,15,0.35);
+  color: #f6d46b;
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  #training-panel-content {
+    gap: 6px;
+  }
+  .training-summary-grid {
+    gap: 3px;
+  }
+  .training-summary-item {
+    padding: 4px 6px;
+  }
+  .training-summary-label,
+  .training-delta-badge,
+  .training-line-btn {
+    font-size: 7px;
+  }
+  .training-summary-value,
+  .training-promote-btn {
+    font-size: 10px;
+  }
+  .training-promote-btn {
+    padding: 7px 9px;
+  }
 }
 
 /* ── Dungeon Clear Banner ── */
