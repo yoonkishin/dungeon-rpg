@@ -106,17 +106,17 @@
   pointer-events: none;
   z-index: 1;
 }
-/* MOBA-style upper-left fan: R=120, θ=90°/120°/150°/180° (attack center right:104, bottom:72) */
-#skill-slot-0 { bottom: 163px; right: 75px;  }
-#skill-slot-1 { bottom: 147px; right: 135px; }
-#skill-slot-2 { bottom: 103px; right: 179px; }
-#skill-slot-3 { bottom: 43px;  right: 195px; }
+/* MOBA-style upper-left fan: R=125, θ=90°/120°/150°/180° (attack center right:104, bottom:72) */
+#skill-slot-0 { bottom: 168px; right: 75px;  }
+#skill-slot-1 { bottom: 151px; right: 138px; }
+#skill-slot-2 { bottom: 106px; right: 183px; }
+#skill-slot-3 { bottom: 43px;  right: 200px; }
 
 /* ── Swap Button ── */
 #skill-swap-btn {
   position: absolute;
-  /* Stacked above slot-0 (θ=90°, R=175) */
-  bottom: 225px; right: 82px;
+  /* Left of slot-3, center-aligned (slot-3 center bottom:72) */
+  bottom: 50px; right: 266px;
   width: 44px; height: 44px;
   border-radius: 50%;
   background: rgba(10,12,20,0.88);
@@ -142,14 +142,14 @@
     height: 54px;
     font-size: 20px;
   }
-  /* Landscape short: MOBA fan R=110, swap stacked above slot-0 (R=161) */
-  #skill-slot-0 { bottom: 155px; right: 77px;  }
-  #skill-slot-1 { bottom: 140px; right: 132px; }
-  #skill-slot-2 { bottom: 100px; right: 172px; }
-  #skill-slot-3 { bottom: 45px;  right: 187px; }
+  /* Landscape short: MOBA fan R=118, swap left of slot-3 */
+  #skill-slot-0 { bottom: 163px; right: 77px;  }
+  #skill-slot-1 { bottom: 147px; right: 136px; }
+  #skill-slot-2 { bottom: 104px; right: 179px; }
+  #skill-slot-3 { bottom: 45px;  right: 195px; }
   #skill-swap-btn {
-    bottom: 213px;
-    right: 84px;
+    bottom: 52px;
+    right: 257px;
     width: 40px;
     height: 40px;
     font-size: 11px;
