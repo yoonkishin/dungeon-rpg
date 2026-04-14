@@ -380,8 +380,11 @@ function closeItemPopup() {
 
 function renderInventory() {
   const counts = getInventoryCounts();
+  const commanderName = typeof getCharacterDisplayName === 'function'
+    ? getCharacterDisplayName(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'))
+    : '주인공';
   bagCount.textContent = inventory.length;
-  if (invGoldEl) invGoldEl.textContent = player.gold;
+  if (invGoldEl) invGoldEl.textContent = commanderName + ' · ' + player.gold;
 
   // Render equip slots
   Object.keys(EQUIP_SLOT_META).forEach(slot => {

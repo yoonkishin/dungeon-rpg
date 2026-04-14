@@ -166,9 +166,27 @@ function cycleCompanionAIMode(cId) {
   return setCompanionAIMode(cId, next);
 }
 
+function getActiveCompanionPartyProfiles() {
+  const ids = [];
+  const commanderCompanionId = typeof getCommanderCompanionId === 'function'
+    ? getCommanderCompanionId()
+    : (typeof currentCommanderId === 'string' && currentCommanderId.startsWith('companion:')
+        ? parseInt(currentCommanderId.slice('companion:'.length), 10)
+        : null);
+
+  if (Number.isInteger(commanderCompanionId) && isValidCompanionId(commanderCompanionId)) {
+    ids.push(commanderCompanionId);
+  }
+
+  activeCompanions.forEach(cId => {
+    if (!ids.includes(cId)) ids.push(cId);
+  });
+
+  return ids.map(cId => getCompanionProfile(cId)).filter(Boolean);
+}
+
 function getActiveCompanionSynergy() {
-  if (activeCompanions.length !== 2) return null;
-  const profiles = activeCompanions.map(cId => getCompanionProfile(cId)).filter(Boolean);
+  const profiles = getActiveCompanionPartyProfiles();
   if (profiles.length !== 2) return null;
   const classIds = profiles
     .map(profile => profile.classId)

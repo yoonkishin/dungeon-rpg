@@ -2,9 +2,13 @@
 
 function doAttack() {
   if (player.attackTimer > 0) return;
+  const attackRange = typeof playerAttackRangeValue === 'function' ? playerAttackRangeValue() : 62;
+  const attackArcWidth = typeof playerAttackArcWidthValue === 'function' ? playerAttackArcWidthValue() : Math.PI * 0.68;
+  const attackLunge = typeof playerAttackLungeDistanceValue === 'function' ? playerAttackLungeDistanceValue() : 10;
+  const damageType = typeof playerAttackDamageTypeValue === 'function' ? playerAttackDamageTypeValue() : 'normal';
   AudioSystem.sfx.attack();
   player.isAttacking = true;
-  player.attackTimer = player.attackCooldown;
+  player.attackTimer = typeof playerAttackCooldownValue === 'function' ? playerAttackCooldownValue() : player.attackCooldown;
 
   const angles = [0, Math.PI, -Math.PI/2, Math.PI/2];
   const dirVecs = [{x:1,y:0},{x:-1,y:0},{x:0,y:-1},{x:0,y:1}];
@@ -12,7 +16,7 @@ function doAttack() {
   player.attackArc = 0;
 
   const lunge = dirVecs[player.dir];
-  const lungePos = resolveCollision(player, player.x + lunge.x * 10, player.y + lunge.y * 10);
+  const lungePos = resolveCollision(player, player.x + lunge.x * attackLunge, player.y + lunge.y * attackLunge);
   player.x = lungePos.x;
   player.y = lungePos.y;
 
@@ -20,10 +24,10 @@ function doAttack() {
   enemies.forEach(e => {
     if (e.dead) return;
     const d = dist(player, e);
-    if (d > 62) return;
+    if (d > attackRange) return;
     const angle = Math.atan2(e.y - player.y, e.x - player.x);
     const diff = Math.abs(normalizeAngle(angle - player.attackAngle));
-    if (diff < Math.PI * 0.68) {
+    if (diff < attackArcWidth) {
       let dmg = Math.max(1, playerAtk() - Math.floor(Math.random() * 5));
       let isCrit = false;
       const totalCritChance = player.critChance + (getEquipBonus().critBonus || 0);
@@ -38,9 +42,9 @@ function doAttack() {
       const kbPower = (e.isBoss ? 1.2 : 2.4) * (isCrit ? 1.35 : 1);
       e.knockbackVx = Math.cos(angle) * kbPower;
       e.knockbackVy = Math.sin(angle) * kbPower;
-      addParticles(e.x, e.y, '#e74c3c', isCrit ? 12 : 8);
-      addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : 'normal');
-      enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:8, maxTimer:8, color: isCrit ? '#f1c40f' : '#fff' });
+      addParticles(e.x, e.y, damageType === 'magic' ? '#9b59b6' : '#e74c3c', isCrit ? 12 : 8);
+      addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : damageType);
+      enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:8, maxTimer:8, color: isCrit ? '#f1c40f' : (damageType === 'magic' ? '#c39bd3' : '#fff') });
       if (isCrit) hitFreezeFrames = 3;
       hitCount++;
       triggerShake(isCrit ? 14 : 9);
@@ -491,7 +495,8 @@ function checkDungeonClear() {
       dungeonsCleared.push(currentDungeonId);
       const info = DUNGEON_INFO[currentDungeonId];
       if (info && !companions.includes(currentDungeonId)) {
-        companions.push(currentDungeonId);
+        if (typeof unlockCompanion === 'function') unlockCompanion(currentDungeonId, { silent: true });
+        else companions.push(currentDungeonId);
         setTimeout(() => {
           showDungeonClearBanner('새로운 동료: ' + info.companionName + ' 획득!');
         }, 2000);

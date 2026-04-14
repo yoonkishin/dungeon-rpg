@@ -43,9 +43,12 @@ function buildSkillCard(skill) {
 function renderSkillPanel() {
   const content = document.getElementById('skill-panel-content');
   const pageInd = document.getElementById('skill-page-ind');
+  const commanderName = typeof getCharacterDisplayName === 'function'
+    ? getCharacterDisplayName(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'))
+    : '주인공';
 
   if (pageInd) {
-    pageInd.textContent = '\uD604\uC7AC \uD398\uC774\uC9C0 ' + (currentSkillPage + 1) + '/' + skillPages.length;
+    pageInd.textContent = commanderName + ' \u00B7 \uD398\uC774\uC9C0 ' + (currentSkillPage + 1) + '/' + skillPages.length;
   }
 
   // Build skill lookup

@@ -207,13 +207,23 @@ function getEquipBonus() {
 }
 
 function playerAtk() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
   const synergy = getActiveCompanionSynergy();
+  if (commanderCombat) {
+    return commanderCombat.baseDamage + Math.floor(getEquipBonus().atk * 0.35) + getVillageAttackBonus() + (synergy && synergy.playerAtkBonus ? synergy.playerAtkBonus : 0);
+  }
   return player.atk + getEquipBonus().atk + getVillageAttackBonus() + (synergy && synergy.playerAtkBonus ? synergy.playerAtkBonus : 0);
 }
 
 function playerDef() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
   const synergy = getActiveCompanionSynergy();
   let d = player.def + getEquipBonus().def + getVillageDefenseBonus() + (synergy && synergy.playerDefBonus ? synergy.playerDefBonus : 0);
+  if (commanderCombat) {
+    if (commanderCombat.profile.unitType === 'Infantry' || commanderCombat.profile.unitType === 'NavalUnit') d += 2;
+    else if (commanderCombat.profile.unitType === 'Cavalry' || commanderCombat.profile.unitType === 'Lancer') d += 1;
+    else if (commanderCombat.profile.unitType === 'Mage') d -= 1;
+  }
   Object.values(skillBuffs).forEach(b => {
     if (b.defBuff && b.timer > 0) d += b.defBuff;
   });
@@ -221,11 +231,38 @@ function playerDef() {
 }
 
 function playerSpeed() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
   let s = player.speed + (getEquipBonus().speedBonus || 0);
+  if (commanderCombat) s += commanderCombat.moveSpeedBonus;
   Object.values(skillBuffs).forEach(b => {
     if (b.speedBuff && b.timer > 0) s += b.speedBuff;
   });
   return s;
+}
+
+function playerAttackCooldownValue() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  return commanderCombat ? commanderCombat.attackCooldown : player.attackCooldown;
+}
+
+function playerAttackRangeValue() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  return commanderCombat ? commanderCombat.attackRange : 62;
+}
+
+function playerAttackArcWidthValue() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  return commanderCombat ? commanderCombat.arcWidth : Math.PI * 0.68;
+}
+
+function playerAttackLungeDistanceValue() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  return commanderCombat ? commanderCombat.lungeDistance : 10;
+}
+
+function playerAttackDamageTypeValue() {
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  return commanderCombat ? commanderCombat.damageType : 'normal';
 }
 
 function showPickupText(name) {

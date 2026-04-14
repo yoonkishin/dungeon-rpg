@@ -318,6 +318,7 @@ if (loaded) {
 } else {
   syncPlayerGrowthState();
 }
+if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
 
 spawnEnemies();
 updateHUD();

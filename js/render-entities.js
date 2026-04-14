@@ -76,6 +76,12 @@ function drawPlayer() {
   const sx = player.x - cameraX + screenShake.x;
   const sy = player.y - cameraY + screenShake.y;
   const tierInfo = getCurrentTier();
+  const commanderRoster = typeof getCommanderCompanionRoster === 'function' ? getCommanderCompanionRoster() : null;
+  const commanderProfile = typeof getCommanderCompanionProfile === 'function' ? getCommanderCompanionProfile() : null;
+  const usingCompanionCommander = !!(commanderRoster && commanderProfile);
+  const bodyColor = usingCompanionCommander ? commanderRoster.color : tierInfo.bodyColor;
+  const glowColor = usingCompanionCommander ? commanderRoster.color : tierInfo.color;
+  const hairColor = usingCompanionCommander ? '#e8edf2' : '#5a3825';
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
@@ -96,21 +102,21 @@ function drawPlayer() {
   ctx.fillRect(sx + 1, bodyY + 4, 5, 8 - legOff);
 
   // Body (small torso)
-  if (player.tier >= 4) {
+  if (player.tier >= 4 || usingCompanionCommander) {
     ctx.save();
-    ctx.shadowColor = tierInfo.color;
-    ctx.shadowBlur = 8 + Math.sin(Date.now() * 0.003) * 4;
-    ctx.fillStyle = tierInfo.bodyColor;
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = (usingCompanionCommander ? 6 : 8) + Math.sin(Date.now() * 0.003) * 4;
+    ctx.fillStyle = bodyColor;
     ctx.fillRect(sx - 8, bodyY - 6, 16, 12);
     ctx.restore();
   } else {
-    ctx.fillStyle = tierInfo.bodyColor;
+    ctx.fillStyle = bodyColor;
     ctx.fillRect(sx - 8, bodyY - 6, 16, 12);
   }
 
   // Arms
   const armSwing = player.frame === 0 ? 2 : -2;
-  ctx.fillStyle = tierInfo.bodyColor;
+  ctx.fillStyle = bodyColor;
   ctx.fillRect(sx - 12, bodyY - 4 + armSwing, 4, 10);
   ctx.fillRect(sx + 8, bodyY - 4 - armSwing, 4, 10);
 
@@ -121,7 +127,7 @@ function drawPlayer() {
   ctx.fill();
 
   // Hair
-  ctx.fillStyle = '#5a3825';
+  ctx.fillStyle = hairColor;
   ctx.beginPath();
   ctx.arc(sx, headY - 2, headR, Math.PI * 1.1, Math.PI * 1.9);
   ctx.fill();
@@ -171,6 +177,17 @@ function drawPlayer() {
   }
 
   drawHpBar(sx, headY - headR - 6, player.hp, player.maxHp, 36, '#2ecc71');
+
+  if (usingCompanionCommander) {
+    const labelText = commanderRoster.name;
+    const labelW = labelText.length * 7 + 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(sx - labelW / 2, headY - headR - 20, labelW, 12);
+    ctx.fillStyle = commanderRoster.color;
+    ctx.font = '8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(labelText, sx, headY - headR - 11);
+  }
 }
 
 function drawCompanion(cId, cs) {

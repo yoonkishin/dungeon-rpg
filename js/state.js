@@ -68,6 +68,11 @@ let activeCompanions = [];  // array of companion IDs, max 2
 let deadCompanions = [];    // IDs of dead companions
 let companionStates = {};
 let companionAIModes = {};
+let ownedCharacters = [];
+let currentCommanderId = null;
+let activePartyCharacterIds = [];
+let characterStates = {};
+let characterAIModes = {};
 
 let totalGoldEarned = 0;
 let totalEnemiesKilled = 0;

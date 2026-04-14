@@ -119,9 +119,12 @@ function renderEmblemRoomPanel() {
   const masterEmblems = getAllEmblemDefs().filter(def => def.type === EMBLEM_TYPES.master);
   const ownedCount = (player.emblemIds || []).length;
   const activeEmblem = typeof getActivePlayerEmblem === 'function' ? getActivePlayerEmblem() : null;
+  const commanderName = typeof getCharacterDisplayName === 'function'
+    ? getCharacterDisplayName(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'))
+    : '주인공';
 
   if (summaryEl) {
-    summaryEl.textContent = '\uBCF4\uC720 ' + ownedCount + '/' + (unitEmblems.length + masterEmblems.length);
+    summaryEl.textContent = commanderName + ' \u00B7 \uBCF4\uC720 ' + ownedCount + '/' + (unitEmblems.length + masterEmblems.length);
     summaryEl.style.color = '#aaa';
   }
 
@@ -135,7 +138,7 @@ function renderEmblemRoomPanel() {
         '<div class="quest-section-label">\uB9C8\uC2A4\uD130 \uBB38\uC7A5 ' + masterEmblems.length + '\uC885</div>' +
         '<div class="emblem-table">' + masterEmblems.map(buildMasterEmblemCompactRow).join('') + '</div>' +
         '<div class="emblem-info-box">' +
-          '<div class="quest-section-label">\uD604\uC7AC \uC0C1\uD0DC</div>' +
+          '<div class="quest-section-label">\uD604\uC7AC \uC0C1\uD0DC · ' + commanderName + '</div>' +
           '<div class="emb-info-row"><span>\uB77C\uC778</span><span>' + getOriginalLineLabel(player.classLine || 'infantry') + '</span></div>' +
           '<div class="emb-info-row"><span>\uB2E8\uC218</span><span>' + (player.tier || 1) + '\uB2E8</span></div>' +
           '<div class="emb-info-row"><span>\uB808\uBCA8</span><span>Lv.' + player.level + '</span></div>' +

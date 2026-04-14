@@ -141,9 +141,12 @@ function unlockCompanion(cId, options = {}) {
   if (!isValidCompanionId(cId) || companions.includes(cId)) return false;
   companions.push(cId);
   if (!companionAIModes[cId]) companionAIModes[cId] = getDefaultCompanionAIMode(cId);
+  if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
   if (!options.silent && typeof showToast === 'function') {
     showToast(getCompanionName(cId) + ' 합류!');
   }
+  if (typeof renderCompanionPanel === 'function' && companionPanelOpen) renderCompanionPanel();
+  if (typeof renderProfile === 'function' && profileOpen) renderProfile();
   return true;
 }
 

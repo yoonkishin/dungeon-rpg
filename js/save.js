@@ -53,6 +53,53 @@ function serializePlayer() {
   return out;
 }
 
+function serializeOwnedCharacters() {
+  return (Array.isArray(ownedCharacters) ? ownedCharacters : []).map(entry => {
+    const out = {
+      characterId: entry.characterId,
+      name: entry.name,
+      unlocked: entry.unlocked !== false,
+      dead: !!entry.dead,
+      aiBehavior: entry.aiBehavior || (characterAIModes && entry.characterId ? characterAIModes[entry.characterId] : null) || null,
+      sourceType: entry.sourceType,
+      sourceId: entry.sourceId,
+    };
+
+    [
+      'classId',
+      'unitType',
+      'level',
+      'currentTier',
+      'exp',
+      'expToNext',
+      'hp',
+      'maxHp',
+      'mp',
+      'maxMp',
+      'classLine',
+      'classRank',
+      'currentClassKey',
+      'activeEmblemId',
+      'masterEmblemId',
+      'skillPageIndex',
+    ].forEach(key => {
+      if (entry[key] !== undefined) out[key] = entry[key];
+    });
+
+    if (Array.isArray(entry.classHistory)) out.classHistory = entry.classHistory.slice();
+    if (Array.isArray(entry.emblemIds)) out.emblemIds = entry.emblemIds.slice();
+    if (Array.isArray(entry.appliedEmblemBonusIds)) out.appliedEmblemBonusIds = entry.appliedEmblemBonusIds.slice();
+    if (Array.isArray(entry.emblemFusionHistory)) out.emblemFusionHistory = entry.emblemFusionHistory.slice();
+    if (entry.cooldowns && typeof entry.cooldowns === 'object') out.cooldowns = { ...entry.cooldowns };
+    if (entry.stats && typeof entry.stats === 'object') out.stats = JSON.parse(JSON.stringify(entry.stats));
+    if (entry.equipment && typeof entry.equipment === 'object') out.equipment = JSON.parse(JSON.stringify(entry.equipment));
+    if (Array.isArray(entry.skills)) out.skills = entry.skills.slice();
+    if (Array.isArray(entry.skillPages)) out.skillPages = entry.skillPages.map(page => Array.isArray(page) ? page.slice() : []);
+
+    return out;
+  });
+}
+
 function hasOwn(obj, key) {
   return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
 }
@@ -73,7 +120,9 @@ function loadPlayerScalars(p) {
 
 function autoSave() {
   try {
+    if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
     const saveData = {
+      saveVersion: 1,
       player: serializePlayer(),
       inventory: inventory.map(e => ({ uid: e.uid, itemId: e.itemId })),
       nextItemUid: nextItemUid,
@@ -84,6 +133,16 @@ function autoSave() {
       activeCompanions: activeCompanions.slice(),
       deadCompanions: deadCompanions.slice(),
       companionAIModes: { ...companionAIModes },
+      ownedCharacters: serializeOwnedCharacters(),
+      currentCommanderId: currentCommanderId,
+      activePartyCharacterIds: Array.isArray(activePartyCharacterIds) ? activePartyCharacterIds.slice() : [],
+      characterAIModes: { ...characterAIModes },
+      world: {
+        playerPosition: {
+          x: player.x,
+          y: player.y,
+        },
+      },
       totalGoldEarned: totalGoldEarned,
       totalEnemiesKilled: totalEnemiesKilled,
       currentDungeonId: currentDungeonId,
@@ -195,6 +254,70 @@ function loadCompanionState(data) {
   restoreActiveCompanionStates();
 }
 
+function loadCommanderState(data) {
+  if (Array.isArray(data.ownedCharacters)) {
+    ownedCharacters = data.ownedCharacters
+      .filter(entry => entry && typeof entry.characterId === 'string')
+      .map(entry => ({
+        ...entry,
+        characterId: entry.characterId,
+        sourceType: entry.sourceType || (isHeroCharacterId(entry.characterId) ? 'player' : 'companion'),
+        sourceId: entry.sourceId ?? parseCompanionCharacterId(entry.characterId),
+        name: entry.name || getCharacterDisplayName(entry.characterId),
+        unlocked: entry.unlocked !== false,
+        dead: !!entry.dead,
+        aiBehavior: entry.aiBehavior || null,
+        classHistory: Array.isArray(entry.classHistory) ? entry.classHistory.slice() : entry.classHistory,
+        emblemIds: Array.isArray(entry.emblemIds) ? entry.emblemIds.slice() : entry.emblemIds,
+        appliedEmblemBonusIds: Array.isArray(entry.appliedEmblemBonusIds) ? entry.appliedEmblemBonusIds.slice() : entry.appliedEmblemBonusIds,
+        emblemFusionHistory: Array.isArray(entry.emblemFusionHistory) ? entry.emblemFusionHistory.slice() : entry.emblemFusionHistory,
+        cooldowns: entry.cooldowns && typeof entry.cooldowns === 'object' ? { ...entry.cooldowns } : entry.cooldowns,
+        stats: entry.stats && typeof entry.stats === 'object' ? JSON.parse(JSON.stringify(entry.stats)) : entry.stats,
+        equipment: entry.equipment && typeof entry.equipment === 'object' ? JSON.parse(JSON.stringify(entry.equipment)) : entry.equipment,
+        skills: Array.isArray(entry.skills) ? entry.skills.slice() : entry.skills,
+        skillPages: Array.isArray(entry.skillPages) ? entry.skillPages.map(page => Array.isArray(page) ? page.slice() : []) : entry.skillPages,
+      }));
+  } else {
+    ownedCharacters = [];
+  }
+
+  currentCommanderId = (typeof data.currentCommanderId === 'string' && data.currentCommanderId)
+    ? data.currentCommanderId
+    : getHeroCharacterId();
+
+  activePartyCharacterIds = Array.isArray(data.activePartyCharacterIds)
+    ? data.activePartyCharacterIds.filter(id => typeof id === 'string')
+    : [];
+
+  if (data.characterAIModes && typeof data.characterAIModes === 'object') {
+    characterAIModes = { ...data.characterAIModes };
+    Object.keys(characterAIModes).forEach(characterId => {
+      const cId = parseCompanionCharacterId(characterId);
+      if (cId !== null && companions.includes(cId)) {
+        companionAIModes[cId] = normalizeCompanionAIMode(characterAIModes[characterId]);
+      }
+    });
+  } else {
+    characterAIModes = {};
+  }
+
+  ownedCharacters.forEach(entry => {
+    if (!entry || !entry.characterId) return;
+    if (entry.aiBehavior) {
+      characterAIModes[entry.characterId] = entry.aiBehavior;
+      const cId = parseCompanionCharacterId(entry.characterId);
+      if (cId !== null && companions.includes(cId)) {
+        companionAIModes[cId] = normalizeCompanionAIMode(entry.aiBehavior);
+      }
+    }
+  });
+
+  if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
+  if (typeof applyOwnedCharacterStateToPlayer === 'function') {
+    applyOwnedCharacterStateToPlayer(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'));
+  }
+}
+
 function loadQuestState(data) {
   totalGoldEarned = readValue(data, 'totalGoldEarned', 0);
   totalEnemiesKilled = readValue(data, 'totalEnemiesKilled', 0);
@@ -226,6 +349,12 @@ function loadMapState(data) {
   if (data.fieldSeed !== undefined) {
     maps.field = buildField(data.fieldSeed);
   }
+
+  const savedWorldPosition = data.world && data.world.playerPosition
+    && typeof data.world.playerPosition.x === 'number'
+    && typeof data.world.playerPosition.y === 'number'
+    ? data.world.playerPosition
+    : null;
 
   // Emblem trial resume policy: treat as transient, return to town on reload.
   // Must run BEFORE the generic dungeon resume branch so corrupted saves that
@@ -267,6 +396,10 @@ function loadMapState(data) {
   if (currentMap !== 'dungeon') {
     currentDungeonId = -1;
     currentEmblemTrial = null;
+    if (savedWorldPosition) {
+      player.x = savedWorldPosition.x;
+      player.y = savedWorldPosition.y;
+    }
   }
 }
 
@@ -280,8 +413,10 @@ function loadSave() {
     loadPlayerState(data.player);
     loadInventoryState(data);
     loadCompanionState(data);
+    loadCommanderState(data);
     loadQuestState(data);
     loadMapState(data);
+    if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
 
     // Flush normalized state so corrupted blobs don't linger on disk.
     autoSave();

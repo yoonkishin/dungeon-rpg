@@ -59,6 +59,8 @@ function renderProfile() {
   const synergy = getActiveCompanionSynergy();
   const glowColor = tier.color || '#f1c40f';
   const isMaxLevel = player.level >= getPlayerLevelCap();
+  const commanderRoster = typeof getCommanderCompanionRoster === 'function' ? getCommanderCompanionRoster() : null;
+  const commanderProfile = typeof getCommanderCompanionProfile === 'function' ? getCommanderCompanionProfile() : null;
 
   // Resource values
   const hpPct = player.maxHp > 0 ? Math.min(100, Math.floor(player.hp / player.maxHp * 100)) : 0;
@@ -87,13 +89,17 @@ function renderProfile() {
   const totalSpeed = (player.speed + (bonus.speedBonus || 0)).toFixed(2);
   const goldBonusPct = bonus.goldBonus || 0;
   const healMult = typeof getHealingMultiplier === 'function' ? getHealingMultiplier() : 1;
-  const atkCooldown = (player.attackCooldown / 1000).toFixed(2);
+  const atkCooldownMs = typeof playerAttackCooldownValue === 'function' ? playerAttackCooldownValue() : player.attackCooldown;
+  const atkCooldown = (atkCooldownMs / 1000).toFixed(2);
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
 
   // Progress
   const dungeonCount = dungeonsCleared.length;
   const companionCount = companions.length;
   const companionTotal = getTotalCompanionCount();
-  const activeCount = activeCompanions.length;
+  const activeCount = typeof getActivePartyCharacters === 'function'
+    ? getActivePartyCharacters().length
+    : activeCompanions.length;
 
   const profileGoldEl = document.getElementById('profile-gold');
   if (profileGoldEl) profileGoldEl.textContent = player.gold.toLocaleString();
@@ -113,9 +119,13 @@ function renderProfile() {
           '<div class="profile-id-fallback"><div class="profile-id-body" style="background:' + (armorColor || tier.bodyColor || '#555') + ';"></div></div>' +
         '</div>' +
         '<div class="profile-id-info">' +
-          '<div class="profile-id-class">' + growthLine.lineName + ' \u00B7 ' + tier.tier + '\uB2E8</div>' +
-          '<div class="profile-id-name" style="color:' + glowColor + ';">' + tier.name + '</div>' +
-          '<div class="profile-id-level">Lv. ' + player.level + (isMaxLevel ? ' <span class="max-tag">MAX</span>' : '') + '</div>' +
+          '<div class="profile-id-class">' + (commanderRoster && commanderProfile
+            ? ('동료 지휘관 · ' + commanderProfile.className)
+            : (growthLine.lineName + ' \u00B7 ' + tier.tier + '\uB2E8')) + '</div>' +
+          '<div class="profile-id-name" style="color:' + (commanderRoster ? commanderRoster.color : glowColor) + ';">' + (commanderRoster ? commanderRoster.name : tier.name) + '</div>' +
+          '<div class="profile-id-level">' + (commanderRoster
+            ? ('공용 성장 Lv. ' + player.level)
+            : ('Lv. ' + player.level + (isMaxLevel ? ' <span class="max-tag">MAX</span>' : ''))) + '</div>' +
         '</div>' +
       '</div>' +
 
@@ -133,6 +143,7 @@ function renderProfile() {
         profileStatRow('\uD83C\uDFAF', '\uD06C\uB9AC\uD2F0\uCEEC', totalCrit + '%', bonus.critBonus || null) +
         profileStatRow('\uD83D\uDC62', '\uC774\uB3D9\uC18D\uB3C4', totalSpeed, bonus.speedBonus ? bonus.speedBonus.toFixed(2) : null) +
         profileStatRow('\u23F1', '\uACF5\uACA9\uC18D\uB3C4', atkCooldown + '\uCD08', null) +
+        profileStatRow('\uD83D\uDCCF', '\uACF5\uACA9 \uC0AC\uC815\uAC70\uB9AC', (typeof playerAttackRangeValue === 'function' ? playerAttackRangeValue() : 62), commanderCombat ? commanderCombat.profile.className : null) +
         profileStatRow('\uD83D\uDCB0', '\uACE8\uB4DC\uBCF4\uB108\uC2A4', goldBonusPct > 0 ? '+' + goldBonusPct + '%' : '0%', null) +
         profileStatRow('\uD83D\uDC9A', '\uD68C\uBCF5\uBC30\uC728', '\u00D7' + healMult.toFixed(2), healMult > 1 ? ('+' + ((healMult - 1) * 100).toFixed(0) + '%') : null) +
       '</div>' +
@@ -165,14 +176,15 @@ function renderProfile() {
         profileProgItem('\uB358\uC804 \uD074\uB9AC\uC5B4', dungeonCount, 9, 'dungeon') +
         profileProgItem('\uB3D9\uB8CC \uC218\uC9D1', companionCount, companionTotal, 'companion') +
         '<div class="profile-prog-item">' +
-          '<span class="p-label">\uD65C\uC131 \uB3D9\uB8CC</span>' +
+          '<span class="p-label">\uCD9C\uC804 \uD30C\uD2F0</span>' +
           '<div class="p-bar"></div>' +
-          '<span class="p-count">' + activeCount + '/' + MAX_ACTIVE_COMPANIONS + '</span>' +
+          '<span class="p-count">' + activeCount + '/' + (MAX_ACTIVE_COMPANIONS + 1) + '</span>' +
         '</div>' +
       '</div>' +
 
       // Game Stats
       '<div class="profile-meta">' +
+        profileMetaItem('\uD604\uC7AC \uC9C0\uD718\uAD00', getCharacterDisplayName(currentCommanderId || getHeroCharacterId()), '') +
         profileMetaItem('\uBCF4\uC720 \uACE8\uB4DC', player.gold.toLocaleString(), 'gold') +
         profileMetaItem('\uCD1D \uCC98\uCE58', totalEnemiesKilled.toLocaleString(), '') +
         profileMetaItem('\uCD1D \uD68D\uB4DD \uACE8\uB4DC', totalGoldEarned.toLocaleString(), 'gold') +

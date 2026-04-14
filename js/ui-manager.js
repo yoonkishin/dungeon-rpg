@@ -30,26 +30,43 @@ function showToast(msg) {
 // ─── HUD Rendering ──────────────────────────────────────────────────────────
 function updateHUD() {
   hudDirty = false;
+  const avatarEl = document.getElementById('player-avatar');
   document.getElementById('hp-fill').style.width = (player.hp / player.maxHp * 100) + '%';
   document.getElementById('hp-text').textContent = Math.floor(player.hp) + '/' + player.maxHp;
   document.getElementById('mp-fill').style.width = (player.mp / player.maxMp * 100) + '%';
   document.getElementById('mp-text').textContent = Math.floor(player.mp) + '/' + player.maxMp;
-  document.getElementById('player-avatar').textContent = player.level;
+  if (avatarEl) avatarEl.textContent = player.level;
 
   const tier = getCurrentTier();
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const nextTier = getNextTier();
   const promotionTarget = getPlayerPromotionTarget();
+  const commanderRoster = typeof getCommanderCompanionRoster === 'function' ? getCommanderCompanionRoster() : null;
+  const commanderProfile = typeof getCommanderCompanionProfile === 'function' ? getCommanderCompanionProfile() : null;
   const statusClassLineEl = document.getElementById('status-class-line');
   const statusClassNextEl = document.getElementById('status-class-next');
-  if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
-  if (statusClassNextEl) {
-    statusClassNextEl.textContent = promotionTarget
-      ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
-      : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
+  if (commanderRoster && commanderProfile) {
+    if (statusClassLineEl) statusClassLineEl.textContent = `동료 지휘관 · ${commanderRoster.name} · ${commanderProfile.className}`;
+    if (statusClassNextEl) statusClassNextEl.textContent = `현재 조작 캐릭터 · 캐릭터별 상태 유지`;
+    if (avatarEl) {
+      avatarEl.textContent = commanderRoster.portraitIcon || '👥';
+      avatarEl.style.borderColor = commanderRoster.color;
+      avatarEl.style.background = `linear-gradient(135deg, ${commanderRoster.color}, #2c3e50)`;
+    }
+  } else {
+    if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
+    if (statusClassNextEl) {
+      statusClassNextEl.textContent = promotionTarget
+        ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
+        : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
+    }
+    if (avatarEl) {
+      avatarEl.style.borderColor = tier.color;
+      avatarEl.style.background = 'linear-gradient(135deg, ' + tier.bodyColor + ', ' + tier.color + ')';
+    }
   }
   if (promotionShortcutBtn) {
-    promotionShortcutBtn.style.display = promotionTarget ? 'block' : 'none';
+    promotionShortcutBtn.style.display = commanderRoster ? 'none' : (promotionTarget ? 'block' : 'none');
     promotionShortcutBtn.textContent = promotionTarget ? `승급: ${promotionTarget.name}` : '승급 가능';
   }
 
@@ -57,8 +74,6 @@ function updateHUD() {
   document.getElementById('xp-fill').style.width = xpPct + '%';
   document.getElementById('xp-text').textContent = player.xp + '/' + player.xpNext;
   document.getElementById('gold-display').textContent = '💰 ' + player.gold;
-  document.getElementById('player-avatar').style.borderColor = tier.color;
-  document.getElementById('player-avatar').style.background = 'linear-gradient(135deg, ' + tier.bodyColor + ', ' + tier.color + ')';
 }
 
 let levelupTimeout = null;

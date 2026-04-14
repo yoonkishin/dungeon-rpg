@@ -160,9 +160,12 @@ function renderTrainingPanel() {
   const nextTier = getNextTier();
   const growthLine = getGrowthLine(player.classLine || 'infantry');
   const promotionTarget = getPlayerPromotionTarget();
+  const commanderName = typeof getCharacterDisplayName === 'function'
+    ? getCharacterDisplayName(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'))
+    : '주인공';
 
   if (summaryEl) {
-    summaryEl.textContent = currentTier.name + ' \u00B7 ' + growthLine.lineName + (promotionTarget ? ' \u00B7 \uC2B9\uAE09\uAC00\uB2A5' : '');
+    summaryEl.textContent = commanderName + ' \u00B7 ' + currentTier.name + ' \u00B7 ' + growthLine.lineName + (promotionTarget ? ' \u00B7 \uC2B9\uAE09\uAC00\uB2A5' : '');
     summaryEl.style.color = promotionTarget ? '#2ecc71' : '#aaa';
   }
 
