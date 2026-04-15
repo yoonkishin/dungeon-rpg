@@ -261,6 +261,9 @@ function loadInventoryState(data) {
     if (player.activeEmblemId && equipped.helmet) {
       inventory.push(equipped.helmet);
       equipped.helmet = null;
+      if (typeof showToast === 'function') {
+        setTimeout(() => showToast('문장이 투구 슬롯을 차지해 투구가 가방으로 이동했습니다'), 400);
+      }
     }
   }
 }

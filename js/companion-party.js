@@ -16,7 +16,10 @@ function activateCompanion(cId) {
 
 function deactivateCompanion(cId, options = {}) {
   const { force = false } = options;
-  if (!force && currentCommanderId === getCompanionCharacterId(cId)) return false;
+  if (!force && currentCommanderId === getCompanionCharacterId(cId)) {
+    if (typeof showToast === 'function') showToast('지휘 중인 동료는 비활성화할 수 없습니다');
+    return false;
+  }
   if (!activeCompanions.includes(cId)) return false;
   activeCompanions = activeCompanions.filter(id => id !== cId);
   delete companionStates[cId];
@@ -105,4 +108,3 @@ function reviveAllCompanions() {
   normalizeCommanderState();
   return true;
 }
-

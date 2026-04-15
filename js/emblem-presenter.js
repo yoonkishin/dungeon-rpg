@@ -50,6 +50,10 @@ function closeEmblemPresenter() {
   }
 }
 
+function isEmblemPresenterActive() {
+  return !!(emblemPresenterOverlay && !emblemPresenterOverlay.classList.contains('hidden'));
+}
+
 function setEmblemPresenterColors(overlay, recipe) {
   overlay.style.setProperty('--ep-color-primary', recipe.colors.primary);
   overlay.style.setProperty('--ep-color-accent', recipe.colors.accent);
@@ -212,7 +216,10 @@ function queueFusionTransformation(masterLineId, promotedRank) {
 
 function queueAscensionTransformation(targetRank, masterLineId, targetRankObj) {
   const recipe = getFusionRecipeForLine(masterLineId);
-  if (!recipe) return;
+  if (!recipe) {
+    if (targetRankObj && typeof showTierBanner === 'function') showTierBanner(targetRankObj);
+    return;
+  }
   const isFinal = targetRank === 10;
   const totalMs = isFinal ? 5000 : 4100;
   const skipMs = isFinal ? 1400 : 900;

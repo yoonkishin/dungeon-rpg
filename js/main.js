@@ -223,6 +223,7 @@ function updateParticles() {
 function update(dt) {
   if (hitFreezeFrames > 0) { hitFreezeFrames--; return; }
   if (player.dead) return;
+  if (typeof isEmblemPresenterActive === 'function' && isEmblemPresenterActive()) return;
   if (typeof isAnyPanelOpen === 'function' && isAnyPanelOpen()) return;
 
   updateTimers(dt);
@@ -281,4 +282,3 @@ requestAnimationFrame((ts) => {
 
 // Prevent context menu on long press
 window.addEventListener('contextmenu', e => e.preventDefault());
-
