@@ -459,20 +459,24 @@ function applyOwnedCharacterStateToPlayer(characterId) {
   return true;
 }
 
+function createPartyPusher(partyArray) {
+  return (characterId) => {
+    if (!characterId) return;
+    if (partyArray.includes(characterId)) return;
+    if (!getOwnedCharacter(characterId)) return;
+    if (isCharacterDead(characterId)) return;
+    if (partyArray.length >= MAX_ACTIVE_COMPANIONS + 1) return;
+    partyArray.push(characterId);
+  };
+}
+
 function syncCommanderModelFromLegacyPartyState() {
   syncOwnedCharactersFromRoster();
   if (!getOwnedCharacter(currentCommanderId)) currentCommanderId = HERO_CHARACTER_ID;
   if (isCharacterDead(currentCommanderId)) currentCommanderId = HERO_CHARACTER_ID;
 
   const nextParty = [];
-  const pushCharacter = (characterId) => {
-    if (!characterId) return;
-    if (nextParty.includes(characterId)) return;
-    if (!getOwnedCharacter(characterId)) return;
-    if (isCharacterDead(characterId)) return;
-    if (nextParty.length >= MAX_ACTIVE_COMPANIONS + 1) return;
-    nextParty.push(characterId);
-  };
+  const pushCharacter = createPartyPusher(nextParty);
 
   pushCharacter(currentCommanderId);
   activeCompanions.forEach(cId => pushCharacter(getCompanionCharacterId(cId)));
@@ -512,14 +516,7 @@ function normalizeCommanderState() {
     syncCommanderModelFromLegacyPartyState();
   } else {
     const nextParty = [];
-    const pushCharacter = (characterId) => {
-      if (!characterId) return;
-      if (nextParty.includes(characterId)) return;
-      if (!getOwnedCharacter(characterId)) return;
-      if (isCharacterDead(characterId)) return;
-      if (nextParty.length >= MAX_ACTIVE_COMPANIONS + 1) return;
-      nextParty.push(characterId);
-    };
+    const pushCharacter = createPartyPusher(nextParty);
 
     pushCharacter(currentCommanderId);
     activePartyCharacterIds.forEach(pushCharacter);
@@ -547,14 +544,7 @@ function assignCommanderCharacter(characterId) {
   currentCommanderId = characterId;
 
   const nextParty = [];
-  const pushCharacter = (candidateId) => {
-    if (!candidateId) return;
-    if (nextParty.includes(candidateId)) return;
-    if (!getOwnedCharacter(candidateId)) return;
-    if (isCharacterDead(candidateId)) return;
-    if (nextParty.length >= MAX_ACTIVE_COMPANIONS + 1) return;
-    nextParty.push(candidateId);
-  };
+  const pushCharacter = createPartyPusher(nextParty);
 
   pushCharacter(characterId);
 
