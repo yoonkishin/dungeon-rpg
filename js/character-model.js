@@ -1,6 +1,12 @@
 'use strict';
 
 const HERO_CHARACTER_ID = 'hero';
+// 커맨더 전환 시 per-character로 스왑되는 필드들.
+// 문장 관련 상태(emblemIds/activeEmblemId/masterEmblemId/tier8*/tier9*/emblemFusionHistory/
+// appliedEmblemBonusIds)는 프로토타입에서 **글로벌 공유 풀**로 다룬다. lightsaber_test
+// 정본은 per-character지만, 이 저장소는 플레이어 한 명이 모든 라인을 순회하며 재료를
+// 모으는 구조라 공유 풀이 UX와 멘탈 모델에 훨씬 맞는다. 합체 판정(playerHasEmblem)도
+// player.emblemIds를 직접 읽으므로 공유 저장소 하나로 충분하다.
 const COMMANDER_PLAYER_SNAPSHOT_KEYS = [
   'hp',
   'maxHp',
@@ -19,17 +25,9 @@ const COMMANDER_PLAYER_SNAPSHOT_KEYS = [
   'currentClassKey',
   'promotionPending',
   'promotionBonusRankApplied',
-  'activeEmblemId',
-  'masterEmblemId',
-  'tier8UnlockLineId',
-  'tier8EmblemId',
-  'tier9EmblemId',
 ];
 const COMMANDER_PLAYER_ARRAY_SNAPSHOT_KEYS = [
   'classHistory',
-  'emblemIds',
-  'appliedEmblemBonusIds',
-  'emblemFusionHistory',
 ];
 
 function getHeroCharacterId() {
