@@ -11,6 +11,18 @@ let emblemPresenterOverlay = null;
 let emblemPresenterSkipTimer = null;
 let emblemPresenterCompleteTimer = null;
 let emblemPresenterSkipHandler = null;
+const EMBLEM_FUSION_MATERIAL_STYLES = {
+  infantry: { glyph: '보', primary: '#f39c12', accent: '#c0392b', glow: '#ffe0a6' },
+  flyingKnight: { glyph: '비', primary: '#f5b7b1', accent: '#e056fd', glow: '#ffe9ef' },
+  cavalry: { glyph: '기', primary: '#f1c40f', accent: '#d35400', glow: '#fff2a8' },
+  navalUnit: { glyph: '수', primary: '#1abc9c', accent: '#2980b9', glow: '#d7fff5' },
+  lancer: { glyph: '창', primary: '#16a085', accent: '#2ecc71', glow: '#daf9ed' },
+  archer: { glyph: '궁', primary: '#74b9ff', accent: '#0984e3', glow: '#e6f3ff' },
+  monk: { glyph: '승', primary: '#9b59b6', accent: '#f39c12', glow: '#f3e5ff' },
+  priest: { glyph: '신', primary: '#d6a2ff', accent: '#8e44ad', glow: '#fbf1ff' },
+  mage: { glyph: '법', primary: '#6c5ce7', accent: '#00cec9', glow: '#ece9ff' },
+  darkPriest: { glyph: '사', primary: '#8e44ad', accent: '#2d132c', glow: '#eedcff' },
+};
 
 function ensureEmblemPresenterOverlay() {
   if (emblemPresenterOverlay) return emblemPresenterOverlay;
@@ -20,6 +32,8 @@ function ensureEmblemPresenterOverlay() {
   root.innerHTML =
     '<div class="ep-backdrop"></div>' +
     '<div class="ep-flash"></div>' +
+    '<div class="ep-rays"></div>' +
+    '<div class="ep-particle-burst"></div>' +
     '<div class="ep-stage">' +
       '<div class="ep-materials"></div>' +
       '<div class="ep-result">' +
@@ -76,19 +90,117 @@ function playEmblemPresenterSound(stage) {
   if (stage === 'peak' && typeof AudioSystem.sfx.tierUp === 'function') AudioSystem.sfx.tierUp();
 }
 
+function getFusionMaterialOffset(index, total) {
+  const spacing = total >= 4 ? 132 : 156;
+  const dx = Math.round((index - (total - 1) / 2) * spacing);
+  let dy = 0;
+  if (total === 3) dy = index === 1 ? 22 : -12;
+  if (total === 4) dy = index === 0 || index === total - 1 ? -18 : 18;
+  return { dx, dy };
+}
+
+function getFusionMaterialMarkup(materialId, index, total) {
+  const emblem = getEmblemDef(materialId);
+  const lineId = emblem ? emblem.targetLine : '';
+  const label = emblem ? emblem.name.replace(' 문장', '') : materialId;
+  const styleDef = EMBLEM_FUSION_MATERIAL_STYLES[lineId] || {
+    glyph: label.slice(0, 1),
+    primary: '#f1c40f',
+    accent: '#e67e22',
+    glow: '#fff3b0',
+  };
+  const offset = getFusionMaterialOffset(index, total);
+  return '<div class="ep-mat" data-line="' + lineId + '"' +
+    ' style="--ep-mat-dx:' + offset.dx + 'px;--ep-mat-dy:' + offset.dy + 'px;' +
+    '--ep-mat-primary:' + styleDef.primary + ';--ep-mat-accent:' + styleDef.accent + ';--ep-mat-glow:' + styleDef.glow + ';">' +
+    '<div class="ep-mat-rune"><span class="ep-mat-glyph">' + styleDef.glyph + '</span></div>' +
+    '<div class="ep-mat-label">' + label + '</div></div>';
+}
+
+function buildFusionSilhouetteSvg(masterLineId) {
+  if (masterLineId === 'battleMaster') {
+    return '' +
+      '<svg viewBox="0 0 240 240" aria-hidden="true">' +
+        '<defs>' +
+          '<linearGradient id="ep-silhouette-gradient" x1="0%" y1="0%" x2="100%" y2="100%">' +
+            '<stop offset="0%" stop-color="var(--ep-color-glow)"></stop>' +
+            '<stop offset="55%" stop-color="var(--ep-color-primary)"></stop>' +
+            '<stop offset="100%" stop-color="var(--ep-color-accent)"></stop>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M113 22h14v38l27 27-11 11-16-16v78h-14V82L97 98 86 87l27-27z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M172 48l9 10-27 27 38 38-10 10-38-38-18 18-9-10 18-18-38-38 10-10 38 38z" opacity="0.95"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M120 92c31 0 56 25 56 56 0 35-28 61-56 70-28-9-56-35-56-70 0-31 25-56 56-56zm0 16c-22 0-40 18-40 40 0 24 19 43 40 52 21-9 40-28 40-52 0-22-18-40-40-40z" opacity="0.92"></path>' +
+      '</svg>';
+  }
+  if (masterLineId === 'tacticsMaster') {
+    return '' +
+      '<svg viewBox="0 0 240 240" aria-hidden="true">' +
+        '<defs>' +
+          '<linearGradient id="ep-silhouette-gradient" x1="0%" y1="10%" x2="100%" y2="90%">' +
+            '<stop offset="0%" stop-color="var(--ep-color-glow)"></stop>' +
+            '<stop offset="50%" stop-color="var(--ep-color-primary)"></stop>' +
+            '<stop offset="100%" stop-color="var(--ep-color-accent)"></stop>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M46 181c47-5 85-43 90-90h18c-5 57-51 103-108 108z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M194 59c-47 5-85 43-90 90H86c5-57 51-103 108-108z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M163 46l22 22-16 4-14-14z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M101 176l-22 22 16 4 14-14z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M73 176l95-127 12 9-95 127z" opacity="0.95"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M164 41l24 10-18 18-12-10z"></path>' +
+        '<path fill="url(#ep-silhouette-gradient)" d="M64 175l18 12-18 18-10-24z"></path>' +
+      '</svg>';
+  }
+  return '' +
+    '<svg viewBox="0 0 240 240" aria-hidden="true">' +
+      '<defs>' +
+        '<linearGradient id="ep-silhouette-gradient" x1="10%" y1="0%" x2="90%" y2="100%">' +
+          '<stop offset="0%" stop-color="var(--ep-color-glow)"></stop>' +
+          '<stop offset="52%" stop-color="var(--ep-color-primary)"></stop>' +
+          '<stop offset="100%" stop-color="var(--ep-color-accent)"></stop>' +
+        '</linearGradient>' +
+      '</defs>' +
+      '<polygon fill="url(#ep-silhouette-gradient)" points="120,28 137,72 184,72 146,102 160,148 120,120 80,148 94,102 56,72 103,72" opacity="0.96"></polygon>' +
+      '<polygon fill="url(#ep-silhouette-gradient)" points="120,52 133,88 170,88 140,110 150,145 120,124 90,145 100,110 70,88 107,88" opacity="0.72"></polygon>' +
+      '<circle cx="120" cy="120" r="24" fill="none" stroke="url(#ep-silhouette-gradient)" stroke-width="10"></circle>' +
+      '<path fill="url(#ep-silhouette-gradient)" d="M118 95h4v50h-4zM95 118h50v4H95z"></path>' +
+      '<path fill="url(#ep-silhouette-gradient)" d="M103 103l7-7 27 27-7 7zM130 96l7 7-27 27-7-7z" opacity="0.88"></path>' +
+    '</svg>';
+}
+
+function buildFusionParticlesMarkup(count) {
+  const parts = [];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.round((360 / count) * i + (i % 2 === 0 ? -4 : 5));
+    const distance = 116 + (i % 6) * 14;
+    const size = 5 + (i % 4) * 2;
+    const duration = 0.88 + (i % 5) * 0.06;
+    parts.push('<span class="ep-particle" style="--ep-angle:' + angle + 'deg;--ep-distance:' + distance + 'px;--ep-size:' + size + 'px;--ep-particle-duration:' + duration + 's;"></span>');
+  }
+  return parts.join('');
+}
+
+function applyFusionVisuals(overlay, masterLineId) {
+  overlay.querySelector('.ep-result-silhouette').innerHTML = buildFusionSilhouetteSvg(masterLineId);
+  overlay.querySelector('.ep-particle-burst').innerHTML = buildFusionParticlesMarkup(36);
+}
+
+function resetFusionVisuals(overlay) {
+  overlay.querySelector('.ep-result-silhouette').innerHTML = '';
+  overlay.querySelector('.ep-particle-burst').innerHTML = '';
+}
+
 function queueFusionTransformation(masterLineId, promotedRank) {
   const recipe = getFusionRecipeForLine(masterLineId);
   if (!recipe) return;
   const overlay = ensureEmblemPresenterOverlay();
   overlay.className = 'emblem-presenter fusion line-' + masterLineId;
   setEmblemPresenterColors(overlay, recipe);
+  applyFusionVisuals(overlay, masterLineId);
 
   const matsEl = overlay.querySelector('.ep-materials');
-  matsEl.innerHTML = (recipe.materials || []).map(mid => {
-    const m = getEmblemDef(mid);
-    const label = m ? m.name.replace(' 문장', '') : mid;
-    return '<div class="ep-mat"><div class="ep-mat-rune"></div><div class="ep-mat-label">' + label + '</div></div>';
-  }).join('');
+  matsEl.innerHTML = (recipe.materials || []).map((mid, index, list) => getFusionMaterialMarkup(mid, index, list.length)).join('');
 
   const className = promotedRank && promotedRank.className
     ? promotedRank.className
@@ -120,6 +232,7 @@ function queueAscensionTransformation(targetRank, masterLineId, targetRankObj) {
   const overlay = ensureEmblemPresenterOverlay();
   overlay.className = 'emblem-presenter ascension ' + (isFinal ? 'rank10' : 'rank9') + ' line-' + masterLineId;
   setEmblemPresenterColors(overlay, recipe);
+  resetFusionVisuals(overlay);
 
   // 9/10단 승급은 재료 표시 금지 (spec §4.7)
   overlay.querySelector('.ep-materials').innerHTML = '';

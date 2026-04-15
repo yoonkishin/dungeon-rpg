@@ -24,6 +24,11 @@
   background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.96) 100%);
   opacity: 0;
 }
+.emblem-presenter.fusion .ep-backdrop {
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.08) 0%, rgba(22, 16, 36, 0.12) 18%, transparent 36%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.97) 100%);
+}
 .emblem-presenter.playing .ep-backdrop { animation: ep-backdrop-in 0.35s ease-out forwards; }
 
 .emblem-presenter .ep-flash {
@@ -37,6 +42,81 @@
 .emblem-presenter.fusion.playing .ep-flash { animation: ep-flash-fusion 4.8s ease-out forwards; }
 .emblem-presenter.ascension.rank9.playing .ep-flash { animation: ep-flash-rank9 4.1s ease-out forwards; }
 .emblem-presenter.ascension.rank10.playing .ep-flash { animation: ep-flash-rank10 5s ease-out forwards; }
+
+.emblem-presenter .ep-rays,
+.emblem-presenter .ep-particle-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.emblem-presenter .ep-rays {
+  z-index: 1;
+  width: min(84vw, 720px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: blur(2px);
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg 10deg,
+      var(--ep-color-primary) 12deg 18deg,
+      transparent 22deg 34deg,
+      var(--ep-color-accent) 36deg 42deg,
+      transparent 48deg 60deg,
+      var(--ep-color-primary) 62deg 68deg,
+      transparent 74deg 88deg,
+      var(--ep-color-glow) 90deg 96deg,
+      transparent 100deg 112deg,
+      var(--ep-color-primary) 114deg 120deg,
+      transparent 126deg 140deg,
+      var(--ep-color-accent) 144deg 152deg,
+      transparent 156deg 170deg,
+      var(--ep-color-primary) 172deg 178deg,
+      transparent 182deg 198deg,
+      var(--ep-color-glow) 200deg 206deg,
+      transparent 212deg 228deg,
+      var(--ep-color-accent) 230deg 236deg,
+      transparent 242deg 258deg,
+      var(--ep-color-primary) 260deg 266deg,
+      transparent 270deg 286deg,
+      var(--ep-color-glow) 288deg 294deg,
+      transparent 300deg 316deg,
+      var(--ep-color-accent) 318deg 324deg,
+      transparent 330deg 360deg
+    );
+  -webkit-mask: radial-gradient(circle at center, transparent 0 14%, #000 24% 76%, transparent 88%);
+  mask: radial-gradient(circle at center, transparent 0 14%, #000 24% 76%, transparent 88%);
+}
+.emblem-presenter.fusion.playing .ep-rays { animation: ep-rays-fusion 4.8s ease-out forwards; }
+
+.emblem-presenter .ep-particle-burst {
+  z-index: 2;
+  width: 360px;
+  height: 360px;
+  opacity: 0;
+}
+.emblem-presenter.fusion.playing .ep-particle-burst { animation: ep-particle-burst-visibility 4.8s ease-out forwards; }
+.emblem-presenter .ep-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--ep-size, 8px);
+  height: var(--ep-size, 8px);
+  margin-left: calc(var(--ep-size, 8px) * -0.5);
+  margin-top: calc(var(--ep-size, 8px) * -0.5);
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, var(--ep-color-glow) 0%, var(--ep-color-primary) 48%, var(--ep-color-accent) 100%);
+  box-shadow: 0 0 12px var(--ep-color-primary), 0 0 20px var(--ep-color-accent);
+}
+.emblem-presenter.fusion.playing .ep-particle {
+  animation: ep-particle-fusion var(--ep-particle-duration, 1s) ease-out forwards;
+  animation-delay: 2.08s;
+}
 
 .emblem-presenter .ep-stage {
   position: relative;
@@ -53,37 +133,58 @@
 .emblem-presenter.ascension.rank10.playing .ep-stage { animation: ep-shake-rank10 5s ease-out forwards; }
 
 .emblem-presenter .ep-materials {
-  display: flex;
-  gap: 48px;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  min-height: 96px;
+  position: relative;
+  width: min(92vw, 760px);
+  min-height: 158px;
 }
 .emblem-presenter .ep-mat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   opacity: 0;
+  transform: translate(calc(-50% + var(--ep-mat-dx, 0px)), calc(-50% + var(--ep-mat-dy, 0px)));
 }
 .emblem-presenter.fusion.playing .ep-mat {
   animation: ep-mat-fusion 4.8s ease-in-out forwards;
 }
 .emblem-presenter .ep-mat-rune {
-  width: 56px; height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--ep-color-glow) 0%, var(--ep-color-primary) 70%, var(--ep-color-accent) 100%);
-  box-shadow: 0 0 28px var(--ep-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 32% 28%, var(--ep-mat-glow, var(--ep-color-glow)) 0%, transparent 28%),
+    radial-gradient(circle at 68% 70%, rgba(255, 255, 255, 0.18) 0%, transparent 30%),
+    linear-gradient(145deg, var(--ep-mat-primary, var(--ep-color-primary)) 0%, var(--ep-mat-accent, var(--ep-color-accent)) 100%);
+  box-shadow:
+    0 0 22px var(--ep-mat-primary, var(--ep-color-primary)),
+    0 0 42px var(--ep-mat-accent, var(--ep-color-accent));
+  border: 1px solid rgba(255, 255, 255, 0.38);
+}
+.emblem-presenter .ep-mat-glyph {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.82),
+    0 0 14px var(--ep-mat-primary, var(--ep-color-primary));
 }
 .emblem-presenter .ep-mat-label {
   color: #fff;
   font-size: 13px;
   font-weight: 700;
-  text-shadow: 0 0 8px var(--ep-color-primary), 0 0 2px #000;
+  text-shadow: 0 0 8px var(--ep-mat-primary, var(--ep-color-primary)), 0 0 2px #000;
 }
 
 .emblem-presenter .ep-result {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -103,6 +204,35 @@
     0 0 64px var(--ep-color-primary),
     0 0 128px var(--ep-color-accent),
     inset 0 -16px 32px rgba(0, 0, 0, 0.35);
+}
+.emblem-presenter.fusion .ep-result-silhouette {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: grid;
+  place-items: center;
+  background: none;
+  box-shadow: none;
+}
+.emblem-presenter.fusion .ep-result-silhouette::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--ep-color-glow) 0%, var(--ep-color-primary) 42%, transparent 72%);
+  box-shadow: 0 0 42px var(--ep-color-primary), 0 0 96px var(--ep-color-accent);
+  opacity: 0.6;
+  filter: blur(8px);
+}
+.emblem-presenter.fusion .ep-result-silhouette svg {
+  position: relative;
+  z-index: 1;
+  width: 82%;
+  height: 82%;
+  filter:
+    drop-shadow(0 0 10px var(--ep-color-glow))
+    drop-shadow(0 0 22px var(--ep-color-primary))
+    drop-shadow(0 0 38px var(--ep-color-accent));
 }
 .emblem-presenter .ep-result-label {
   color: #fff;
@@ -157,32 +287,90 @@
 */
 @keyframes ep-flash-fusion {
   0%, 35% { opacity: 0; }
-  36% { opacity: 0.55; }   /* D 시작 */
-  44% { opacity: 0.18; }   /* D 끝 */
+  36% { opacity: 0.48; }   /* D 시작 */
+  40% { opacity: 0.62; }
+  44% { opacity: 0.2; }    /* D 끝 */
   70% { opacity: 0.05; }
   100% { opacity: 0; }
 }
 @keyframes ep-mat-fusion {
-  0% { opacity: 0; transform: translateY(-18px) scale(0.55); }
-  16.7% { opacity: 1; transform: translateY(0) scale(1); }   /* A 끝 */
-  35% { opacity: 1; transform: scale(1); }                   /* C 시작 */
-  43% { opacity: 0.75; transform: scale(0.3); }              /* C 수렴 */
-  46% { opacity: 0; transform: scale(0); }                   /* D 겹침 */
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--ep-mat-dx, 0px)), calc(-50% + var(--ep-mat-dy, 0px) - 22px)) scale(0.45);
+    filter: blur(8px);
+  }
+  16% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--ep-mat-dx, 0px)), calc(-50% + var(--ep-mat-dy, 0px))) scale(1);
+    filter: blur(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--ep-mat-dx, 0px)), calc(-50% + var(--ep-mat-dy, 0px))) scale(1);
+    filter: blur(0);
+  }
+  43% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(0.3);
+    filter: blur(2px);
+  }
+  46% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+    filter: blur(8px);
+  }
   100% { opacity: 0; }
 }
 @keyframes ep-result-fusion {
   0%, 43% { opacity: 0; transform: scale(0.4); filter: blur(6px); }
-  52% { opacity: 1; transform: scale(1.12); filter: blur(0); } /* E 피크 */
+  52% { opacity: 1; transform: scale(1.14); filter: blur(0); } /* E 피크 */
   68% { opacity: 1; transform: scale(1); }
   100% { opacity: 1; transform: scale(1); }
 }
+@keyframes ep-rays-fusion {
+  0%, 42% { opacity: 0; transform: translate(-50%, -50%) scale(0.72) rotate(-12deg); }
+  48% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.98) rotate(12deg); }
+  68% { opacity: 0.34; transform: translate(-50%, -50%) scale(1.06) rotate(86deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12) rotate(144deg); }
+}
+@keyframes ep-particle-burst-visibility {
+  0%, 43% { opacity: 0; }
+  48%, 64% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes ep-particle-fusion {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--ep-angle, 0deg)) translateX(0) scale(0.4);
+  }
+  16% {
+    opacity: 1;
+    transform: rotate(var(--ep-angle, 0deg)) translateX(calc(var(--ep-distance, 120px) * 0.55)) scale(1);
+  }
+  80% {
+    opacity: 0.9;
+    transform: rotate(var(--ep-angle, 0deg)) translateX(var(--ep-distance, 120px)) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--ep-angle, 0deg)) translateX(calc(var(--ep-distance, 120px) + 20px)) scale(0.3);
+  }
+}
 @keyframes ep-shake-fusion {
   0%, 35% { transform: translate(0, 0); }
-  36% { transform: translate(-4px, 2px); }
-  37% { transform: translate(4px, -2px); }
-  38% { transform: translate(-2px, 3px); }
-  39% { transform: translate(2px, -3px); }
-  41%, 100% { transform: translate(0, 0); }
+  36% { transform: translate(-8px, 5px); }
+  37% { transform: translate(8px, -5px); }
+  38% { transform: translate(-6px, 6px); }
+  39% { transform: translate(7px, -6px); }
+  40% { transform: translate(-5px, 4px); }
+  41% { transform: translate(5px, -4px); }
+  42% { transform: translate(-4px, 3px); }
+  43% { transform: translate(4px, -3px); }
+  44% { transform: translate(-3px, 2px); }
+  45% { transform: translate(3px, -2px); }
+  46% { transform: translate(-2px, 1px); }
+  47% { transform: translate(2px, -1px); }
+  48%, 100% { transform: translate(0, 0); }
 }
 
 /* Rank 9 Ascension 4.1s:
