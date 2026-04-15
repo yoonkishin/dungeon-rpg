@@ -66,7 +66,9 @@ function equipPlayerEmblem(id, options = {}) {
     const current = getEmblemDef(player.activeEmblemId);
     if (current) removeEmblemBonus(current);
   }
+  let helmetName = '';
   if (equipped.helmet) {
+    helmetName = ITEMS[equipped.helmet.itemId] ? ITEMS[equipped.helmet.itemId].name : '헬멧';
     inventory.push(equipped.helmet);
     equipped.helmet = null;
   }
@@ -77,7 +79,7 @@ function equipPlayerEmblem(id, options = {}) {
   }
   player.appliedEmblemBonusIds = [id];
   if (!options.silent && typeof showToast === 'function') {
-    showToast((emblem ? emblem.name : '문장') + ' 장착');
+    showToast((emblem ? emblem.name : '문장') + ' 장착' + (helmetName ? ' · 헬멧 ' + helmetName + ' 해제' : ''));
   }
   if (typeof updateHUD === 'function') updateHUD();
   if (typeof renderInventory === 'function' && invOpen) renderInventory();

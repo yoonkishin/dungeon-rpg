@@ -182,14 +182,17 @@ function equipInventoryItem(invEntry) {
   const invIdx = inventory.indexOf(invEntry);
   if (invIdx === -1) return;
   const previous = equipped[slot];
+  let displacedEmblemName = '';
   inventory.splice(invIdx, 1);
   if (slot === 'helmet' && player.activeEmblemId && typeof unequipPlayerEmblem === 'function') {
+    const emblemDef = typeof getEmblemDef === 'function' ? getEmblemDef(player.activeEmblemId) : null;
+    displacedEmblemName = emblemDef && emblemDef.name ? emblemDef.name : '문장';
     unequipPlayerEmblem({ silent: true });
   }
   equipped[slot] = invEntry;
   if (previous) inventory.push(previous);
   AudioSystem.sfx.pickup();
-  showToast(item.name + ' 장착');
+  showToast(item.name + ' 장착' + (displacedEmblemName ? ' · 문장 ' + displacedEmblemName + ' 해제' : ''));
   // Trigger pulse animation on slot
   const slotEl = document.querySelector('.equip-slot[data-slot="' + slot + '"]');
   if (slotEl) {
@@ -321,10 +324,25 @@ function openItemPopup({ itemId, source, slot, invEntry }) {
       '</div>';
   } else {
     // Equipment: inline comparison table
-    const rows = buildInlineCompareRows(currentItem, item);
+    let popupCurrentItem = currentItem;
+    let currentHeaderLabel = '현재';
+    if (item.type === 'helmet' && !currentItem && player.activeEmblemId && typeof getEmblemDef === 'function') {
+      const activeEmblem = getEmblemDef(player.activeEmblemId);
+      if (activeEmblem && activeEmblem.bonus) {
+        popupCurrentItem = {
+          atk: activeEmblem.bonus.atk || 0,
+          def: activeEmblem.bonus.def || 0,
+          speedBonus: activeEmblem.bonus.speed || 0,
+          critBonus: activeEmblem.bonus.critChance || 0,
+          goldBonus: 0,
+        };
+        currentHeaderLabel = '현재 (문장)';
+      }
+    }
+    const rows = buildInlineCompareRows(popupCurrentItem, item);
     if (rows) {
       bodyHtml = '<table class="popup-compare-table">' +
-        '<thead><tr><th></th><th class="col-current">현재</th><th class="col-new">신규</th><th class="col-delta">변화</th></tr></thead>' +
+        '<thead><tr><th></th><th class="col-current">' + currentHeaderLabel + '</th><th class="col-new">신규</th><th class="col-delta">변화</th></tr></thead>' +
         '<tbody>' + rows + '</tbody></table>';
     } else {
       bodyHtml = '<div class="popup-potion-info"><div class="popup-potion-stat"><span>효과</span><span class="val">없음</span></div></div>';
@@ -396,6 +414,7 @@ function renderInventory() {
     const iconEl = slotEl.querySelector('.slot-icon');
     const labelEl = slotEl.querySelector('.slot-label');
     slotEl.classList.toggle('equipped', !!item || !!activeEmblem);
+    slotEl.classList.toggle('emblem-mode', slot === 'helmet' && !item && !!activeEmblem);
     if (iconEl) iconEl.textContent = item ? item.icon : (activeEmblem ? '✦' : EQUIP_SLOT_META[slot].icon);
     if (labelEl) {
       labelEl.textContent = item ? item.name : (activeEmblem ? activeEmblem.name : EQUIP_SLOT_META[slot].label);

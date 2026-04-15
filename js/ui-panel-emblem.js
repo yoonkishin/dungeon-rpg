@@ -82,13 +82,14 @@ function buildEmblemCompactRow(emblem) {
   const isActive = player.activeEmblemId === emblem.id;
   const statusLabel = isActive ? '\u2694' : status.owned ? '\u2705' : status.canEnter ? '\u25B6' : '\uD83D\uDD12';
   const cls = isActive ? 'next' : status.owned ? 'done' : status.canEnter ? 'next' : '';
+  const equipWarn = status.owned && !isActive && equipped.helmet ? '<span class="emb-warn">헬멧 해제</span>' : '';
   return '<div class="emblem-row ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
     '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (status.canEnter && !status.owned ? '<button class="emb-btn emblem-claim-btn" data-emblem-id="' + emblem.id + '">\uB3C4\uC804</button>' : '') +
-    (status.owned && !isActive ? '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
+    (status.owned && !isActive ? equipWarn + '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
     (isActive ? '<button class="emb-btn emblem-unequip-btn" data-emblem-id="' + emblem.id + '">\uD574\uC81C</button>' : '') +
   '</div>';
 }
@@ -101,13 +102,14 @@ function buildMasterEmblemCompactRow(emblem) {
   const matTotal = (emblem.fusionMaterials || []).length;
   const statusLabel = isActive ? '\u2694' : owned ? '\u2705' : ready ? '\u25B6' : matCount + '/' + matTotal;
   const cls = isActive ? 'next' : owned ? 'done' : ready ? 'next' : '';
+  const equipWarn = owned && !isActive && equipped.helmet ? '<span class="emb-warn">헬멧 해제</span>' : '';
   return '<div class="emblem-row master ' + cls + '">' +
     '<span class="emb-name">' + emblem.name + '</span>' +
     '<span class="emb-line">' + getOriginalLineLabel(emblem.targetLine) + '</span>' +
     '<span class="emb-bonus">' + formatEmblemBonus(emblem.bonus) + '</span>' +
     '<span class="emb-status">' + statusLabel + '</span>' +
     (ready && !owned ? '<button class="emb-btn emblem-fuse-btn" data-emblem-id="' + emblem.id + '">\uC735\uD569</button>' : '') +
-    (owned && !isActive ? '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
+    (owned && !isActive ? equipWarn + '<button class="emb-btn emblem-equip-btn" data-emblem-id="' + emblem.id + '">\uC7A5\uCC29</button>' : '') +
     (isActive ? '<button class="emb-btn emblem-unequip-btn" data-emblem-id="' + emblem.id + '">\uD574\uC81C</button>' : '') +
   '</div>';
 }
