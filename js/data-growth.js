@@ -411,7 +411,26 @@ function getNextTier() {
 function getPlayerPromotionTarget() {
   const next = getNextRankFromCurrentRank(player.classLine || 'infantry', player.classRank || 1);
   if (!next) return null;
-  return player.level >= next.reqLevel ? toTierDisplay(next) : null;
+  if (player.level < next.reqLevel) return null;
+  // lightsaber_test staged progression: 8→9 승급은 tier8 문장, 9→10 승급은 tier9 문장을 요구한다.
+  if (next.rank === 9 && !player.tier8EmblemId) return null;
+  if (next.rank === 10 && !player.tier9EmblemId) return null;
+  return toTierDisplay(next);
+}
+
+// 다음 승급 자체는 가능한데 상위 문장이 아직 없어서 막혀있는 상황 판정.
+// 훈련 패널에서 "Lv100 만렙 대기 중" 같은 안내를 띄우기 위해 사용.
+function getPlayerPromotionGateBlock() {
+  const next = getNextRankFromCurrentRank(player.classLine || 'infantry', player.classRank || 1);
+  if (!next) return null;
+  if (player.level < next.reqLevel) return null;
+  if (next.rank === 9 && !player.tier8EmblemId) {
+    return { reason: 'needTier8', nextRank: next, requiredLine: player.classLine };
+  }
+  if (next.rank === 10 && !player.tier9EmblemId) {
+    return { reason: 'needTier9', nextRank: next, requiredLine: player.classLine };
+  }
+  return null;
 }
 
 function getPlayerPromotionGrowthDelta() {

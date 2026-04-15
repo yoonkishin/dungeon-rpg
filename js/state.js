@@ -56,7 +56,10 @@ const player = {
   emblemIds: [],
   appliedEmblemBonusIds: [],
   activeEmblemId: null,
-  masterEmblemId: null,
+  masterEmblemId: null,       // DEPRECATED: 하위 호환 마이그레이션 전용 (tier8UnlockLineId + tier8EmblemId가 정본)
+  tier8UnlockLineId: null,    // 합체 완료 라인 ('battleMaster'|'tacticsMaster'|'magicMaster'|null)
+  tier8EmblemId: null,        // 8단 Lv100 만렙 보상 (9단 승급 게이트)
+  tier9EmblemId: null,        // 9단 Lv200 만렙 보상 (10단 승급 게이트)
   emblemFusionHistory: [],
   promotionPending: false,
   promotionBonusRankApplied: 1,

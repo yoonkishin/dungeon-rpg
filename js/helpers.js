@@ -163,6 +163,7 @@ window.__rpgDebug = {
     syncPlayerGrowthState();
     player.xp = 0;
     player.xpNext = getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+    if (typeof checkTierCapMilestoneRewards === 'function') checkTierCapMilestoneRewards();
     updateHUD();
     autoSave();
   },
@@ -179,19 +180,38 @@ window.__rpgDebug = {
     updateHUD();
     autoSave();
   },
-  prepareFusion(masterId = 'battle_master_emblem') {
-    const emblem = getEmblemDef(masterId);
-    if (!emblem || !Array.isArray(emblem.fusionMaterials)) return false;
+  // 합체 대상 라인 기본값: battleMaster. 'battle'/'tactics'/'magic' 별칭도 허용.
+  prepareFusion(lineHint = 'battleMaster') {
+    const aliasMap = {
+      battle: 'battleMaster', battleMaster: 'battleMaster',
+      tactics: 'tacticsMaster', tacticsMaster: 'tacticsMaster',
+      magic: 'magicMaster', magicMaster: 'magicMaster',
+      battle_master_emblem: 'battleMaster',
+      tactics_master_emblem: 'tacticsMaster',
+      magic_master_emblem: 'magicMaster',
+    };
+    const masterLineId = aliasMap[lineHint] || lineHint;
+    const recipe = getFusionRecipeForLine(masterLineId);
+    if (!recipe) return false;
     player.level = 36;
     player.classRank = 7;
     player.tier = 7;
-    emblem.fusionMaterials.forEach(id => {
+    (recipe.materials || []).forEach(id => {
       if (!player.emblemIds.includes(id)) player.emblemIds.push(id);
     });
     syncPlayerGrowthState();
     ensurePlayerEmblemBonusesApplied();
     autoSave();
     return true;
+  },
+  // 8단/9단 만렙 보상 문장을 바로 지급 (수동 테스트용).
+  prepareTier8Reward(masterLineId = 'battleMaster') {
+    if (typeof grantTier8Emblem === 'function') return grantTier8Emblem(masterLineId);
+    return false;
+  },
+  prepareTier9Reward(masterLineId = 'battleMaster') {
+    if (typeof grantTier9Emblem === 'function') return grantTier9Emblem(masterLineId);
+    return false;
   },
   prepareTier(tier = 8, lineId = 'battleMaster') {
     const targets = {
@@ -205,8 +225,22 @@ window.__rpgDebug = {
     player.level = target.level;
     player.classRank = tier;
     player.tier = tier;
+    // 마스터 라인이면 staged progression 상태도 선제 세팅
+    if (EMBLEM_FUSION_RECIPES && EMBLEM_FUSION_RECIPES[lineId]) {
+      player.tier8UnlockLineId = lineId;
+      if (tier >= 8) {
+        // 8단 도달 → tier8 문장도 같이 부여 (9단+ 테스트 편의)
+        player.tier8EmblemId = EMBLEM_FUSION_RECIPES[lineId].tier8EmblemId;
+        if (!player.emblemIds.includes(player.tier8EmblemId)) player.emblemIds.push(player.tier8EmblemId);
+      }
+      if (tier >= 9) {
+        player.tier9EmblemId = EMBLEM_FUSION_RECIPES[lineId].tier9EmblemId;
+        if (!player.emblemIds.includes(player.tier9EmblemId)) player.emblemIds.push(player.tier9EmblemId);
+      }
+    }
     target.gear.forEach(itemId => inventory.push(createItemInstance(itemId)));
     syncPlayerGrowthState();
+    ensurePlayerEmblemBonusesApplied();
     updateHUD();
     autoSave();
     return true;

@@ -1,8 +1,16 @@
 'use strict';
 
+// Emblem type taxonomy matches lightsaber_test staged progression:
+//   unit  → 7단 기본 문장 10종 (문장의방 시험 보상)
+//   tier8 → 8단 Lv100 만렙 보상 문장 3종 (9단 진입 게이트)
+//   tier9 → 9단 Lv200 만렙 보상 문장 3종 (10단 진입 게이트)
+//   master → deprecated alias for tier8 (save-migration only)
+//   legacy → unused reserve
 const EMBLEM_TYPES = {
   unit: 'unit',
   master: 'master',
+  tier8: 'tier8',
+  tier9: 'tier9',
   legacy: 'legacy',
 };
 
@@ -33,10 +41,58 @@ const EMBLEM_DEFS = {
   priest_emblem: { id: 'priest_emblem', type: EMBLEM_TYPES.unit, name: '신관 문장', targetLine: 'priest', requiredTier: 7, requiredLevel: 36, requiredAttack: 600, requiredDefense: 280, bonus: { maxMp: 80, def: 14 } },
   mage_emblem: { id: 'mage_emblem', type: EMBLEM_TYPES.unit, name: '법사 문장', targetLine: 'mage', requiredTier: 7, requiredLevel: 36, requiredAttack: 700, requiredDefense: 320, bonus: { atk: 42, maxMp: 90 } },
   dark_priest_emblem: { id: 'dark_priest_emblem', type: EMBLEM_TYPES.unit, name: '사교 문장', targetLine: 'darkPriest', requiredTier: 7, requiredLevel: 36, requiredAttack: 720, requiredDefense: 330, bonus: { atk: 38, def: 12, maxMp: 80 } },
-  battle_master_emblem: { id: 'battle_master_emblem', type: EMBLEM_TYPES.master, name: '배틀마스터 문장', targetLine: 'battleMaster', requiredTier: 7, requiredLevel: 36, fusionMaterials: ['infantry_emblem', 'flying_knight_emblem', 'cavalry_emblem'], bonus: { atk: 60, def: 40, maxHp: 100 } },
-  tactics_master_emblem: { id: 'tactics_master_emblem', type: EMBLEM_TYPES.master, name: '택틱스마스터 문장', targetLine: 'tacticsMaster', requiredTier: 7, requiredLevel: 36, fusionMaterials: ['naval_unit_emblem', 'lancer_emblem', 'archer_emblem'], bonus: { atk: 48, def: 32, critChance: 4, maxHp: 80 } },
-  magic_master_emblem: { id: 'magic_master_emblem', type: EMBLEM_TYPES.master, name: '매직마스터 문장', targetLine: 'magicMaster', requiredTier: 7, requiredLevel: 36, fusionMaterials: ['monk_emblem', 'priest_emblem', 'mage_emblem', 'dark_priest_emblem'], bonus: { atk: 55, maxMp: 120, critChance: 3 } },
+  // tier8 문장 — 8단 만렙(Lv100) 보상. 9단 승급 게이트.
+  battle_master_emblem: { id: 'battle_master_emblem', type: EMBLEM_TYPES.tier8, name: '배틀마스터 문장', targetLine: 'battleMaster', requiredTier: 8, requiredLevel: 100, bonus: { atk: 60, def: 40, maxHp: 100 } },
+  tactics_master_emblem: { id: 'tactics_master_emblem', type: EMBLEM_TYPES.tier8, name: '택틱스마스터 문장', targetLine: 'tacticsMaster', requiredTier: 8, requiredLevel: 100, bonus: { atk: 48, def: 32, critChance: 4, maxHp: 80 } },
+  magic_master_emblem: { id: 'magic_master_emblem', type: EMBLEM_TYPES.tier8, name: '매직마스터 문장', targetLine: 'magicMaster', requiredTier: 8, requiredLevel: 100, bonus: { atk: 55, maxMp: 120, critChance: 3 } },
+  // tier9 문장 — 9단 만렙(Lv200) 보상. 10단 승급 게이트.
+  grand_sword_emblem: { id: 'grand_sword_emblem', type: EMBLEM_TYPES.tier9, name: '그랑스워드 문장', targetLine: 'battleMaster', requiredTier: 9, requiredLevel: 200, bonus: { atk: 80, def: 55, maxHp: 140 } },
+  grand_archer_emblem: { id: 'grand_archer_emblem', type: EMBLEM_TYPES.tier9, name: '그랑아처 문장', targetLine: 'tacticsMaster', requiredTier: 9, requiredLevel: 200, bonus: { atk: 66, def: 40, critChance: 6, maxHp: 110 } },
+  grand_mage_emblem: { id: 'grand_mage_emblem', type: EMBLEM_TYPES.tier9, name: '그랑메이지 문장', targetLine: 'magicMaster', requiredTier: 9, requiredLevel: 200, bonus: { atk: 75, maxMp: 180, critChance: 5 } },
 };
+
+// 7단 기본 문장 → 8단 진입권 합체 레시피. 재료 + 부여할 tier8/tier9 보상 ID가 한 테이블에 모여있다.
+const EMBLEM_FUSION_RECIPES = {
+  battleMaster: {
+    masterLineId: 'battleMaster',
+    lineName: '배틀',
+    materials: ['infantry_emblem', 'flying_knight_emblem', 'cavalry_emblem'],
+    tier8EmblemId: 'battle_master_emblem',
+    tier9EmblemId: 'grand_sword_emblem',
+    colors: { primary: '#f1c40f', accent: '#e74c3c', glow: '#fff3b0' },
+    keyword: '중량/전면돌파',
+  },
+  tacticsMaster: {
+    masterLineId: 'tacticsMaster',
+    lineName: '택틱스',
+    materials: ['naval_unit_emblem', 'lancer_emblem', 'archer_emblem'],
+    tier8EmblemId: 'tactics_master_emblem',
+    tier9EmblemId: 'grand_archer_emblem',
+    colors: { primary: '#1abc9c', accent: '#74b9ff', glow: '#d6f5ee' },
+    keyword: '정밀/속도',
+  },
+  magicMaster: {
+    masterLineId: 'magicMaster',
+    lineName: '매직',
+    materials: ['monk_emblem', 'priest_emblem', 'mage_emblem', 'dark_priest_emblem'],
+    tier8EmblemId: 'magic_master_emblem',
+    tier9EmblemId: 'grand_mage_emblem',
+    colors: { primary: '#8e44ad', accent: '#6c5ce7', glow: '#e3d6f5' },
+    keyword: '신비/초월',
+  },
+};
+
+function getFusionRecipeForLine(masterLineId) {
+  return EMBLEM_FUSION_RECIPES[masterLineId] || null;
+}
+
+function getAllFusionRecipes() {
+  return Object.values(EMBLEM_FUSION_RECIPES);
+}
+
+function getFusionRecipeForTier8EmblemId(tier8EmblemId) {
+  return getAllFusionRecipes().find(r => r.tier8EmblemId === tier8EmblemId) || null;
+}
 
 function getOriginalLineLabel(lineId) {
   return ORIGINAL_LINE_LABELS[lineId] || lineId;
@@ -106,8 +162,30 @@ function canPlayerEnterEmblemTrial(id) {
   return !!(status && status.canEnter && !status.owned);
 }
 
-function canPlayerFuseMasterEmblem(id) {
-  const emblem = getEmblemDef(id);
-  if (!emblem || emblem.type !== EMBLEM_TYPES.master || playerHasEmblem(id)) return false;
-  return (emblem.fusionMaterials || []).every(playerHasEmblem);
+// lightsaber_test staged progression: 7단 기본 문장 합체는 "tier8 진입권"만 연다.
+// 따라서 합체 가능 여부는 boolean 기준으로 재료만 본다. 이미 진입권을 획득한
+// 라인이면 다시 합체할 수 없다.
+function canPlayerFuseTier7ForLine(masterLineId) {
+  const recipe = getFusionRecipeForLine(masterLineId);
+  if (!recipe) return false;
+  if (player.tier8UnlockLineId) return false;
+  return (recipe.materials || []).every(playerHasEmblem);
+}
+
+function getPlayerFusionStatusForLine(masterLineId) {
+  const recipe = getFusionRecipeForLine(masterLineId);
+  if (!recipe) return null;
+  const materials = recipe.materials || [];
+  const owned = materials.filter(playerHasEmblem).length;
+  const unlocked = player.tier8UnlockLineId === masterLineId;
+  const otherUnlock = !!player.tier8UnlockLineId && !unlocked;
+  return {
+    recipe,
+    materials,
+    owned,
+    total: materials.length,
+    unlocked,
+    otherUnlock,
+    canFuse: !player.tier8UnlockLineId && owned >= materials.length,
+  };
 }

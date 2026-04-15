@@ -45,14 +45,25 @@ function buildTrainingPromotionCard(currentTier, nextTier, promotionTarget, grow
     return '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">최종 승급 완료</div><span class="quest-chip done">완료</span></div><div class="quest-focus-text">지금은 ' + currentTier.name + ' 단계야. 더 이상 승급은 없고, 장비와 동료 조합 최적화가 다음 성장 포인트다.</div></div>';
   }
 
+  const gateBlock = typeof getPlayerPromotionGateBlock === 'function' ? getPlayerPromotionGateBlock() : null;
   const growthDelta = promotionTarget ? getPlayerPromotionGrowthDelta() : null;
   const statBonus = promotionTarget ? getPlayerPromotionStatBonus() : null;
   let html = '<div class="quest-card training-promo-card">';
-  html += '<div class="quest-focus-head"><div class="quest-focus-title">다음 승급 안내</div><span class="quest-chip ' + (promotionTarget ? 'done' : 'active') + '">' + (promotionTarget ? '지금 가능' : ('Lv ' + nextTier.reqLevel + ' 필요')) + '</span></div>';
+  let chipLabel;
+  if (promotionTarget) chipLabel = '지금 가능';
+  else if (gateBlock) chipLabel = gateBlock.reason === 'needTier8' ? '8단 만렙 필요' : '9단 만렙 필요';
+  else chipLabel = 'Lv ' + nextTier.reqLevel + ' 필요';
+  html += '<div class="quest-focus-head"><div class="quest-focus-title">다음 승급 안내</div><span class="quest-chip ' + (promotionTarget ? 'done' : 'active') + '">' + chipLabel + '</span></div>';
   html += '<div class="quest-row"><span class="quest-label">현재</span><span class="quest-value">' + currentTier.name + '</span></div>';
   html += '<div class="quest-row"><span class="quest-label">다음</span><span class="quest-value" style="color:' + nextTier.color + '">' + nextTier.name + '</span></div>';
-  html += '<div class="quest-row"><span class="quest-label">조건</span><span class="quest-value">Lv ' + nextTier.reqLevel + ' 이상</span></div>';
-  html += '<div class="quest-desc">' + (promotionTarget ? '조건을 만족했다. 승급을 확정하면 즉시 능력치 보너스를 받고, 이후 레벨업 성장 보정도 함께 올라간다.' : ('아직 수련이 더 필요하다. 현재 레벨은 Lv ' + player.level + '이고, ' + growthLine.lineName + ' 라인 다음 승급은 Lv ' + nextTier.reqLevel + '에서 열린다.')) + '</div>';
+  html += '<div class="quest-row"><span class="quest-label">조건</span><span class="quest-value">Lv ' + nextTier.reqLevel + ' 이상' + (nextTier.rank === 9 ? ' · 배틀/택틱스/매직마스터 문장' : nextTier.rank === 10 ? ' · 그랑 계열 문장' : '') + '</span></div>';
+  let desc;
+  if (promotionTarget) desc = '조건을 만족했다. 승급을 확정하면 즉시 능력치 보너스를 받고, 이후 레벨업 성장 보정도 함께 올라간다.';
+  else if (gateBlock) desc = gateBlock.reason === 'needTier8'
+      ? '8단 만렙(Lv100)을 달성해야 상위 문장이 해금되고 9단 승급이 열린다. 지금은 Lv ' + player.level + '이다.'
+      : '9단 만렙(Lv200)을 달성해야 최종 문장이 해금되고 10단 승급이 열린다. 지금은 Lv ' + player.level + '이다.';
+  else desc = '아직 수련이 더 필요하다. 현재 레벨은 Lv ' + player.level + '이고, ' + growthLine.lineName + ' 라인 다음 승급은 Lv ' + nextTier.reqLevel + '에서 열린다.';
+  html += '<div class="quest-desc">' + desc + '</div>';
   if (promotionTarget) {
     html += '<div class="training-subtitle">즉시 보너스</div>';
     html += buildTrainingDeltaBadges(statBonus, '즉시');
@@ -80,7 +91,8 @@ function getBaseLineSwitchOptions() {
 }
 
 function canSwitchBaseLine() {
-  return !player.masterEmblemId && (player.tier || player.classRank || 1) >= 7;
+  // 합체 전까지만 기본 병종 라인을 자유 전환할 수 있다.
+  return !player.tier8UnlockLineId && !player.masterEmblemId && (player.tier || player.classRank || 1) >= 7;
 }
 
 function switchPlayerGrowthLine(lineId) {
@@ -101,10 +113,12 @@ function switchPlayerGrowthLine(lineId) {
 
 function buildTrainingLineSwitchCard() {
   if (!canSwitchBaseLine()) {
-    if (player.masterEmblemId) {
-      const master = getEmblemDef(player.masterEmblemId);
-      return '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">라인 고정</div><span class="quest-chip done">마스터 계열</span></div><div class="quest-focus-text">' +
-        (master ? master.name : '마스터 문장') + '과 동기화된 계열이라 기본 병종 라인 전환은 잠겨 있다.</div></div>';
+    if (player.tier8UnlockLineId || player.masterEmblemId) {
+      const unlockLine = player.tier8UnlockLineId
+        || (player.masterEmblemId ? (getEmblemDef(player.masterEmblemId) || {}).targetLine : null);
+      const lineLabel = unlockLine ? getOriginalLineLabel(unlockLine) : '마스터';
+      return '<div class="quest-card"><div class="quest-focus-head"><div class="quest-focus-title">라인 고정</div><span class="quest-chip done">' + lineLabel + ' 계열</span></div><div class="quest-focus-text">' +
+        lineLabel + ' 합체를 완료한 뒤에는 기본 병종 라인으로 되돌릴 수 없다.</div></div>';
     }
     return '';
   }
@@ -131,7 +145,13 @@ function promotePlayerClass() {
   player.classRank = target.rank;
   player.promotionBonusRankApplied = target.rank;
   syncPlayerGrowthState();
-  showTierBanner(target);
+  // lightsaber_test: 9단/10단은 단독 승급 변신 연출 (재료 캐릭터 없음).
+  // 7→8은 합체 플로우에서 이미 별도로 처리되므로 여기선 rank 9/10만 프리젠터로 띄운다.
+  if ((target.rank === 9 || target.rank === 10) && typeof queueAscensionTransformation === 'function') {
+    queueAscensionTransformation(target.rank, player.classLine, target);
+  } else {
+    showTierBanner(target);
+  }
   addParticles(player.x, player.y, target.color, 28);
   showToast(target.name + ' 승급 완료!');
   updateHUD();

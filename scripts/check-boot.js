@@ -23,6 +23,7 @@ const files = [
   'js/boss-effects.js',
   'js/transitions.js',
   'js/skills.js',
+  'js/emblem-presenter.js',
   'js/character-model.js',
   'js/companion-party.js',
   'js/companion-ai.js',

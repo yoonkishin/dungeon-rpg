@@ -579,6 +579,8 @@ function gainXP(amount) {
       showToast('승급 가능! 수련의 방으로 가자');
       addParticles(player.x, player.y, promotionTarget.color, 25);
     }
+    // lightsaber_test staged progression: 8단 Lv100/9단 Lv200 도달 시 상위 문장 자동 지급
+    if (typeof checkTierCapMilestoneRewards === 'function') checkTierCapMilestoneRewards();
 
     if (player.level >= getPlayerLevelCap()) {
       player.xp = 0;

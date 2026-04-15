@@ -47,9 +47,12 @@ function serializePlayer() {
   for (const k of PERSISTED_PLAYER_ARRAY_KEYS) {
     out[k] = Array.isArray(player[k]) ? player[k].slice() : [];
   }
-  // Nullable singleton — preserve explicit null when absent/falsy.
+  // Nullable singletons — preserve explicit null when absent/falsy.
   out.activeEmblemId = player.activeEmblemId || null;
-  out.masterEmblemId = player.masterEmblemId || null;
+  out.masterEmblemId = player.masterEmblemId || null;       // DEPRECATED (migration only)
+  out.tier8UnlockLineId = player.tier8UnlockLineId || null;
+  out.tier8EmblemId = player.tier8EmblemId || null;
+  out.tier9EmblemId = player.tier9EmblemId || null;
   return out;
 }
 
@@ -87,6 +90,9 @@ function serializeOwnedCharacters() {
       'currentClassKey',
       'activeEmblemId',
       'masterEmblemId',
+      'tier8UnlockLineId',
+      'tier8EmblemId',
+      'tier9EmblemId',
       'skillPageIndex',
     ].forEach(key => {
       if (entry[key] !== undefined) out[key] = entry[key];
@@ -179,6 +185,23 @@ function loadPlayerState(p) {
     ? p.activeEmblemId
     : null;
   player.masterEmblemId = p.masterEmblemId && getEmblemDef(p.masterEmblemId) ? p.masterEmblemId : null;
+
+  // staged progression 신규 필드 — 원본 세이브가 있으면 직접 읽고,
+  // 없으면 구버전 masterEmblemId에서 파생해 마이그레이션한다.
+  player.tier8UnlockLineId = (typeof p.tier8UnlockLineId === 'string' && EMBLEM_FUSION_RECIPES[p.tier8UnlockLineId])
+    ? p.tier8UnlockLineId
+    : null;
+  player.tier8EmblemId = (p.tier8EmblemId && getEmblemDef(p.tier8EmblemId)) ? p.tier8EmblemId : null;
+  player.tier9EmblemId = (p.tier9EmblemId && getEmblemDef(p.tier9EmblemId)) ? p.tier9EmblemId : null;
+  if (player.masterEmblemId && !player.tier8UnlockLineId) {
+    const legacyMaster = getEmblemDef(player.masterEmblemId);
+    if (legacyMaster && EMBLEM_FUSION_RECIPES[legacyMaster.targetLine]) {
+      player.tier8UnlockLineId = legacyMaster.targetLine;
+      // 구 세이브는 masterEmblemId=보유를 전제로 하므로 tier8 문장도 함께 획득한 것으로 본다.
+      if (!player.tier8EmblemId) player.tier8EmblemId = player.masterEmblemId;
+    }
+  }
+
   player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
   player.xpNext = hasOwn(p, 'xpNext') ? p.xpNext : getXpToNextLevel(player.level, player.tier || player.classRank || 1);
   if (player.appliedEmblemBonusIds.length && typeof removeLegacyAppliedEmblemBonuses === 'function') {
