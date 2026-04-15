@@ -396,12 +396,78 @@ function closeItemPopup() {
   popupContent.innerHTML = '';
 }
 
+function getInventoryEmblemIds() {
+  if (!Array.isArray(player.emblemIds)) return [];
+  return player.emblemIds.filter(id => !!(typeof getEmblemDef === 'function' && getEmblemDef(id)));
+}
+
+function getEmblemTierForCell(emblem) {
+  if (!emblem) return 'common';
+  if (emblem.type === EMBLEM_TYPES.tier9) return 'legendary';
+  if (emblem.type === EMBLEM_TYPES.tier8 || emblem.type === EMBLEM_TYPES.master) return 'epic';
+  return 'rare';
+}
+
+function openEmblemPopup(emblemId) {
+  const emblem = typeof getEmblemDef === 'function' ? getEmblemDef(emblemId) : null;
+  if (!emblem) return;
+  const isActive = player.activeEmblemId === emblem.id;
+  const lineLabel = typeof getOriginalLineLabel === 'function' ? getOriginalLineLabel(emblem.targetLine) : emblem.targetLine;
+  const tierBadge = emblem.type === EMBLEM_TYPES.tier9
+    ? '9단 문장'
+    : (emblem.type === EMBLEM_TYPES.tier8 || emblem.type === EMBLEM_TYPES.master)
+      ? '8단 문장'
+      : '기본 문장';
+  const bonus = emblem.bonus || {};
+  const rows = [];
+  if (bonus.atk) rows.push({ k: 'ATK', v: '+' + bonus.atk });
+  if (bonus.def) rows.push({ k: 'DEF', v: '+' + bonus.def });
+  if (bonus.maxHp) rows.push({ k: 'HP', v: '+' + bonus.maxHp });
+  if (bonus.maxMp) rows.push({ k: 'MP', v: '+' + bonus.maxMp });
+  if (bonus.speed) rows.push({ k: '이속', v: '+' + bonus.speed.toFixed(2) });
+  if (bonus.critChance) rows.push({ k: '치명', v: '+' + bonus.critChance + '%' });
+  const bonusHtml = rows.length
+    ? '<div class="popup-potion-info">' +
+        rows.map(r => '<div class="popup-potion-stat"><span>' + r.k + '</span><span class="val">' + r.v + '</span></div>').join('') +
+      '</div>'
+    : '<div class="popup-potion-info"><div class="popup-potion-stat"><span>효과</span><span class="val">없음</span></div></div>';
+
+  popupContent.innerHTML = '' +
+    '<div class="popup-item-header">' +
+      '<div class="popup-icon type-helmet">\u2728</div>' +
+      '<div>' +
+        '<div class="popup-name">' + emblem.name + '</div>' +
+        '<span class="popup-type-badge">' + tierBadge + ' \u00B7 ' + lineLabel + ' \u00B7 \uBA38\uB9AC 슬롯</span>' +
+      '</div>' +
+    '</div>' +
+    bonusHtml +
+    '<div class="popup-btns"></div>';
+
+  const btns = popupContent.querySelector('.popup-btns');
+  if (!isActive) {
+    appendPopupActionButton(btns, 'equip', '장착', () => {
+      if (typeof equipPlayerEmblem === 'function') equipPlayerEmblem(emblem.id, { silent: false });
+      closeItemPopup();
+      renderInventory();
+    });
+  } else {
+    appendPopupActionButton(btns, 'unequip', '해제', () => {
+      if (typeof unequipPlayerEmblem === 'function') unequipPlayerEmblem({ silent: false });
+      closeItemPopup();
+      renderInventory();
+    });
+  }
+  appendPopupActionButton(btns, 'close', '닫기', () => closeItemPopup());
+  itemPopup.style.display = 'flex';
+}
+
 function renderInventory() {
   const counts = getInventoryCounts();
+  const emblemIds = getInventoryEmblemIds();
   const commanderName = typeof getCharacterDisplayName === 'function'
     ? getCharacterDisplayName(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'))
     : '주인공';
-  bagCount.textContent = inventory.length;
+  bagCount.textContent = inventory.length + emblemIds.length;
   if (invGoldEl) invGoldEl.textContent = commanderName + ' · ' + player.gold;
 
   // Render equip slots
@@ -429,21 +495,45 @@ function renderInventory() {
 
   // Filter & sort bag items
   const sortedIds = Object.keys(counts).sort(compareInventoryItems);
-  const filteredIds = sortedIds.filter(id => {
+  const showItems = activeBagFilter !== 'emblem';
+  const showEmblems = activeBagFilter === 'all' || activeBagFilter === 'emblem';
+  const filteredIds = showItems ? sortedIds.filter(id => {
     if (activeBagFilter === 'all') return true;
     const item = ITEMS[id];
     if (!item) return false;
     if (activeBagFilter === 'potion') return item.type === 'potion';
     if (activeBagFilter === 'equip') return item.type !== 'potion';
     return true;
-  });
+  }) : [];
 
   bagGrid.innerHTML = '';
-  if (filteredIds.length === 0) {
-    bagGrid.innerHTML = '<div class="bag-empty"><div class="bag-empty-icon">\uD83C\uDF92</div>' +
-      (inventory.length === 0 ? '가방이 비어있습니다' : '해당 아이템이 없습니다') + '</div>';
+  if (filteredIds.length === 0 && (!showEmblems || emblemIds.length === 0)) {
+    const emptyMsg = inventory.length === 0 && emblemIds.length === 0
+      ? '가방이 비어있습니다'
+      : '해당 아이템이 없습니다';
+    bagGrid.innerHTML = '<div class="bag-empty"><div class="bag-empty-icon">\uD83C\uDF92</div>' + emptyMsg + '</div>';
     return;
   }
+
+  // 문장 셀을 먼저 렌더링 (수집 상태 즉시 확인용).
+  // 문장은 player.emblemIds가 정본 저장소이고, 인벤 그리드에는 시각적으로 미러링만 한다.
+  if (showEmblems) {
+    emblemIds.forEach(emblemId => {
+      const emblem = getEmblemDef(emblemId);
+      if (!emblem) return;
+      const tier = getEmblemTierForCell(emblem);
+      const isActive = player.activeEmblemId === emblem.id;
+      const cell = document.createElement('button');
+      cell.className = 'bag-cell tier-' + tier + ' emblem-cell' + (isActive ? ' equipped' : '');
+      const dotHtml = '<span class="type-dot type-helmet"></span>';
+      const activeBadge = isActive ? '<span class="cell-count">\u2694</span>' : '';
+      cell.innerHTML = dotHtml + '\u2728' + activeBadge;
+      cell.title = emblem.name + (isActive ? ' (장착 중)' : '');
+      bindTap(cell, () => openEmblemPopup(emblemId), { stopPropagation: true });
+      bagGrid.appendChild(cell);
+    });
+  }
+
   filteredIds.forEach(id => {
     const item = ITEMS[id];
     if (!item) return;

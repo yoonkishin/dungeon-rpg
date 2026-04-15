@@ -393,6 +393,27 @@
 .bag-cell .type-dot.type-event     { background: #f1c40f; }
 .bag-cell .type-dot.type-potion    { background: #e74c3c; }
 
+/* Emblem cells — 수집한 문장을 가방에 시각적으로 미러링한다.
+   실제 저장소는 player.emblemIds이고, 여기선 보관 확인용으로 표시만 한다. */
+.bag-cell.emblem-cell {
+  font-size: 18px;
+  color: #f1c40f;
+  box-shadow: inset 0 0 10px rgba(241, 196, 15, 0.25);
+}
+.bag-cell.emblem-cell.tier-epic {
+  color: #d6b3ff;
+  box-shadow: inset 0 0 10px rgba(155, 89, 182, 0.3);
+}
+.bag-cell.emblem-cell.tier-legendary {
+  color: #ffeaa7;
+  box-shadow: inset 0 0 14px rgba(241, 196, 15, 0.4);
+}
+.bag-cell.emblem-cell.equipped {
+  border-width: 2px;
+  box-shadow: inset 0 0 14px rgba(255, 235, 59, 0.45), 0 0 8px rgba(241, 196, 15, 0.5);
+}
+.bag-cell.emblem-cell .cell-count { color: #ffeb3b; font-size: 11px; }
+
 /* ── Item Popup (redesigned inline comparison) ── */
 #item-popup {
   position: absolute;
