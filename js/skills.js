@@ -154,6 +154,11 @@ function useSkill(skillId) {
   if (!skill) return;
   if (player.mp < skill.mpCost) { showToast('MP 부족!'); return; }
   if ((skillCooldowns[skillId] || 0) > 0) return;
+  const classId = typeof getCommanderClassIdForCompat === 'function' ? getCommanderClassIdForCompat() : null;
+  if (classId !== null && !isSkillAllowedForClass(skillId, classId)) {
+    if (typeof showToast === 'function') showToast('현재 병종으로는 사용할 수 없는 스킬');
+    return;
+  }
 
   player.mp -= skill.mpCost;
   skillCooldowns[skillId] = skill.cooldown;

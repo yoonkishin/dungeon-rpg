@@ -71,6 +71,12 @@ function getCommanderCompanionProfile() {
   return cId !== null ? getCompanionProfile(cId) : null;
 }
 
+function getCommanderClassIdForCompat() {
+  const cId = typeof getCommanderCompanionId === 'function' ? getCommanderCompanionId() : null;
+  const profile = cId !== null && typeof getCommanderCompanionProfile === 'function' ? getCommanderCompanionProfile() : null;
+  return profile ? profile.classId : null;
+}
+
 function getCommanderCompanionRoster() {
   const cId = getCommanderCompanionId();
   return cId !== null ? getCompanionRoster(cId) : null;
@@ -196,6 +202,32 @@ function applySkillPagesState(pages) {
   const nextPages = cloneSkillPagesState(pages);
   skillPages.length = 0;
   nextPages.forEach(page => skillPages.push(page));
+}
+
+function cloneLineup(lineup) {
+  if (!Array.isArray(lineup)) return null;
+  return lineup.map(page => Array.isArray(page) ? page.slice() : []);
+}
+
+function reconcileSkillPagesForClass(pages, classId) {
+  if (!Array.isArray(pages)) return null;
+  if (classId === null) return pages.map(page => Array.isArray(page) ? page.slice() : []);
+  return pages.map(page => {
+    if (!Array.isArray(page)) return [];
+    return page.map(id => (id && !isSkillAllowedForClass(id, classId)) ? null : id);
+  });
+}
+
+function getDefaultLineupForClass(classId) {
+  const policy = classId !== null ? getClassSkillPolicy(classId) : null;
+  return policy && policy.defaultLineup ? cloneLineup(policy.defaultLineup) : null;
+}
+
+function applyClassDefaultLineup(classId) {
+  const def = getDefaultLineupForClass(classId);
+  if (!def) return false;
+  applySkillPagesState(def);
+  return true;
 }
 
 function syncCharacterAIModesFromLegacy() {
@@ -401,8 +433,13 @@ function applyOwnedCharacterStateToPlayer(characterId) {
       equipped[slot] = entry.equipment[slot] ? { ...entry.equipment[slot] } : null;
     });
   }
-  if (Array.isArray(entry.skillPages)) {
-    applySkillPagesState(entry.skillPages);
+  const classId = getCommanderClassIdForCompat();
+  const reconciled = reconcileSkillPagesForClass(entry.skillPages, classId);
+  const pagesEmpty = !Array.isArray(reconciled) || reconciled.every(page => !Array.isArray(page) || page.every(id => !id));
+  if (pagesEmpty) {
+    applyClassDefaultLineup(classId);
+  } else {
+    applySkillPagesState(reconciled);
   }
   if (typeof entry.skillPageIndex === 'number') {
     currentSkillPage = Math.max(0, Math.min(skillPages.length - 1, entry.skillPageIndex));

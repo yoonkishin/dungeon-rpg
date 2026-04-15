@@ -2,18 +2,18 @@
 
 // ─── Skill System ─────────────────────────────────────────────────────────────
 const SKILLS = [
-  { id:'fireball',   name:'파이어볼',   icon:'🔥', mpCost:10, cooldown:3000, damage:25, range:120, type:'projectile', desc:'전방에 화염구를 발사하여 적에게 25 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
-  { id:'heal',       name:'힐',         icon:'💚', mpCost:15, cooldown:5000, heal:40, range:0, type:'self', desc:'체력을 40 회복합니다', typeLabel:'자가', iconBg:'#2ecc71' },
-  { id:'slash',      name:'강타',       icon:'⚡', mpCost:8,  cooldown:2000, damage:20, range:55, type:'melee', desc:'강력한 일격으로 근접 적에게 20 피해를 입힙니다', typeLabel:'근접', iconBg:'#e67e22' },
-  { id:'shield',     name:'방어막',     icon:'🛡️', mpCost:12, cooldown:8000, defBuff:10, duration:5000, range:0, type:'buff', desc:'5초간 방어력이 10 증가합니다', typeLabel:'버프', iconBg:'#3498db' },
-  { id:'poison',     name:'독안개',     icon:'☠️', mpCost:10, cooldown:4000, damage:5, ticks:5, range:80, type:'aoe', desc:'주변 적에게 독을 퍼뜨려 지속 피해를 입힙니다', typeLabel:'범위', iconBg:'#8e44ad' },
-  { id:'sprint',     name:'질주',       icon:'💨', mpCost:5,  cooldown:6000, speedBuff:2, duration:3000, range:0, type:'buff', desc:'3초간 이동속도가 크게 증가합니다', typeLabel:'버프', iconBg:'#3498db' },
-  { id:'thunder',    name:'번개',       icon:'⚡', mpCost:20, cooldown:6000, damage:40, range:100, type:'projectile', desc:'번개를 내려 적에게 40 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
-  { id:'drain',      name:'흡혈',       icon:'🩸', mpCost:12, cooldown:4000, damage:15, heal:15, range:55, type:'melee', desc:'적의 생명력을 흡수하여 15 피해 + 15 회복합니다', typeLabel:'근접', iconBg:'#e67e22' },
-  { id:'whirlwind',  name:'폭풍참',     icon:'🌪️', mpCost:25, cooldown:4000, damage:60, range:80,  type:'melee',      desc:'폭풍처럼 회전하며 주변 모든 적에게 60 피해를 입힙니다', typeLabel:'근접', iconBg:'#e67e22' },
-  { id:'meteor',     name:'유성낙하',   icon:'☄️', mpCost:30, cooldown:8000, damage:80, range:150, type:'projectile', desc:'강력한 유성을 내리꽂아 범위 내 적에게 80 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
-  { id:'iron_fortress', name:'철벽진', icon:'🏯', mpCost:20, cooldown:10000, defBuff:20, duration:6000, range:0, type:'buff', desc:'6초간 방어력이 20 증가하는 철벽 방어 태세를 취합니다', typeLabel:'버프', iconBg:'#3498db' },
-  { id:'life_drain', name:'생명흡수',   icon:'💀', mpCost:22, cooldown:5000, damage:30, heal:30, range:65, type:'melee', desc:'강력한 생명 흡수로 근접 적에게 30 피해 + 30 회복합니다', typeLabel:'근접', iconBg:'#8e44ad' },
+  { id:'fireball',   name:'파이어볼',   icon:'🔥', mpCost:10, cooldown:3000, damage:25, range:120, type:'projectile', category:'attack_magic', element:'fire', desc:'전방에 화염구를 발사하여 적에게 25 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
+  { id:'heal',       name:'힐',         icon:'💚', mpCost:15, cooldown:5000, heal:40, range:0, type:'self', category:'support_magic', element:'none', desc:'체력을 40 회복합니다', typeLabel:'자가', iconBg:'#2ecc71' },
+  { id:'slash',      name:'강타',       icon:'⚡', mpCost:8,  cooldown:2000, damage:20, range:55, type:'melee', category:'physical', element:'none', desc:'강력한 일격으로 근접 적에게 20 피해를 입힙니다', typeLabel:'근접', iconBg:'#e67e22' },
+  { id:'shield',     name:'방어막',     icon:'🛡️', mpCost:12, cooldown:8000, defBuff:10, duration:5000, range:0, type:'buff', category:'support_magic', element:'none', desc:'5초간 방어력이 10 증가합니다', typeLabel:'버프', iconBg:'#3498db' },
+  { id:'poison',     name:'독안개',     icon:'☠️', mpCost:10, cooldown:4000, damage:5, ticks:5, range:80, type:'aoe', category:'attack_magic', element:'dark', desc:'주변 적에게 독을 퍼뜨려 지속 피해를 입힙니다', typeLabel:'범위', iconBg:'#8e44ad' },
+  { id:'sprint',     name:'질주',       icon:'💨', mpCost:5,  cooldown:6000, speedBuff:2, duration:3000, range:0, type:'buff', category:'support_magic', element:'none', desc:'3초간 이동속도가 크게 증가합니다', typeLabel:'버프', iconBg:'#3498db' },
+  { id:'thunder',    name:'번개',       icon:'⚡', mpCost:20, cooldown:6000, damage:40, range:100, type:'projectile', category:'attack_magic', element:'thunder', desc:'번개를 내려 적에게 40 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
+  { id:'drain',      name:'흡혈',       icon:'🩸', mpCost:12, cooldown:4000, damage:15, heal:15, range:55, type:'melee', category:'physical', element:'none', desc:'적의 생명력을 흡수하여 15 피해 + 15 회복합니다', typeLabel:'근접', iconBg:'#e67e22' },
+  { id:'whirlwind',  name:'폭풍참',     icon:'🌪️', mpCost:25, cooldown:4000, damage:60, range:80,  type:'melee', category:'physical', element:'none', desc:'폭풍처럼 회전하며 주변 모든 적에게 60 피해를 입힙니다', typeLabel:'근접', iconBg:'#e67e22' },
+  { id:'meteor',     name:'유성낙하',   icon:'☄️', mpCost:30, cooldown:8000, damage:80, range:150, type:'projectile', category:'attack_magic', element:'fire', desc:'강력한 유성을 내리꽂아 범위 내 적에게 80 피해를 입힙니다', typeLabel:'투사체', iconBg:'#e74c3c' },
+  { id:'iron_fortress', name:'철벽진', icon:'🏯', mpCost:20, cooldown:10000, defBuff:20, duration:6000, range:0, type:'buff', category:'support_magic', element:'none', desc:'6초간 방어력이 20 증가하는 철벽 방어 태세를 취합니다', typeLabel:'버프', iconBg:'#3498db' },
+  { id:'life_drain', name:'생명흡수',   icon:'💀', mpCost:22, cooldown:5000, damage:30, heal:30, range:65, type:'melee', category:'attack_magic', element:'dark', desc:'강력한 생명 흡수로 근접 적에게 30 피해 + 30 회복합니다', typeLabel:'근접', iconBg:'#8e44ad' },
 ];
 
 // ─── Player Growth Lines / Original Emblem Foundations ─────────────────────
