@@ -64,6 +64,8 @@ function spawnDungeonEnemies() {
         attackTimer: 0,
         attackCooldown: 980,
         flashTimer: 0,
+        chillTimer: 0,
+        chillMult: 1,
         dead: false,
         frame: 0,
         frameTimer: 0,
@@ -136,6 +138,8 @@ function spawnDungeonEnemies() {
       attackTimer: 0,
       attackCooldown: 1000,
       flashTimer: 0,
+      chillTimer: 0,
+      chillMult: 1,
       dead: false,
       frame: 0,
       frameTimer: 0,
@@ -182,6 +186,8 @@ function createEnemy(tx, ty, t, typeIdx) {
     attackTimer: 0,
     attackCooldown: 1200 + Math.random() * 400,
     flashTimer: 0,
+    chillTimer: 0,
+    chillMult: 1,
     dead: false,
     frame: 0,
     frameTimer: 0,
@@ -254,8 +260,16 @@ function updateEnemyAI(dt) {
 
     if (e.flashTimer > 0) e.flashTimer--;
     if (e.attackTimer > 0) e.attackTimer -= dt;
+    if (e.chillTimer > 0) {
+      e.chillTimer = Math.max(0, e.chillTimer - dt);
+    } else {
+      e.chillMult = 1;
+    }
     if (e.isBoss && e.specialTimer > 0) e.specialTimer -= dt;
     if (e.isBoss && typeof triggerBossPhaseGimmick === 'function') triggerBossPhaseGimmick(e);
+
+    const speedMult = e.chillTimer > 0 ? (e.chillMult ?? 1) : 1;
+    const effectiveSpeed = e.speed * speedMult;
 
     e.frameTimer += dt;
     if (e.frameTimer > 300) { e.frameTimer = 0; e.frame = 1 - e.frame; }
@@ -277,7 +291,7 @@ function updateEnemyAI(dt) {
         e.wanderDx = Math.cos(angle) * e.speed * 0.5;
         e.wanderDy = Math.sin(angle) * e.speed * 0.5;
       }
-      const pos = resolveCollision(e, e.x + e.wanderDx, e.y + e.wanderDy);
+      const pos = resolveCollision(e, e.x + e.wanderDx * speedMult, e.y + e.wanderDy * speedMult);
       e.x = pos.x; e.y = pos.y;
       if (d < e.aggroRange) e.state = 'chase';
     } else if (e.state === 'chase') {
@@ -293,7 +307,7 @@ function updateEnemyAI(dt) {
       if (d > e.attackRange + 8) {
         e.attackWindup = 0;
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        const pos = resolveCollision(e, e.x + Math.cos(angle) * e.speed * 1.55, e.y + Math.sin(angle) * e.speed * 1.55);
+        const pos = resolveCollision(e, e.x + Math.cos(angle) * effectiveSpeed * 1.55, e.y + Math.sin(angle) * effectiveSpeed * 1.55);
         e.x = pos.x; e.y = pos.y;
       } else {
         if (e.attackWindup > 0) {

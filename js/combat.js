@@ -178,9 +178,98 @@ function doAttack() {
   player.x = lungePos.x;
   player.y = lungePos.y;
 
+  const swingOriginX = player.x;
+  const swingOriginY = player.y;
+  const swingAngle = player.attackAngle;
+  const totalCritChance = player.critChance + (getEquipBonus().critBonus || 0);
+
+  function applyHitTimerBonus(hitCount) {
+    if (hitCount > 0) {
+      player.attackTimer = Math.max(240, player.attackTimer - hitCount * 35);
+    }
+  }
+
+  function collectArcTargets(range = attackRange, arcWidth = attackArcWidth, originX = swingOriginX, originY = swingOriginY, angle = swingAngle) {
+    const targets = [];
+    enemies.forEach(e => {
+      if (e.dead) return;
+      const dx = e.x - originX;
+      const dy = e.y - originY;
+      const distance = Math.hypot(dx, dy);
+      if (distance > range) return;
+      const enemyAngle = Math.atan2(dy, dx);
+      const diff = Math.abs(normalizeAngle(enemyAngle - angle));
+      if (diff < arcWidth) {
+        targets.push({ enemy:e, angle:enemyAngle, distance });
+      }
+    });
+    return targets;
+  }
+
+  function runArcSweep(options = {}) {
+    const range = options.attackRange == null ? attackRange : options.attackRange;
+    const arcWidth = options.attackArcWidth == null ? attackArcWidth : options.attackArcWidth;
+    const originX = options.originX == null ? swingOriginX : options.originX;
+    const originY = options.originY == null ? swingOriginY : options.originY;
+    const angle = options.attackAngle == null ? swingAngle : options.attackAngle;
+    const targets = collectArcTargets(range, arcWidth, originX, originY, angle);
+    const hitEnemies = [];
+    let hitCount = 0;
+
+    targets.forEach(target => {
+      const e = target.enemy;
+      const damageBase = options.damageBase == null ? playerAtk() : options.damageBase;
+      let dmg = Math.max(1, Math.floor(damageBase) - Math.floor(Math.random() * 5));
+      if (e === options.mainTarget && options.mainTargetDamageMult) {
+        dmg = Math.max(1, Math.floor(dmg * options.mainTargetDamageMult));
+      }
+
+      let isCrit = false;
+      if (Math.random() * 100 < totalCritChance) {
+        dmg = Math.floor(dmg * 1.5);
+        isCrit = true;
+      }
+
+      e.hp -= dmg;
+      e.flashTimer = 12;
+      e.attackWindup = 0;
+      e.hitStun = isCrit ? 260 : 170;
+      const kbAngle = typeof options.knockbackAngle === 'function' ? options.knockbackAngle(target) : target.angle;
+      const kbPower = ((e.isBoss ? 1.2 : 2.4) * (isCrit ? 1.35 : 1)) * (options.knockbackMult || 1);
+      e.knockbackVx = Math.cos(kbAngle) * kbPower;
+      e.knockbackVy = Math.sin(kbAngle) * kbPower;
+      const hitColor = options.particleColor || (damageType === 'magic' ? '#9b59b6' : '#e74c3c');
+      addParticles(e.x, e.y, hitColor, isCrit ? 12 : 8);
+      addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : damageType);
+      enemyEffects.push({
+        kind:'slash',
+        x:e.x,
+        y:e.y,
+        angle:target.angle,
+        timer:8,
+        maxTimer:8,
+        color: isCrit ? '#f1c40f' : (options.slashColor || (damageType === 'magic' ? '#c39bd3' : '#fff'))
+      });
+      if (isCrit) hitFreezeFrames = 3;
+      hitCount++;
+      if (!options.skipHitShake) {
+        triggerShake(isCrit ? 14 : 9);
+      }
+      hitEnemies.push(e);
+
+      if (typeof options.onHit === 'function') {
+        options.onHit({ enemy:e, angle:target.angle, distance:target.distance, damage:dmg, isCrit });
+      }
+      if (e.hp <= 0) {
+        killEnemy(e);
+      }
+    });
+
+    return { hitCount, hitEnemies, targets };
+  }
+
   if (spec && spec.kind === 'projectile') {
     const damageBase = playerAtk();
-    const totalCritChance = player.critChance + (getEquipBonus().critBonus || 0);
     const isCritRoll = Math.random() * 100 < totalCritChance;
     spawnPlayerProjectile(spec, player.x, player.y, player.attackAngle, damageBase, isCritRoll);
     if (typeof addParticles === 'function') {
@@ -191,45 +280,10 @@ function doAttack() {
     return;
   }
 
-  let hitCount = 0;
-  enemies.forEach(e => {
-    if (e.dead) return;
-    const d = dist(player, e);
-    if (d > attackRange) return;
-    const angle = Math.atan2(e.y - player.y, e.x - player.x);
-    const diff = Math.abs(normalizeAngle(angle - player.attackAngle));
-    if (diff < attackArcWidth) {
-      let dmg = Math.max(1, playerAtk() - Math.floor(Math.random() * 5));
-      let isCrit = false;
-      const totalCritChance = player.critChance + (getEquipBonus().critBonus || 0);
-      if (Math.random() * 100 < totalCritChance) {
-        dmg = Math.floor(dmg * 1.5);
-        isCrit = true;
-      }
-      e.hp -= dmg;
-      e.flashTimer = 12;
-      e.attackWindup = 0;
-      e.hitStun = isCrit ? 260 : 170;
-      const kbPower = (e.isBoss ? 1.2 : 2.4) * (isCrit ? 1.35 : 1);
-      e.knockbackVx = Math.cos(angle) * kbPower;
-      e.knockbackVy = Math.sin(angle) * kbPower;
-      addParticles(e.x, e.y, damageType === 'magic' ? '#9b59b6' : '#e74c3c', isCrit ? 12 : 8);
-      addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : damageType);
-      enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:8, maxTimer:8, color: isCrit ? '#f1c40f' : (damageType === 'magic' ? '#c39bd3' : '#fff') });
-      if (isCrit) hitFreezeFrames = 3;
-      hitCount++;
-      triggerShake(isCrit ? 14 : 9);
-      if (e.hp <= 0) {
-        killEnemy(e);
-      }
-    }
-  });
-
-  if (hitCount > 0) {
-    player.attackTimer = Math.max(240, player.attackTimer - hitCount * 35);
-  }
-
   if (spec && spec.kind === 'arc-aura') {
+    const sweep = runArcSweep();
+    applyHitTimerBonus(sweep.hitCount);
+
     const auraDamage = Math.max(1, Math.floor(playerAtk() * spec.auraDamageRatio));
     const auraType = commanderCombat && commanderCombat.damageType ? commanderCombat.damageType : damageType;
     if (typeof addParticles === 'function') {
@@ -237,8 +291,8 @@ function doAttack() {
       for (let i = 0; i < ringBursts; i++) {
         const ringAngle = (Math.PI * 2 * i) / ringBursts;
         addParticles(
-          player.x + Math.cos(ringAngle) * spec.auraRadius,
-          player.y + Math.sin(ringAngle) * spec.auraRadius,
+          swingOriginX + Math.cos(ringAngle) * spec.auraRadius,
+          swingOriginY + Math.sin(ringAngle) * spec.auraRadius,
           spec.color,
           1
         );
@@ -246,8 +300,8 @@ function doAttack() {
     }
     enemies.forEach(e => {
       if (e.dead) return;
-      if (dist(player, e) > spec.auraRadius) return;
-      const angle = Math.atan2(e.y - player.y, e.x - player.x);
+      if (Math.hypot(e.x - swingOriginX, e.y - swingOriginY) > spec.auraRadius) return;
+      const angle = Math.atan2(e.y - swingOriginY, e.x - swingOriginX);
       e.hp -= auraDamage;
       e.flashTimer = 10;
       e.attackWindup = 0;
@@ -263,7 +317,163 @@ function doAttack() {
         killEnemy(e);
       }
     });
+    return;
   }
+
+  if (spec && spec.kind === 'arc-shock') {
+    const sweep = runArcSweep();
+    applyHitTimerBonus(sweep.hitCount);
+
+    setTimeout(() => {
+      const shockDamage = Math.max(1, Math.floor(playerAtk() * spec.shockDamageRatio));
+      enemies.forEach(e => {
+        if (e.dead) return;
+        const dx = e.x - swingOriginX;
+        const dy = e.y - swingOriginY;
+        if (Math.hypot(dx, dy) > spec.shockRadius) return;
+        const angle = Math.atan2(dy, dx);
+        e.hp -= shockDamage;
+        e.flashTimer = 10;
+        e.attackWindup = 0;
+        e.hitStun = 110;
+        const kbPower = 2.4 * spec.shockKnockbackMult;
+        e.knockbackVx = Math.cos(angle) * kbPower;
+        e.knockbackVy = Math.sin(angle) * kbPower;
+        addParticles(e.x, e.y, spec.shockColor, 3);
+        addDamageNumber(e.x, e.y, shockDamage, 'normal');
+        if (e.hp <= 0) {
+          killEnemy(e);
+        }
+      });
+      enemyEffects.push({ kind:'slash', x:swingOriginX, y:swingOriginY, angle:0, timer:12, maxTimer:12, color:spec.shockColor });
+    }, spec.shockDelayMs);
+    return;
+  }
+
+  if (spec && spec.kind === 'arc-combo') {
+    const comboDamageBase = Math.floor(playerAtk() * spec.damagePerHit);
+    const comboHits = Math.max(1, spec.hits || 2);
+
+    const firstSweep = runArcSweep({ damageBase: comboDamageBase });
+    applyHitTimerBonus(firstSweep.hitCount);
+
+    if (comboHits > 1) {
+      setTimeout(() => {
+        const secondSweep = runArcSweep({
+          damageBase: comboDamageBase,
+          originX: swingOriginX,
+          originY: swingOriginY,
+          attackAngle: swingAngle,
+          particleColor: spec.comboColor,
+          slashColor: spec.comboGlow
+        });
+        applyHitTimerBonus(secondSweep.hitCount);
+      }, spec.hitDelayMs);
+    }
+    return;
+  }
+
+  if (spec && spec.kind === 'lance-charge') {
+    const forward = dirVecs[player.dir];
+    let hitCount = 0;
+
+    enemies.forEach(e => {
+      if (e.dead) return;
+      const relX = e.x - swingOriginX;
+      const relY = e.y - swingOriginY;
+      const t = relX * forward.x + relY * forward.y;
+      if (t < 0 || t > spec.lineLength) return;
+      const perpendicular = Math.abs(relX * forward.y - relY * forward.x);
+      if (perpendicular > spec.lineWidth) return;
+
+      let dmg = Math.max(1, Math.floor(playerAtk() * spec.damageMult) - Math.floor(Math.random() * 3));
+      let isCrit = false;
+      if (Math.random() * 100 < totalCritChance) {
+        dmg = Math.floor(dmg * 1.5);
+        isCrit = true;
+      }
+
+      e.hp -= dmg;
+      e.flashTimer = 12;
+      e.attackWindup = 0;
+      e.hitStun = isCrit ? 260 : 170;
+      const kbPower = (e.isBoss ? 1.2 : 2.4) * (isCrit ? 1.35 : 1);
+      e.knockbackVx = forward.x * kbPower;
+      e.knockbackVy = forward.y * kbPower;
+      addParticles(e.x, e.y, spec.chargeColor, isCrit ? 12 : 8);
+      addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : damageType);
+      enemyEffects.push({
+        kind:'slash',
+        x:e.x,
+        y:e.y,
+        angle:swingAngle,
+        timer:8,
+        maxTimer:8,
+        color:isCrit ? '#f1c40f' : (spec.chargeGlow || spec.chargeColor)
+      });
+      if (isCrit) hitFreezeFrames = 3;
+      hitCount++;
+      if (e.hp <= 0) {
+        killEnemy(e);
+      }
+    });
+
+    enemyEffects.push({
+      kind:'slash',
+      x:swingOriginX + forward.x * spec.lineLength,
+      y:swingOriginY + forward.y * spec.lineLength,
+      angle:swingAngle,
+      timer:10,
+      maxTimer:10,
+      color:spec.chargeGlow
+    });
+    [20, 40, 60, 80].forEach(k => {
+      addParticles(swingOriginX + forward.x * k, swingOriginY + forward.y * k, spec.chargeGlow, 1);
+    });
+    triggerShake(8);
+    applyHitTimerBonus(hitCount);
+    return;
+  }
+
+  if (spec && spec.kind === 'arc-chill') {
+    const sweep = runArcSweep({
+      particleColor: spec.chillColor,
+      onHit({ enemy }) {
+        enemy.chillTimer = spec.chillDurationMs;
+        enemy.chillMult = spec.chillSpeedMult;
+        addParticles(enemy.x, enemy.y, spec.chillGlow, 4);
+      }
+    });
+    applyHitTimerBonus(sweep.hitCount);
+    return;
+  }
+
+  if (spec && spec.kind === 'arc-thrust') {
+    const thrustRange = attackRange + spec.rangeBonus;
+    const thrustArcWidth = spec.arcWidthOverride || attackArcWidth;
+    const thrustTargets = collectArcTargets(thrustRange, thrustArcWidth);
+    const mainTargetEntry = thrustTargets.reduce((closest, target) => {
+      if (!closest || target.distance < closest.distance) return target;
+      return closest;
+    }, null);
+    const mainTarget = mainTargetEntry ? mainTargetEntry.enemy : null;
+    const sweep = runArcSweep({
+      attackRange: thrustRange,
+      attackArcWidth: thrustArcWidth,
+      mainTarget,
+      mainTargetDamageMult: spec.mainTargetDamageMult,
+      onHit({ enemy, angle }) {
+        if (enemy !== mainTarget) return;
+        addParticles(enemy.x, enemy.y, spec.thrustColor, 8);
+        enemyEffects.push({ kind:'slash', x:enemy.x, y:enemy.y, angle, timer:8, maxTimer:8, color:spec.thrustGlow });
+      }
+    });
+    applyHitTimerBonus(sweep.hitCount);
+    return;
+  }
+
+  const sweep = runArcSweep();
+  applyHitTimerBonus(sweep.hitCount);
 }
 
 function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
