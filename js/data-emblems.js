@@ -82,6 +82,23 @@ const EMBLEM_FUSION_RECIPES = {
   },
 };
 
+const EMBLEM_FUSION_MATERIAL_STYLES = {
+  infantry: { glyph: '보', primary: '#f39c12', accent: '#c0392b', glow: '#ffe0a6' },
+  flyingKnight: { glyph: '비', primary: '#f5b7b1', accent: '#e056fd', glow: '#ffe9ef' },
+  cavalry: { glyph: '기', primary: '#f1c40f', accent: '#d35400', glow: '#fff2a8' },
+  navalUnit: { glyph: '수', primary: '#1abc9c', accent: '#2980b9', glow: '#d7fff5' },
+  lancer: { glyph: '창', primary: '#16a085', accent: '#2ecc71', glow: '#daf9ed' },
+  archer: { glyph: '궁', primary: '#74b9ff', accent: '#0984e3', glow: '#e6f3ff' },
+  monk: { glyph: '승', primary: '#9b59b6', accent: '#f39c12', glow: '#f3e5ff' },
+  priest: { glyph: '신', primary: '#d6a2ff', accent: '#8e44ad', glow: '#fbf1ff' },
+  mage: { glyph: '법', primary: '#6c5ce7', accent: '#00cec9', glow: '#ece9ff' },
+  darkPriest: { glyph: '사', primary: '#8e44ad', accent: '#2d132c', glow: '#eedcff' },
+};
+
+function getFusionMaterialStyle(lineId) {
+  return EMBLEM_FUSION_MATERIAL_STYLES[lineId] || null;
+}
+
 function getFusionRecipeForLine(masterLineId) {
   return EMBLEM_FUSION_RECIPES[masterLineId] || null;
 }
