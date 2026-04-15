@@ -100,6 +100,7 @@ function enterField() {
   currentMap = 'field';
   player.x = 40 * TILE;
   player.y = (FIELD_H - 3) * TILE + TILE/2;
+  if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   showAreaLabel('필드');
   AudioSystem.sfx.portal();
@@ -114,6 +115,7 @@ function enterTown() {
   currentMap = 'town';
   player.x = 20 * TILE + TILE/2;
   player.y = 15 * TILE + TILE/2;
+  if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   showAreaLabel('마을');
   AudioSystem.sfx.portal();
@@ -130,6 +132,7 @@ function enterDungeon(dungeonId) {
   maps.dungeon = buildDungeon();
   player.x = 10 * TILE + TILE/2;
   player.y = 12 * TILE + TILE/2;
+  if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   const info = DUNGEON_INFO[dungeonId];
   showAreaLabel(info ? info.name : '던전');
@@ -175,6 +178,7 @@ function exitDungeon() {
     player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
     AudioSystem.sfx.portal();
     AudioSystem.startBgm('town');
+    if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
     spawnEnemies();
     showAreaLabel('마을');
     autoSave();
@@ -194,6 +198,7 @@ function exitDungeon() {
   currentDungeonId = -1;
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('field');
+  if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   showAreaLabel('필드');
   autoSave();

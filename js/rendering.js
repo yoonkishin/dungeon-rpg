@@ -83,6 +83,7 @@ function draw() {
 
   drawEnemyEffects();
   drawSkillEffects();
+  if (typeof renderPlayerProjectiles === 'function') renderPlayerProjectiles(ctx);
   drawParticles();
   drawDamageNumbers();
   drawDayNight();

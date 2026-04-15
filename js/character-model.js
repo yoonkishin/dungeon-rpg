@@ -105,6 +105,7 @@ function getCommanderCombatProfile() {
     lungeDistance: isCompanionRangedProfile(profile) ? 2 : (profile.unitType === 'Cavalry' ? 14 : profile.unitType === 'FlyingKnight' ? 10 : 8),
     moveSpeedBonus: moveSpeedBonusByType[profile.unitType] || 0,
     damageType: isCompanionMagicProfile(profile) ? 'magic' : 'normal',
+    basicAttack: profile.basicAttack || null,
   };
 }
 

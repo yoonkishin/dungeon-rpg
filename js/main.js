@@ -234,6 +234,7 @@ function update(dt) {
   updateEnemyAI(dt);
   updateParticles();
   if (typeof updateSkillEffects === 'function') updateSkillEffects(dt);
+  if (typeof updatePlayerProjectiles === 'function') updatePlayerProjectiles(dt);
   if (typeof updateAmbientParticles === 'function') updateAmbientParticles();
   if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
   if (hudDirty) updateHUD();

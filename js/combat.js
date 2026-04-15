@@ -1,7 +1,165 @@
 'use strict';
 
+
+// Player basic-attack projectiles - runtime only, not persisted.
+const PLAYER_PROJECTILE_MAX = 40;
+if (typeof playerProjectiles === 'undefined') var playerProjectiles = [];
+
+function spawnPlayerProjectile(spec, originX, originY, dirAngle, damageBase, isCritRoll) {
+  if (playerProjectiles.length >= PLAYER_PROJECTILE_MAX) {
+    playerProjectiles.shift();
+  }
+  playerProjectiles.push({
+    x: originX,
+    y: originY,
+    vx: Math.cos(dirAngle) * spec.speed,
+    vy: Math.sin(dirAngle) * spec.speed,
+    traveled: 0,
+    range: spec.range,
+    size: spec.size,
+    color: spec.color,
+    glow: spec.glow,
+    shape: spec.shape || 'orb',
+    damageType: spec.damageType || 'normal',
+    damageBase,
+    critLocked: !!isCritRoll,
+    pierce: spec.pierce || 0,
+    pierced: 0,
+    hitRadius: spec.hitRadius || 14,
+    hitSet: new Set(),
+    trailTimer: 0,
+  });
+}
+
+function updatePlayerProjectiles(dt) {
+  if (!playerProjectiles.length) return;
+  const step = dt / 16;
+  for (let i = playerProjectiles.length - 1; i >= 0; i--) {
+    const p = playerProjectiles[i];
+    const mvx = p.vx * step;
+    const mvy = p.vy * step;
+    p.x += mvx;
+    p.y += mvy;
+    p.traveled += Math.hypot(mvx, mvy);
+    p.trailTimer -= dt;
+    if (p.trailTimer <= 0 && typeof addParticles === 'function') {
+      addParticles(p.x, p.y, p.glow || p.color, 1);
+      p.trailTimer = 40;
+    }
+
+    let consumed = false;
+    for (const e of enemies) {
+      if (e.dead) continue;
+      if (p.hitSet.has(e)) continue;
+      const dx = e.x - p.x;
+      const dy = e.y - p.y;
+      const hitRadius = p.hitRadius + 10;
+      if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+        applyPlayerProjectileHit(p, e);
+        p.hitSet.add(e);
+        if (p.pierced >= p.pierce) {
+          consumed = true;
+          break;
+        }
+        p.pierced++;
+      }
+    }
+    if (consumed || p.traveled >= p.range) {
+      playerProjectiles.splice(i, 1);
+    }
+  }
+}
+
+function applyPlayerProjectileHit(p, e) {
+  let dmg = Math.max(1, p.damageBase - Math.floor(Math.random() * 4));
+  const isCrit = p.critLocked;
+  if (isCrit) dmg = Math.floor(dmg * 1.5);
+  e.hp -= dmg;
+  e.flashTimer = 12;
+  e.attackWindup = 0;
+  e.hitStun = isCrit ? 220 : 140;
+  const angle = Math.atan2(p.vy, p.vx);
+  const kbPower = (e.isBoss ? 0.9 : 1.8) * (isCrit ? 1.3 : 1);
+  e.knockbackVx = Math.cos(angle) * kbPower;
+  e.knockbackVy = Math.sin(angle) * kbPower;
+  if (typeof addParticles === 'function') {
+    addParticles(e.x, e.y, p.color, isCrit ? 10 : 6);
+  }
+  if (typeof addDamageNumber === 'function') {
+    addDamageNumber(e.x, e.y, dmg, isCrit ? 'critical' : p.damageType);
+  }
+  if (typeof enemyEffects !== 'undefined') {
+    enemyEffects.push({
+      kind: 'slash',
+      x: e.x,
+      y: e.y,
+      angle,
+      timer: 8,
+      maxTimer: 8,
+      color: isCrit ? '#f1c40f' : (p.damageType === 'magic' ? '#c39bd3' : '#fff')
+    });
+  }
+  if (isCrit && typeof hitFreezeFrames !== 'undefined') hitFreezeFrames = 3;
+  if (typeof triggerShake === 'function') triggerShake(isCrit ? 10 : 6);
+  if (e.hp <= 0 && typeof killEnemy === 'function') killEnemy(e);
+}
+
+function renderPlayerProjectiles(ctx) {
+  if (!playerProjectiles.length) return;
+  ctx.save();
+  for (const p of playerProjectiles) {
+    const sx = p.x - cameraX + screenShake.x;
+    const sy = p.y - cameraY + screenShake.y;
+    const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, p.size * 1.8);
+    gradient.addColorStop(0, p.glow || '#ffffff');
+    gradient.addColorStop(0.5, p.color);
+    gradient.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(sx, sy, p.size * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    if (p.shape === 'arrow') {
+      const angle = Math.atan2(p.vy, p.vx);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(angle);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.moveTo(p.size, 0);
+      ctx.lineTo(-p.size, -p.size * 0.4);
+      ctx.lineTo(-p.size * 0.4, 0);
+      ctx.lineTo(-p.size, p.size * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else if (p.shape === 'shard') {
+      const angle = Math.atan2(p.vy, p.vx);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(angle);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.moveTo(p.size, 0);
+      ctx.lineTo(0, -p.size * 0.5);
+      ctx.lineTo(-p.size, 0);
+      ctx.lineTo(0, p.size * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(sx, sy, p.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function doAttack() {
   if (player.attackTimer > 0) return;
+  const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
+  const spec = commanderCombat && commanderCombat.basicAttack ? commanderCombat.basicAttack : null;
   const attackRange = typeof playerAttackRangeValue === 'function' ? playerAttackRangeValue() : 62;
   const attackArcWidth = typeof playerAttackArcWidthValue === 'function' ? playerAttackArcWidthValue() : Math.PI * 0.68;
   const attackLunge = typeof playerAttackLungeDistanceValue === 'function' ? playerAttackLungeDistanceValue() : 10;
@@ -19,6 +177,19 @@ function doAttack() {
   const lungePos = resolveCollision(player, player.x + lunge.x * attackLunge, player.y + lunge.y * attackLunge);
   player.x = lungePos.x;
   player.y = lungePos.y;
+
+  if (spec && spec.kind === 'projectile') {
+    const damageBase = playerAtk();
+    const totalCritChance = player.critChance + (getEquipBonus().critBonus || 0);
+    const isCritRoll = Math.random() * 100 < totalCritChance;
+    spawnPlayerProjectile(spec, player.x, player.y, player.attackAngle, damageBase, isCritRoll);
+    if (typeof addParticles === 'function') {
+      const muzzleX = player.x + Math.cos(player.attackAngle) * 12;
+      const muzzleY = player.y + Math.sin(player.attackAngle) * 12;
+      addParticles(muzzleX, muzzleY, spec.color, isCritRoll ? 8 : 5);
+    }
+    return;
+  }
 
   let hitCount = 0;
   enemies.forEach(e => {
@@ -56,6 +227,42 @@ function doAttack() {
 
   if (hitCount > 0) {
     player.attackTimer = Math.max(240, player.attackTimer - hitCount * 35);
+  }
+
+  if (spec && spec.kind === 'arc-aura') {
+    const auraDamage = Math.max(1, Math.floor(playerAtk() * spec.auraDamageRatio));
+    const auraType = commanderCombat && commanderCombat.damageType ? commanderCombat.damageType : damageType;
+    if (typeof addParticles === 'function') {
+      const ringBursts = 10;
+      for (let i = 0; i < ringBursts; i++) {
+        const ringAngle = (Math.PI * 2 * i) / ringBursts;
+        addParticles(
+          player.x + Math.cos(ringAngle) * spec.auraRadius,
+          player.y + Math.sin(ringAngle) * spec.auraRadius,
+          spec.color,
+          1
+        );
+      }
+    }
+    enemies.forEach(e => {
+      if (e.dead) return;
+      if (dist(player, e) > spec.auraRadius) return;
+      const angle = Math.atan2(e.y - player.y, e.x - player.x);
+      e.hp -= auraDamage;
+      e.flashTimer = 10;
+      e.attackWindup = 0;
+      e.hitStun = 110;
+      const kbPower = (e.isBoss ? 0.55 : 1.15);
+      e.knockbackVx = Math.cos(angle) * kbPower;
+      e.knockbackVy = Math.sin(angle) * kbPower;
+      addParticles(e.x, e.y, spec.color, 5);
+      addDamageNumber(e.x, e.y, auraDamage, auraType);
+      enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:7, maxTimer:7, color:spec.glow || spec.color });
+      triggerShake(4);
+      if (e.hp <= 0) {
+        killEnemy(e);
+      }
+    });
   }
 }
 
