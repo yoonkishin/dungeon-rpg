@@ -5,13 +5,11 @@
 //   tier8 → 8단 Lv100 만렙 보상 문장 3종 (9단 진입 게이트)
 //   tier9 → 9단 Lv200 만렙 보상 문장 3종 (10단 진입 게이트)
 //   master → deprecated alias for tier8 (save-migration only)
-//   legacy → unused reserve
 const EMBLEM_TYPES = {
   unit: 'unit',
   master: 'master',
   tier8: 'tier8',
   tier9: 'tier9',
-  legacy: 'legacy',
 };
 
 const ORIGINAL_LINE_LABELS = {
