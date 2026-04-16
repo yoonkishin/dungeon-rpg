@@ -96,6 +96,7 @@ function checkPortal() {
 
 function enterField() {
   clearEmblemTrial();
+  clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
   currentDungeonId = -1;
   currentMap = 'field';
   player.x = 40 * TILE;
@@ -111,6 +112,7 @@ function enterField() {
 
 function enterTown() {
   clearEmblemTrial();
+  clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
   currentDungeonId = -1;
   currentMap = 'town';
   player.x = 20 * TILE + TILE/2;
@@ -142,8 +144,11 @@ function enterDungeon(dungeonId) {
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('dungeon');
   initActiveCompanionsForDungeon();
+  initializePartyRuntimeStates();
+  setCombatControlledCharacter(currentCommanderId, 'auto');
   autoSave();
   updateHUD();
+  renderSkillSlots();
 }
 
 const EMBLEM_TRIAL_EXIT_SPAWN = { x: 6 * TILE + TILE / 2, y: 13 * TILE + TILE / 2 };
@@ -165,12 +170,17 @@ function enterEmblemTrial(emblemId) {
   }
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('dungeon');
+  initActiveCompanionsForDungeon();
+  initializePartyRuntimeStates();
+  setCombatControlledCharacter(currentCommanderId, 'auto');
   autoSave();
   updateHUD();
+  renderSkillSlots();
 }
 
 function exitDungeon() {
   if (isEmblemTrialActive()) {
+    clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
     clearEmblemTrial();
     currentDungeonId = -1;
     currentMap = 'town';
@@ -186,6 +196,7 @@ function exitDungeon() {
     return;
   }
 
+  clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
   const info = currentDungeonId >= 0 ? DUNGEON_INFO[currentDungeonId] : null;
   currentMap = 'field';
   if (info) {
@@ -209,6 +220,7 @@ function returnPlayerToTownAfterDeath() {
   const deathScreen = document.getElementById('death-screen');
   if (deathScreen) deathScreen.style.display = 'none';
 
+  clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
   clearActiveCompanions({ markDead: true });
   player.hp = player.maxHp;
   player.mp = player.maxMp;

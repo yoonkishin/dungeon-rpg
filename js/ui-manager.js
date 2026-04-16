@@ -17,6 +17,12 @@ const settingsPanel = document.getElementById('settings-panel');
 const toastEl = document.getElementById('toast');
 const promotionShortcutBtn = document.getElementById('promotion-shortcut-btn');
 const pwaRefreshBtn = document.getElementById('pwa-refresh-btn');
+const combatSwitchHudEl = document.getElementById('combat-switch-hud');
+const combatSwitchNoticeEl = document.getElementById('combat-switch-notice');
+const combatSwitchSlotEls = [
+  document.getElementById('combat-switch-slot-0'),
+  document.getElementById('combat-switch-slot-1'),
+];
 let toastTimeout = null;
 
 function showToast(msg) {
@@ -73,6 +79,7 @@ function updateHUD() {
   document.getElementById('xp-fill').style.width = xpPct + '%';
   document.getElementById('xp-text').textContent = player.xp + '/' + player.xpNext;
   document.getElementById('gold-display').textContent = '💰 ' + player.gold;
+  updateCombatSwitchHud();
 }
 
 let levelupTimeout = null;
@@ -158,6 +165,84 @@ function bindTap(el, handler, options = {}) {
   el.addEventListener('touchstart', wrapped, { passive: false });
   if (!touchOnly) el.addEventListener('click', wrapped);
 }
+
+function getCharacterPortraitIcon(characterId) {
+  if (isHeroCharacterId(characterId)) return '⚔️';
+  const cId = parseCompanionCharacterId(characterId);
+  const info = cId !== null ? getCompanionRoster(cId) : null;
+  return info && info.portraitIcon ? info.portraitIcon : '👥';
+}
+
+function getCombatSwitchSlotData() {
+  const partyIds = Array.isArray(activePartyCharacterIds) ? activePartyCharacterIds : [];
+  const others = partyIds.filter(id => id !== combatControlledCharacterId);
+  const slots = [];
+
+  for (let i = 0; i < 2; i++) {
+    const characterId = others[i] || null;
+    if (!characterId) {
+      slots.push({ empty: true, label: '불가' });
+      continue;
+    }
+
+    const runtimeState = getPartyRuntimeState(characterId);
+    const dead = !runtimeState || runtimeState.dead || runtimeState.hp <= 0;
+    const coolingDown = combatSwitchCooldownMs > 0;
+    slots.push({
+      characterId,
+      portrait: getCharacterPortraitIcon(characterId),
+      name: getCharacterDisplayName(characterId),
+      disabled: dead || coolingDown,
+      label: dead ? '사망' : (coolingDown ? '대기' : ''),
+    });
+  }
+
+  return slots;
+}
+
+function updateCombatSwitchHud() {
+  if (combatSwitchHudEl) {
+    const shouldShow = isCombatControlActive() && Array.isArray(activePartyCharacterIds) && activePartyCharacterIds.length > 1;
+    combatSwitchHudEl.style.display = shouldShow ? 'flex' : 'none';
+    if (shouldShow) {
+      const slots = getCombatSwitchSlotData();
+      slots.forEach((slot, idx) => {
+        const btn = combatSwitchSlotEls[idx];
+        if (!btn) return;
+        if (slot.empty) {
+          btn.disabled = true;
+          btn.className = 'combat-switch-slot disabled';
+          btn.dataset.characterId = '';
+          btn.innerHTML = '<div class="portrait">-</div><div class="name">비어 있음</div><div class="status">' + slot.label + '</div>';
+          return;
+        }
+
+        btn.disabled = !!slot.disabled;
+        btn.className = 'combat-switch-slot' + (slot.disabled ? ' disabled' : '');
+        btn.dataset.characterId = slot.characterId;
+        btn.innerHTML = '<div class="portrait">' + slot.portrait + '</div><div class="name">' + slot.name + '</div><div class="status">' + (slot.label || '&nbsp;') + '</div>';
+      });
+    }
+  }
+
+  if (!combatSwitchNoticeEl) return;
+  if (combatSwitchNotice && combatSwitchNotice.timerMs > 0) {
+    const name = getCharacterDisplayName(combatSwitchNotice.characterId);
+    combatSwitchNoticeEl.textContent = combatSwitchNotice.reason === 'auto' ? ('자동 전환 · ' + name) : (name + ' 전환');
+    combatSwitchNoticeEl.classList.add('visible');
+  } else {
+    combatSwitchNoticeEl.classList.remove('visible');
+    combatSwitchNoticeEl.textContent = '';
+  }
+}
+
+combatSwitchSlotEls.forEach(btn => {
+  bindTap(btn, () => {
+    const characterId = btn.dataset.characterId;
+    if (!characterId) return;
+    requestCombatCharacterSwitch(characterId);
+  }, { stopPropagation: true });
+});
 
 // Click status bar to open profile
 bindTap(document.getElementById('player-status'), () => {

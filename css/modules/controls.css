@@ -140,6 +140,61 @@
 }
 #skill-swap-btn:active { transform: scale(0.92); }
 
+#combat-switch-hud {
+  position: absolute;
+  right: 24px;
+  bottom: 228px;
+  display: none;
+  gap: 10px;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.combat-switch-slot {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(8,10,18,0.9);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  padding: 6px;
+}
+
+.combat-switch-slot:active {
+  transform: scale(0.96);
+}
+
+.combat-switch-slot.disabled {
+  opacity: 0.45;
+}
+
+.combat-switch-slot .portrait {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.combat-switch-slot .name {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.combat-switch-slot .status {
+  min-height: 12px;
+  font-size: 9px;
+  color: #f1c40f;
+  font-weight: 700;
+  line-height: 1;
+}
+
 @media (max-height: 520px) and (orientation: landscape) {
   .skill-slot {
     width: 54px;
@@ -157,6 +212,27 @@
     width: 40px;
     height: 40px;
     font-size: 11px;
+  }
+
+  #combat-switch-hud {
+    right: 22px;
+    bottom: 212px;
+    gap: 8px;
+  }
+
+  .combat-switch-slot {
+    width: 66px;
+    height: 66px;
+    border-radius: 16px;
+    padding: 5px;
+  }
+
+  .combat-switch-slot .portrait {
+    font-size: 20px;
+  }
+
+  .combat-switch-slot .name {
+    font-size: 10px;
   }
 }
 

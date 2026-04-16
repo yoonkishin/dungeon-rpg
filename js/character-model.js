@@ -559,3 +559,315 @@ function assignCommanderCharacter(characterId) {
   applyOwnedCharacterStateToPlayer(characterId);
   return true;
 }
+
+function buildRuntimeStateForCharacter(characterId) {
+  const entry = getOwnedCharacter(characterId);
+  if (!entry) return null;
+
+  const usingCurrentPlayerSnapshot = currentCommanderId === characterId;
+  const companionId = parseCompanionCharacterId(characterId);
+  const companionState = companionId !== null ? companionStates[companionId] : null;
+  return {
+    characterId,
+    hp: typeof entry.hp === 'number' ? entry.hp : (companionState ? companionState.hp : (usingCurrentPlayerSnapshot ? player.hp : player.maxHp)),
+    maxHp: typeof entry.maxHp === 'number' ? entry.maxHp : (companionState ? companionState.maxHp : (usingCurrentPlayerSnapshot ? player.maxHp : player.maxHp)),
+    mp: typeof entry.mp === 'number' ? entry.mp : (usingCurrentPlayerSnapshot ? player.mp : player.maxMp),
+    maxMp: typeof entry.maxMp === 'number' ? entry.maxMp : (usingCurrentPlayerSnapshot ? player.maxMp : player.maxMp),
+    dead: !!entry.dead || isCharacterDead(characterId),
+    x: companionState ? companionState.x : player.x,
+    y: companionState ? companionState.y : player.y,
+    dir: player.dir || 0,
+    attackTimer: usingCurrentPlayerSnapshot ? (player.attackTimer || 0) : (companionState ? (companionState.attackTimer || 0) : 0),
+    invincible: usingCurrentPlayerSnapshot ? (player.invincible || 0) : 0,
+    skillCooldowns: usingCurrentPlayerSnapshot ? { ...skillCooldowns } : (entry.cooldowns && typeof entry.cooldowns === 'object' ? { ...entry.cooldowns } : {}),
+    skillPageIndex: usingCurrentPlayerSnapshot ? currentSkillPage : (typeof entry.skillPageIndex === 'number' ? entry.skillPageIndex : 0),
+    skillPages: usingCurrentPlayerSnapshot ? cloneSkillPagesState() : (Array.isArray(entry.skillPages) ? cloneSkillPagesState(entry.skillPages) : cloneSkillPagesState()),
+    equipment: usingCurrentPlayerSnapshot ? cloneEquippedState() : (entry.equipment && typeof entry.equipment === 'object' ? cloneEquippedState(entry.equipment) : buildEmptyEquippedState()),
+    aiBehavior: entry.aiBehavior || characterAIModes[characterId] || null,
+  };
+}
+
+function initializePartyRuntimeStates() {
+  syncOwnedCharactersFromRoster();
+  partyRuntimeStates = {};
+
+  (activePartyCharacterIds || []).forEach(characterId => {
+    const runtimeState = buildRuntimeStateForCharacter(characterId);
+    if (!runtimeState) return;
+    runtimeState.x = player.x;
+    runtimeState.y = player.y;
+    partyRuntimeStates[characterId] = runtimeState;
+  });
+
+  combatSwitchCooldownMs = 0;
+  combatSwitchNotice = null;
+  return Object.keys(partyRuntimeStates).length;
+}
+
+function getPartyRuntimeState(characterId) {
+  return partyRuntimeStates && partyRuntimeStates[characterId]
+    ? partyRuntimeStates[characterId]
+    : null;
+}
+
+function syncCompanionStateToRuntimeState(cId) {
+  const runtimeState = getPartyRuntimeState(getCompanionCharacterId(cId));
+  const companionState = companionStates[cId];
+  if (!runtimeState || !companionState) return null;
+
+  runtimeState.hp = companionState.hp;
+  runtimeState.maxHp = companionState.maxHp;
+  runtimeState.dead = companionState.hp <= 0;
+  runtimeState.x = companionState.x;
+  runtimeState.y = companionState.y;
+  runtimeState.attackTimer = companionState.attackTimer || 0;
+  return runtimeState;
+}
+
+function syncRuntimeStateToCompanionState(cId) {
+  const runtimeState = getPartyRuntimeState(getCompanionCharacterId(cId));
+  if (!runtimeState) return null;
+
+  const nextState = companionStates[cId] || {};
+  nextState.x = typeof runtimeState.x === 'number' ? runtimeState.x : player.x;
+  nextState.y = typeof runtimeState.y === 'number' ? runtimeState.y : player.y;
+  nextState.hp = typeof runtimeState.hp === 'number' ? runtimeState.hp : getCompanionMaxHp(cId);
+  nextState.maxHp = typeof runtimeState.maxHp === 'number' ? runtimeState.maxHp : getCompanionMaxHp(cId);
+  nextState.attackTimer = runtimeState.attackTimer || 0;
+  nextState.skillTimer = typeof nextState.skillTimer === 'number' ? nextState.skillTimer : Math.random() * 1200;
+  nextState.flashTimer = nextState.flashTimer || 0;
+  nextState.aiMode = getCompanionAIMode(cId);
+  nextState.targetCache = null;
+  nextState.targetCooldown = 0;
+  companionStates[cId] = nextState;
+  return nextState;
+}
+
+function syncControlledCompanionPresence(previousCharacterId, nextCharacterId) {
+  const previousCompanionId = parseCompanionCharacterId(previousCharacterId);
+  const nextCompanionId = parseCompanionCharacterId(nextCharacterId);
+
+  if (previousCompanionId !== null && previousCompanionId !== nextCompanionId) {
+    const previousRuntimeState = getPartyRuntimeState(getCompanionCharacterId(previousCompanionId));
+    syncRuntimeStateToCompanionState(previousCompanionId);
+    if (previousRuntimeState && !previousRuntimeState.dead && previousRuntimeState.hp > 0 && !activeCompanions.includes(previousCompanionId)) {
+      activeCompanions.push(previousCompanionId);
+    }
+  }
+
+  if (nextCompanionId !== null) {
+    syncCompanionStateToRuntimeState(nextCompanionId);
+    activeCompanions = activeCompanions.filter(id => id !== nextCompanionId);
+    delete companionStates[nextCompanionId];
+  }
+}
+
+function syncPartyRuntimeStateToOwnedCharacter(characterId) {
+  const runtimeState = getPartyRuntimeState(characterId);
+  const entry = getOwnedCharacter(characterId);
+  if (!runtimeState || !entry) return null;
+
+  entry.hp = runtimeState.hp;
+  entry.maxHp = runtimeState.maxHp;
+  entry.mp = runtimeState.mp;
+  entry.maxMp = runtimeState.maxMp;
+  entry.dead = !!runtimeState.dead;
+  entry.cooldowns = { ...(runtimeState.skillCooldowns || {}) };
+  entry.skillPageIndex = runtimeState.skillPageIndex;
+  entry.skillPages = Array.isArray(runtimeState.skillPages) ? cloneSkillPagesState(runtimeState.skillPages) : [];
+  entry.skills = entry.skillPages.flat().filter(Boolean);
+  entry.equipment = runtimeState.equipment && typeof runtimeState.equipment === 'object'
+    ? cloneEquippedState(runtimeState.equipment)
+    : buildEmptyEquippedState();
+  return entry;
+}
+
+function syncPartyRuntimeStatesToOwnedCharacters() {
+  Object.keys(partyRuntimeStates || {}).forEach(characterId => {
+    syncPartyRuntimeStateToOwnedCharacter(characterId);
+  });
+}
+
+function snapshotControlledPlayerToRuntimeState() {
+  if (!combatControlledCharacterId) return null;
+  const runtimeState = getPartyRuntimeState(combatControlledCharacterId);
+  if (!runtimeState) return null;
+
+  runtimeState.hp = player.hp;
+  runtimeState.maxHp = player.maxHp;
+  runtimeState.mp = player.mp;
+  runtimeState.maxMp = player.maxMp;
+  runtimeState.dead = !!player.dead || player.hp <= 0;
+  runtimeState.x = player.x;
+  runtimeState.y = player.y;
+  runtimeState.dir = player.dir || 0;
+  runtimeState.attackTimer = player.attackTimer || 0;
+  runtimeState.invincible = player.invincible || 0;
+  runtimeState.skillCooldowns = { ...skillCooldowns };
+  runtimeState.skillPageIndex = currentSkillPage;
+  runtimeState.skillPages = cloneSkillPagesState();
+  runtimeState.equipment = cloneEquippedState();
+  return runtimeState;
+}
+
+function applyRuntimeStateToPlayer(characterId) {
+  const runtimeState = getPartyRuntimeState(characterId);
+  if (!runtimeState) return false;
+  if (!applyOwnedCharacterStateToPlayer(characterId)) return false;
+
+  player.hp = typeof runtimeState.hp === 'number' ? runtimeState.hp : player.hp;
+  player.maxHp = typeof runtimeState.maxHp === 'number' ? runtimeState.maxHp : player.maxHp;
+  player.mp = typeof runtimeState.mp === 'number' ? runtimeState.mp : player.mp;
+  player.maxMp = typeof runtimeState.maxMp === 'number' ? runtimeState.maxMp : player.maxMp;
+  player.dead = !!runtimeState.dead;
+  player.x = typeof runtimeState.x === 'number' ? runtimeState.x : player.x;
+  player.y = typeof runtimeState.y === 'number' ? runtimeState.y : player.y;
+  player.dir = runtimeState.dir || 0;
+  player.attackTimer = runtimeState.attackTimer || 0;
+  player.invincible = runtimeState.invincible || 0;
+
+  Object.keys(skillCooldowns).forEach(key => delete skillCooldowns[key]);
+  Object.entries(runtimeState.skillCooldowns || {}).forEach(([key, value]) => {
+    skillCooldowns[key] = value;
+  });
+
+  if (Array.isArray(runtimeState.skillPages)) {
+    applySkillPagesState(runtimeState.skillPages);
+  }
+  currentSkillPage = typeof runtimeState.skillPageIndex === 'number' ? runtimeState.skillPageIndex : 0;
+
+  if (runtimeState.equipment && typeof runtimeState.equipment === 'object') {
+    Object.keys(equipped).forEach(slot => {
+      equipped[slot] = runtimeState.equipment[slot] ? { ...runtimeState.equipment[slot] } : null;
+    });
+  }
+
+  hudDirty = true;
+  skillSlotsDirty = true;
+  return true;
+}
+
+function setCombatControlledCharacter(characterId, reason = 'manual') {
+  if (!getPartyRuntimeState(characterId)) return false;
+  if (combatControlledCharacterId === characterId) return true;
+
+  const previousCharacterId = combatControlledCharacterId;
+  if (combatControlledCharacterId) snapshotControlledPlayerToRuntimeState();
+  syncControlledCompanionPresence(previousCharacterId, characterId);
+  if (!applyRuntimeStateToPlayer(characterId)) return false;
+
+  combatControlledCharacterId = characterId;
+  combatSwitchCooldownMs = 1000;
+  combatSwitchNotice = {
+    characterId,
+    timerMs: 1200,
+    reason,
+  };
+
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof renderSkillSlots === 'function') renderSkillSlots();
+  if (typeof updateCombatSwitchHud === 'function') updateCombatSwitchHud();
+  return true;
+}
+
+function clearPartyRuntimeStates(options = {}) {
+  const { restoreCommanderPlayerState = true } = options;
+
+  if (combatControlledCharacterId) {
+    snapshotControlledPlayerToRuntimeState();
+    syncControlledCompanionPresence(combatControlledCharacterId, null);
+  }
+  syncPartyRuntimeStatesToOwnedCharacters();
+
+  if (restoreCommanderPlayerState && getOwnedCharacter(currentCommanderId || HERO_CHARACTER_ID)) {
+    applyOwnedCharacterStateToPlayer(currentCommanderId || HERO_CHARACTER_ID);
+  }
+
+  combatControlledCharacterId = null;
+  combatSwitchCooldownMs = 0;
+  combatSwitchNotice = null;
+  partyRuntimeStates = {};
+}
+
+function getLivingPartyCharacterIds() {
+  return (activePartyCharacterIds || []).filter(characterId => {
+    const runtimeState = getPartyRuntimeState(characterId);
+    return !!(runtimeState && !runtimeState.dead && runtimeState.hp > 0);
+  });
+}
+
+function canSwitchToCharacter(characterId) {
+  if (!isCombatControlActive()) return false;
+  if (!characterId) return false;
+  if (characterId === combatControlledCharacterId) return false;
+  if (!(activePartyCharacterIds || []).includes(characterId)) return false;
+
+  const runtimeState = getPartyRuntimeState(characterId);
+  if (!runtimeState) return false;
+  if (runtimeState.dead || runtimeState.hp <= 0) return false;
+  if (combatSwitchCooldownMs > 0) return false;
+  return true;
+}
+
+function getSwitchablePartyCharacterIds() {
+  return (activePartyCharacterIds || []).filter(characterId => canSwitchToCharacter(characterId));
+}
+
+function interruptCurrentControlledCharacterAction() {
+  player.isAttacking = false;
+  player.attackArc = 0;
+}
+
+function forceRefreshControlledHud() {
+  hudDirty = true;
+  skillSlotsDirty = true;
+  if (typeof updateHUD === 'function') updateHUD();
+  if (typeof renderSkillSlots === 'function') renderSkillSlots();
+  if (typeof updateCombatSwitchHud === 'function') updateCombatSwitchHud();
+}
+
+function requestCombatCharacterSwitch(targetCharacterId) {
+  if (!canSwitchToCharacter(targetCharacterId)) return false;
+  const companionId = parseCompanionCharacterId(targetCharacterId);
+  if (companionId !== null) syncCompanionStateToRuntimeState(companionId);
+  interruptCurrentControlledCharacterAction();
+  const switched = setCombatControlledCharacter(targetCharacterId, 'manual');
+  if (!switched) return false;
+  forceRefreshControlledHud();
+  return true;
+}
+
+function findNextLivingPartyCharacterId(fromCharacterId) {
+  const party = activePartyCharacterIds || [];
+  const startIndex = party.indexOf(fromCharacterId);
+  if (startIndex < 0) return null;
+
+  for (let i = startIndex + 1; i < party.length; i++) {
+    const candidateId = party[i];
+    const runtimeState = getPartyRuntimeState(candidateId);
+    if (runtimeState && !runtimeState.dead && runtimeState.hp > 0) return candidateId;
+  }
+
+  for (let i = 0; i < startIndex; i++) {
+    const candidateId = party[i];
+    const runtimeState = getPartyRuntimeState(candidateId);
+    if (runtimeState && !runtimeState.dead && runtimeState.hp > 0) return candidateId;
+  }
+
+  return null;
+}
+
+function handleControlledCharacterDeath() {
+  if (!combatControlledCharacterId) return false;
+  const currentId = combatControlledCharacterId;
+  const runtimeState = getPartyRuntimeState(currentId);
+  if (!runtimeState) return false;
+  if (!runtimeState.dead && runtimeState.hp > 0) return false;
+
+  const nextId = findNextLivingPartyCharacterId(currentId);
+  if (!nextId) return false;
+  const switched = setCombatControlledCharacter(nextId, 'auto');
+  if (!switched) return false;
+  forceRefreshControlledHud();
+  return true;
+}

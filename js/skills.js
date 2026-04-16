@@ -39,6 +39,32 @@ function renderSkillSlots() {
   document.getElementById('skill-swap-btn').textContent = (currentSkillPage + 1) + '/3';
 }
 
+function syncCurrentSkillPageToRuntimeState() {
+  if (!combatControlledCharacterId) return;
+  const runtimeState = getPartyRuntimeState(combatControlledCharacterId);
+  if (!runtimeState) return;
+
+  runtimeState.skillPageIndex = currentSkillPage;
+  runtimeState.skillPages = cloneSkillPagesState();
+  runtimeState.skillCooldowns = { ...skillCooldowns };
+  runtimeState.mp = player.mp;
+  runtimeState.maxMp = player.maxMp;
+}
+
+function syncControlledCombatStateAfterSkillUse() {
+  if (!combatControlledCharacterId) return;
+  const runtimeState = getPartyRuntimeState(combatControlledCharacterId);
+  if (!runtimeState) return;
+
+  runtimeState.hp = player.hp;
+  runtimeState.maxHp = player.maxHp;
+  runtimeState.mp = player.mp;
+  runtimeState.maxMp = player.maxMp;
+  runtimeState.skillCooldowns = { ...skillCooldowns };
+  runtimeState.skillPageIndex = currentSkillPage;
+  runtimeState.skillPages = cloneSkillPagesState();
+}
+
 // Skill slot touch handlers
 for (let i = 0; i < 4; i++) {
   const el = document.getElementById('skill-slot-' + i);
@@ -59,11 +85,13 @@ const swapBtn = document.getElementById('skill-swap-btn');
 swapBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
   currentSkillPage = (currentSkillPage + 1) % skillPages.length;
+  syncCurrentSkillPageToRuntimeState();
   renderSkillSlots();
 }, { passive: false });
 swapBtn.addEventListener('click', (e) => {
   e.preventDefault();
   currentSkillPage = (currentSkillPage + 1) % skillPages.length;
+  syncCurrentSkillPageToRuntimeState();
   renderSkillSlots();
 });
 
@@ -223,6 +251,7 @@ function useSkill(skillId) {
     });
   }
 
+  syncControlledCombatStateAfterSkillUse();
   if (hudDirty) updateHUD();
   if (skillSlotsDirty) renderSkillSlots();
 }

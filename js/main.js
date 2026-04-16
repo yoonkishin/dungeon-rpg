@@ -99,6 +99,11 @@ function updateTimers(dt) {
     if (player.attackArc >= 1) player.isAttacking = false;
   }
   if (player.invincible > 0) player.invincible -= dt;
+  if (combatSwitchCooldownMs > 0) combatSwitchCooldownMs = Math.max(0, combatSwitchCooldownMs - dt);
+  if (combatSwitchNotice && combatSwitchNotice.timerMs > 0) {
+    combatSwitchNotice.timerMs = Math.max(0, combatSwitchNotice.timerMs - dt);
+    if (combatSwitchNotice.timerMs <= 0) combatSwitchNotice = null;
+  }
 
   if (player.mp < player.maxMp) {
     player.mp = Math.min(player.maxMp, player.mp + 0.008 * dt);
@@ -239,6 +244,7 @@ function update(dt) {
   if (typeof updateAmbientParticles === 'function') updateAmbientParticles();
   if (typeof updateQuestRealtimeStatus === 'function') updateQuestRealtimeStatus();
   if (hudDirty) updateHUD();
+  if (typeof updateCombatSwitchHud === 'function') updateCombatSwitchHud();
 }
 
 // ─── Companion Update ────────────────────────────────────────────────────────

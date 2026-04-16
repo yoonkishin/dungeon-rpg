@@ -76,6 +76,10 @@ let currentCommanderId = null;
 let activePartyCharacterIds = [];
 let characterStates = {};
 let characterAIModes = {};
+let combatControlledCharacterId = null; // runtime only, never saved
+let combatSwitchCooldownMs = 0;
+let combatSwitchNotice = null;
+let partyRuntimeStates = {};
 
 let totalGoldEarned = 0;
 let totalEnemiesKilled = 0;
@@ -123,3 +127,7 @@ let hitFreezeFrames = 0;
 let dayNight = 0;
 let dayNightDir = 1;
 let cameraX = 0, cameraY = 0;
+
+function isCombatControlActive() {
+  return currentMap === 'dungeon' && !!combatControlledCharacterId;
+}

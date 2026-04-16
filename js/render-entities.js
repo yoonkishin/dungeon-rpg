@@ -89,6 +89,14 @@ function drawPlayer() {
   ctx.ellipse(sx, sy + 12, 11, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  if (isCombatControlActive()) {
+    ctx.strokeStyle = 'rgba(241,196,15,0.9)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 12, 17, 7, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   if (player.invincible > 0 && Math.floor(player.invincible / 80) % 2 === 0) return;
 
   const bodyY = sy + 2;

@@ -227,3 +227,28 @@
   opacity: 0;
   transition: opacity 0.5s;
 }
+
+#combat-switch-notice {
+  position: absolute;
+  right: 28px;
+  bottom: 308px;
+  min-width: 120px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(8,10,18,0.92);
+  border: 1px solid rgba(241,196,15,0.32);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 95;
+}
+
+#combat-switch-notice.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

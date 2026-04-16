@@ -131,7 +131,22 @@ function loadPlayerScalars(p) {
 }
 
 function autoSave() {
+  let restoreControlledId = null;
+  let restoreCooldownMs = 0;
+  let restoreNotice = null;
+
   try {
+    if (isCombatControlActive()) {
+      restoreControlledId = combatControlledCharacterId;
+      restoreCooldownMs = combatSwitchCooldownMs;
+      restoreNotice = combatSwitchNotice ? { ...combatSwitchNotice } : null;
+      if (typeof snapshotControlledPlayerToRuntimeState === 'function') snapshotControlledPlayerToRuntimeState();
+      if (typeof syncPartyRuntimeStatesToOwnedCharacters === 'function') syncPartyRuntimeStatesToOwnedCharacters();
+      if (restoreControlledId && restoreControlledId !== currentCommanderId && typeof applyOwnedCharacterStateToPlayer === 'function') {
+        applyOwnedCharacterStateToPlayer(currentCommanderId || (typeof getHeroCharacterId === 'function' ? getHeroCharacterId() : 'hero'));
+      }
+    }
+
     if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
     const saveData = {
       saveVersion: 1,
@@ -170,6 +185,13 @@ function autoSave() {
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
   } catch(ex) {
     // localStorage may be unavailable
+  } finally {
+    if (restoreControlledId && restoreControlledId !== currentCommanderId && typeof applyRuntimeStateToPlayer === 'function') {
+      applyRuntimeStateToPlayer(restoreControlledId);
+      combatControlledCharacterId = restoreControlledId;
+      combatSwitchCooldownMs = restoreCooldownMs;
+      combatSwitchNotice = restoreNotice;
+    }
   }
 }
 
@@ -435,6 +457,13 @@ function loadMapState(data) {
   }
 }
 
+function resetCombatRuntimeStateAfterLoad() {
+  combatControlledCharacterId = null;
+  combatSwitchCooldownMs = 0;
+  combatSwitchNotice = null;
+  partyRuntimeStates = {};
+}
+
 function loadSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -449,6 +478,7 @@ function loadSave() {
     loadQuestState(data);
     loadMapState(data);
     if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
+    resetCombatRuntimeStateAfterLoad();
 
     // Flush normalized state so corrupted blobs don't linger on disk.
     autoSave();

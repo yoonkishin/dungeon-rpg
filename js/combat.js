@@ -486,6 +486,18 @@ function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
   if (player.hp <= 0) {
     player.hp = 0;
     player.dead = true;
+    const runtimeState = getPartyRuntimeState(combatControlledCharacterId);
+    if (runtimeState) {
+      runtimeState.hp = 0;
+      runtimeState.dead = true;
+      runtimeState.x = player.x;
+      runtimeState.y = player.y;
+    }
+    const switched = handleControlledCharacterDeath();
+    if (switched) {
+      updateHUD();
+      return;
+    }
     AudioSystem.sfx.death();
     AudioSystem.stopBgm();
     returnPlayerToTownAfterDeath();
@@ -501,7 +513,18 @@ function damageCompanionById(cId, dmg, hitX, hitY) {
   cs.flashTimer = 12;
   addDamageNumber(hitX ?? cs.x, hitY ?? cs.y, dmg, 'received');
   addParticles(hitX ?? cs.x, hitY ?? cs.y, '#e74c3c', 4);
+  const runtimeState = getPartyRuntimeState(getCompanionCharacterId(cId));
+  if (runtimeState) {
+    runtimeState.hp = cs.hp;
+    runtimeState.maxHp = cs.maxHp;
+    runtimeState.x = cs.x;
+    runtimeState.y = cs.y;
+  }
   if (cs.hp <= 0) {
+    if (runtimeState) {
+      runtimeState.hp = 0;
+      runtimeState.dead = true;
+    }
     markCompanionDead(cId, { hitX, hitY });
   }
   return true;

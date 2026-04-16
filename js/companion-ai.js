@@ -405,6 +405,10 @@ function updateCompanion(dt) {
       moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
       useCompanionSkill(cId, cs, null, behavior);
     }
+
+    if (typeof syncCompanionStateToRuntimeState === 'function') {
+      syncCompanionStateToRuntimeState(cId);
+    }
   });
 }
 
