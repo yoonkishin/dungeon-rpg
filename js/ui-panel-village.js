@@ -18,7 +18,7 @@ function getVillageUpgradeDefinitions() {
             ? ('방어력 +' + (idx + 1) + ' / 동료 체력 +' + ((idx + 1) * 10))
             : key === 'trade'
               ? ('골드 획득 +' + ((idx + 1) * 12) + '%')
-              : ('포션 효율 +' + ((idx + 1) * 15) + '% / 부활비 할인 ' + Math.min(50, (idx + 1) * 10) + '%')
+              : ('포션 효율 +' + ((idx + 1) * 15) + '%')
       }))
     };
   });
@@ -70,6 +70,7 @@ const villagePanel = document.getElementById('village-panel');
 bindTap(document.getElementById('village-panel-close'), () => closeVillagePanel());
 
 function openVillagePanel() {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 마을 발전을 진행할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   villagePanelOpen = true;
   showPanel(villagePanel);
   renderVillagePanel();

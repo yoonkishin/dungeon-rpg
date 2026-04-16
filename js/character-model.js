@@ -53,8 +53,106 @@ function isCompanionCharacterId(characterId) {
 }
 
 function isCharacterDead(characterId) {
+  const entry = getOwnedCharacter(characterId);
+  if (entry && entry.dead) return true;
   const cId = parseCompanionCharacterId(characterId);
   return cId !== null ? deadCompanions.includes(cId) : false;
+}
+
+function isCharacterGhost(characterId) {
+  return isCharacterDead(characterId);
+}
+
+function isCurrentCommanderGhost() {
+  return !!currentCommanderId && isCharacterGhost(currentCommanderId);
+}
+
+function requireLivingCommanderForProgression(message) {
+  if (!isCurrentCommanderGhost()) return true;
+  if (typeof showToast === 'function') {
+    showToast(message || '현재 지휘관이 유령 상태입니다. 신전에서 먼저 부활하세요');
+  }
+  return false;
+}
+
+function getCharacterReviveCost(characterId) {
+  return 200;
+}
+
+function getDeadCharacterIds() {
+  syncOwnedCharactersFromRoster();
+  return (Array.isArray(ownedCharacters) ? ownedCharacters : [])
+    .filter(entry => entry && entry.dead)
+    .map(entry => entry.characterId);
+}
+
+function markCharacterGhost(characterId, options = {}) {
+  const { skipNormalize = false } = options;
+  syncOwnedCharactersFromRoster();
+  const entry = getOwnedCharacter(characterId);
+  if (!entry) return false;
+
+  entry.dead = true;
+  entry.hp = 0;
+  if (typeof entry.mp === 'number' && entry.mp < 0) entry.mp = 0;
+
+  const cId = parseCompanionCharacterId(characterId);
+  if (cId !== null) {
+    if (!deadCompanions.includes(cId)) deadCompanions.push(cId);
+    activeCompanions = activeCompanions.filter(id => id !== cId);
+    delete companionStates[cId];
+  }
+
+  if (!skipNormalize) normalizeCommanderState();
+  return true;
+}
+
+function reviveCharacter(characterId, options = {}) {
+  const { skipNormalize = false } = options;
+  syncOwnedCharactersFromRoster();
+  const entry = getOwnedCharacter(characterId);
+  if (!entry || !entry.dead) return false;
+
+  entry.dead = false;
+  entry.hp = typeof entry.maxHp === 'number'
+    ? entry.maxHp
+    : (isHeroCharacterId(characterId) ? player.maxHp : getCompanionMaxHp(parseCompanionCharacterId(characterId)));
+  if (typeof entry.maxMp === 'number') entry.mp = entry.maxMp;
+
+  const cId = parseCompanionCharacterId(characterId);
+  if (cId !== null) {
+    deadCompanions = deadCompanions.filter(id => id !== cId);
+    delete companionStates[cId];
+  }
+
+  if (!skipNormalize) normalizeCommanderState();
+  if (currentCommanderId === characterId && typeof applyOwnedCharacterStateToPlayer === 'function') {
+    applyOwnedCharacterStateToPlayer(characterId);
+    player.dead = false;
+    player.invincible = 0;
+  }
+  return true;
+}
+
+function reviveAllDeadCharacters() {
+  const deadIds = getDeadCharacterIds();
+  if (!deadIds.length) return false;
+  deadIds.forEach(characterId => reviveCharacter(characterId, { skipNormalize: true }));
+  normalizeCommanderState();
+  if (typeof applyOwnedCharacterStateToPlayer === 'function' && currentCommanderId) {
+    applyOwnedCharacterStateToPlayer(currentCommanderId);
+    player.dead = false;
+    player.invincible = 0;
+  }
+  return true;
+}
+
+function markEntireActivePartyGhost() {
+  const partyIds = Array.isArray(activePartyCharacterIds) ? activePartyCharacterIds.slice() : [];
+  if (!partyIds.length) return false;
+  partyIds.forEach(characterId => markCharacterGhost(characterId, { skipNormalize: true }));
+  normalizeCommanderState();
+  return true;
 }
 
 function getCharacterDisplayName(characterId) {
@@ -258,7 +356,7 @@ function syncOwnedCharactersFromRoster() {
     sourceId: null,
     name: '주인공',
     unlocked: true,
-    dead: false,
+    dead: !!heroExisting.dead,
     level: player.level,
     currentTier: player.tier || player.classRank || 1,
     tier: player.tier || player.classRank || 1,
@@ -407,7 +505,7 @@ function snapshotPlayerStateToOwnedCharacter(characterId) {
   entry.skills = skillPages.flat().filter(Boolean);
   entry.skillPages = cloneSkillPagesState();
   entry.skillPageIndex = currentSkillPage;
-  entry.dead = false;
+  entry.dead = !!entry.dead;
 
   return entry;
 }
@@ -460,11 +558,12 @@ function applyOwnedCharacterStateToPlayer(characterId) {
 }
 
 function createPartyPusher(partyArray) {
-  return (characterId) => {
+  return (characterId, options = {}) => {
+    const { includeDead = false } = options;
     if (!characterId) return;
     if (partyArray.includes(characterId)) return;
     if (!getOwnedCharacter(characterId)) return;
-    if (isCharacterDead(characterId)) return;
+    if (!includeDead && isCharacterDead(characterId)) return;
     if (partyArray.length >= MAX_ACTIVE_COMPANIONS + 1) return;
     partyArray.push(characterId);
   };
@@ -473,12 +572,14 @@ function createPartyPusher(partyArray) {
 function syncCommanderModelFromLegacyPartyState() {
   syncOwnedCharactersFromRoster();
   if (!getOwnedCharacter(currentCommanderId)) currentCommanderId = HERO_CHARACTER_ID;
-  if (isCharacterDead(currentCommanderId)) currentCommanderId = HERO_CHARACTER_ID;
 
+  const preservedDeadParty = (Array.isArray(activePartyCharacterIds) ? activePartyCharacterIds : [])
+    .filter(characterId => characterId !== currentCommanderId && getOwnedCharacter(characterId) && isCharacterDead(characterId));
   const nextParty = [];
   const pushCharacter = createPartyPusher(nextParty);
 
-  pushCharacter(currentCommanderId);
+  pushCharacter(currentCommanderId, { includeDead: true });
+  preservedDeadParty.forEach(characterId => pushCharacter(characterId, { includeDead: true }));
   activeCompanions.forEach(cId => pushCharacter(getCompanionCharacterId(cId)));
 
   activePartyCharacterIds = nextParty;
@@ -508,7 +609,7 @@ function syncLegacyPartyStateFromCommanderModel() {
 
 function normalizeCommanderState() {
   syncOwnedCharactersFromRoster();
-  if (!getOwnedCharacter(currentCommanderId) || isCharacterDead(currentCommanderId)) {
+  if (!getOwnedCharacter(currentCommanderId)) {
     currentCommanderId = HERO_CHARACTER_ID;
   }
 
@@ -518,8 +619,8 @@ function normalizeCommanderState() {
     const nextParty = [];
     const pushCharacter = createPartyPusher(nextParty);
 
-    pushCharacter(currentCommanderId);
-    activePartyCharacterIds.forEach(pushCharacter);
+    pushCharacter(currentCommanderId, { includeDead: true });
+    activePartyCharacterIds.forEach(characterId => pushCharacter(characterId, { includeDead: true }));
     activeCompanions.forEach(cId => pushCharacter(getCompanionCharacterId(cId)));
     activePartyCharacterIds = nextParty;
   }
@@ -535,6 +636,7 @@ function normalizeCommanderState() {
 
 function assignCommanderCharacter(characterId) {
   if (!canEditPartySetup()) return false;
+  if (isCurrentCommanderGhost()) return false;
   if (!getOwnedCharacter(characterId)) return false;
   if (isCharacterDead(characterId)) return false;
   if (currentCommanderId === characterId) return true;
@@ -546,12 +648,12 @@ function assignCommanderCharacter(characterId) {
   const nextParty = [];
   const pushCharacter = createPartyPusher(nextParty);
 
-  pushCharacter(characterId);
+  pushCharacter(characterId, { includeDead: true });
 
   const fallbackCandidates = []
     .concat(activePartyCharacterIds || [])
     .concat(activeCompanions.map(cId => getCompanionCharacterId(cId)));
-  fallbackCandidates.forEach(pushCharacter);
+  fallbackCandidates.forEach(candidateId => pushCharacter(candidateId, { includeDead: true }));
 
   activePartyCharacterIds = nextParty;
   syncLegacyPartyStateFromCommanderModel();
@@ -781,6 +883,8 @@ function clearPartyRuntimeStates(options = {}) {
 
   if (restoreCommanderPlayerState && getOwnedCharacter(currentCommanderId || HERO_CHARACTER_ID)) {
     applyOwnedCharacterStateToPlayer(currentCommanderId || HERO_CHARACTER_ID);
+    player.dead = false;
+    player.invincible = 0;
   }
 
   combatControlledCharacterId = null;

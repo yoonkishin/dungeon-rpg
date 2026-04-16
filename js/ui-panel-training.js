@@ -5,6 +5,7 @@ const trainingPanel = document.getElementById('training-panel');
 bindTap(document.getElementById('training-panel-close'), () => closeTrainingPanel());
 
 function openTrainingPanel() {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 승급 수련을 진행할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   trainingPanelOpen = true;
   showPanel(trainingPanel);
   renderTrainingPanel();

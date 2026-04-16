@@ -185,6 +185,7 @@ function renderProfile() {
       // Game Stats
       '<div class="profile-meta">' +
         profileMetaItem('\uD604\uC7AC \uC9C0\uD718\uAD00', getCharacterDisplayName(currentCommanderId || getHeroCharacterId()), '') +
+        profileMetaItem('\uC9C0\uD718\uAD00 \uC0C1\uD0DC', isCurrentCommanderGhost() ? '\uC720\uB839 \uC0C1\uD0DC' : '\uC815\uC0C1', isCurrentCommanderGhost() ? 'gold' : '') +
         profileMetaItem('\uBCF4\uC720 \uACE8\uB4DC', player.gold.toLocaleString(), 'gold') +
         profileMetaItem('\uCD1D \uCC98\uCE58', totalEnemiesKilled.toLocaleString(), '') +
         profileMetaItem('\uCD1D \uD68D\uB4DD \uACE8\uB4DC', totalGoldEarned.toLocaleString(), 'gold') +

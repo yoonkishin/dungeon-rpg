@@ -147,6 +147,10 @@ function handleCommanderAssign(characterId) {
     showToast('\uB358\uC804 \uC548\uC5D0\uC11C\uB294 \uC9C0\uD718\uAD00 \uC804\uD658\uC774 \uBD88\uAC00\uB2A5\uD569\uB2C8\uB2E4');
     return;
   }
+  if (isCurrentCommanderGhost()) {
+    showToast('유령 상태의 지휘관은 신전에서 먼저 부활해야 합니다');
+    return;
+  }
   if (!assignCommanderCharacter(characterId)) return;
   showToast(getCharacterDisplayName(characterId) + ' \uC9C0\uD718\uAD00 \uC804\uD658');
   if (typeof updateHUD === 'function') updateHUD();

@@ -5,6 +5,7 @@ const emblemRoomPanel = document.getElementById('emblem-room-panel');
 bindTap(document.getElementById('emblem-room-panel-close'), () => closeEmblemRoomPanel());
 
 function openEmblemRoomPanel() {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 문장 진행을 할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   emblemRoomPanelOpen = true;
   showPanel(emblemRoomPanel);
   renderEmblemRoomPanel();

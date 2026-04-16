@@ -95,6 +95,7 @@ function checkPortal() {
 }
 
 function enterField() {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 필드로 나갈 수 없습니다. 신전에서 먼저 부활하세요')) return;
   clearEmblemTrial();
   clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
   currentDungeonId = -1;
@@ -127,6 +128,7 @@ function enterTown() {
 }
 
 function enterDungeon(dungeonId) {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 던전에 입장할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   clearEmblemTrial();
   currentDungeonId = dungeonId;
   dungeonCleared = false;
@@ -154,6 +156,7 @@ function enterDungeon(dungeonId) {
 const EMBLEM_TRIAL_EXIT_SPAWN = { x: 6 * TILE + TILE / 2, y: 13 * TILE + TILE / 2 };
 
 function enterEmblemTrial(emblemId) {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 문장 시험에 도전할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   currentDungeonId = -1;
   currentMap = 'dungeon';
   dungeonCleared = false;
@@ -220,12 +223,12 @@ function returnPlayerToTownAfterDeath() {
   const deathScreen = document.getElementById('death-screen');
   if (deathScreen) deathScreen.style.display = 'none';
 
+  markEntireActivePartyGhost();
   clearPartyRuntimeStates({ restoreCommanderPlayerState: true });
-  clearActiveCompanions({ markDead: true });
-  player.hp = player.maxHp;
-  player.mp = player.maxMp;
+  clearActiveCompanions({ markDead: false, preserveDeadList: true });
+  player.hp = 0;
   player.dead = false;
-  player.invincible = 1000;
+  player.invincible = 0;
 
   if (typeof closeAllPanels === 'function') {
     closeAllPanels();

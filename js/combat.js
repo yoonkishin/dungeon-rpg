@@ -493,6 +493,9 @@ function damagePlayerFromEnemy(source, dmg, hitX, hitY, invincibleMs = 600) {
       runtimeState.x = player.x;
       runtimeState.y = player.y;
     }
+    if (combatControlledCharacterId) {
+      markCharacterGhost(combatControlledCharacterId, { skipNormalize: true });
+    }
     const switched = handleControlledCharacterDeath();
     if (switched) {
       updateHUD();

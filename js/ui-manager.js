@@ -50,9 +50,10 @@ function updateHUD() {
   const commanderProfile = typeof getCommanderCompanionProfile === 'function' ? getCommanderCompanionProfile() : null;
   const statusClassLineEl = document.getElementById('status-class-line');
   const statusClassNextEl = document.getElementById('status-class-next');
+  const commanderGhost = typeof isCurrentCommanderGhost === 'function' ? isCurrentCommanderGhost() : false;
   if (commanderRoster && commanderProfile) {
     if (statusClassLineEl) statusClassLineEl.textContent = `동료 지휘관 · ${commanderRoster.name} · ${commanderProfile.className}`;
-    if (statusClassNextEl) statusClassNextEl.textContent = `현재 조작 캐릭터 · 캐릭터별 상태 유지`;
+    if (statusClassNextEl) statusClassNextEl.textContent = commanderGhost ? '유령 상태 · 신전에서 먼저 부활' : `현재 조작 캐릭터 · 캐릭터별 상태 유지`;
     if (avatarEl) {
       avatarEl.textContent = commanderRoster.portraitIcon || '👥';
       avatarEl.style.borderColor = commanderRoster.color;
@@ -61,9 +62,11 @@ function updateHUD() {
   } else {
     if (statusClassLineEl) statusClassLineEl.textContent = `${growthLine.lineName} 라인 · ${tier.name}`;
     if (statusClassNextEl) {
-      statusClassNextEl.textContent = promotionTarget
-        ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
-        : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료');
+      statusClassNextEl.textContent = commanderGhost
+        ? '유령 상태 · 신전에서 먼저 부활'
+        : (promotionTarget
+          ? `승급 가능! ${promotionTarget.name} · 수련의 방 방문`
+          : (nextTier ? `다음 승급 ${nextTier.name} · Lv.${nextTier.reqLevel}` : '최종 승급 완료'));
     }
     if (avatarEl) {
       avatarEl.style.borderColor = tier.color;
@@ -430,6 +433,7 @@ function advanceDialogue(e) {
 bindTap(dialogueCloseBtn, advanceDialogue, { stopPropagation: true });
 
 function openDialogue(npc) {
+  if (!requireLivingCommanderForProgression('유령 상태에서는 진행 대화를 할 수 없습니다. 신전에서 먼저 부활하세요')) return;
   dialogueOpen = true;
   currentDialogueNpcName = npc.name;
   currentDialogueIndex = 0;
