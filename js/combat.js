@@ -5,7 +5,7 @@
 const PLAYER_PROJECTILE_MAX = 40;
 if (typeof playerProjectiles === 'undefined') var playerProjectiles = [];
 
-function spawnPlayerProjectile(spec, originX, originY, dirAngle, damageBase, isCritRoll) {
+function spawnPlayerProjectile(spec, originX, originY, dirAngle, damageBase, isCritRoll, ownerCharacterId = null) {
   if (playerProjectiles.length >= PLAYER_PROJECTILE_MAX) {
     playerProjectiles.shift();
   }
@@ -28,6 +28,7 @@ function spawnPlayerProjectile(spec, originX, originY, dirAngle, damageBase, isC
     hitRadius: spec.hitRadius || 14,
     hitSet: new Set(),
     trailTimer: 0,
+    ownerCharacterId,
   });
 }
 
@@ -101,7 +102,7 @@ function applyPlayerProjectileHit(p, e) {
   }
   if (isCrit && typeof hitFreezeFrames !== 'undefined') hitFreezeFrames = 3;
   if (typeof triggerShake === 'function') triggerShake(isCrit ? 10 : 6);
-  if (e.hp <= 0 && typeof killEnemy === 'function') killEnemy(e);
+  if (e.hp <= 0 && typeof killEnemy === 'function') killEnemy(e, p.ownerCharacterId || (typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId));
 }
 
 function renderPlayerProjectiles(ctx) {
@@ -158,6 +159,7 @@ function renderPlayerProjectiles(ctx) {
 
 function doAttack() {
   if (player.attackTimer > 0) return;
+  const attackOwnerCharacterId = typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId;
   const commanderCombat = typeof getCommanderCombatProfile === 'function' ? getCommanderCombatProfile() : null;
   const spec = commanderCombat && commanderCombat.basicAttack ? commanderCombat.basicAttack : null;
   const attackRange = typeof playerAttackRangeValue === 'function' ? playerAttackRangeValue() : 62;
@@ -261,7 +263,7 @@ function doAttack() {
         options.onHit({ enemy:e, angle:target.angle, distance:target.distance, damage:dmg, isCrit });
       }
       if (e.hp <= 0) {
-        killEnemy(e);
+        killEnemy(e, attackOwnerCharacterId);
       }
     });
 
@@ -271,7 +273,7 @@ function doAttack() {
   if (spec && spec.kind === 'projectile') {
     const damageBase = playerAtk();
     const isCritRoll = Math.random() * 100 < totalCritChance;
-    spawnPlayerProjectile(spec, player.x, player.y, player.attackAngle, damageBase, isCritRoll);
+    spawnPlayerProjectile(spec, player.x, player.y, player.attackAngle, damageBase, isCritRoll, attackOwnerCharacterId);
     if (typeof addParticles === 'function') {
       const muzzleX = player.x + Math.cos(player.attackAngle) * 12;
       const muzzleY = player.y + Math.sin(player.attackAngle) * 12;
@@ -314,7 +316,7 @@ function doAttack() {
       enemyEffects.push({ kind:'slash', x:e.x, y:e.y, angle:angle, timer:7, maxTimer:7, color:spec.glow || spec.color });
       triggerShake(4);
       if (e.hp <= 0) {
-        killEnemy(e);
+        killEnemy(e, attackOwnerCharacterId);
       }
     });
     return;
@@ -342,7 +344,7 @@ function doAttack() {
         addParticles(e.x, e.y, spec.shockColor, 3);
         addDamageNumber(e.x, e.y, shockDamage, 'normal');
         if (e.hp <= 0) {
-          killEnemy(e);
+          killEnemy(e, attackOwnerCharacterId);
         }
       });
       enemyEffects.push({ kind:'slash', x:swingOriginX, y:swingOriginY, angle:0, timer:12, maxTimer:12, color:spec.shockColor });
@@ -414,7 +416,7 @@ function doAttack() {
       if (isCrit) hitFreezeFrames = 3;
       hitCount++;
       if (e.hp <= 0) {
-        killEnemy(e);
+        killEnemy(e, attackOwnerCharacterId);
       }
     });
 
@@ -575,6 +577,9 @@ function gainXP(amount) {
       showToast('최대 레벨');
       maxLevelToastShown = true;
     }
+    if (typeof snapshotPlayerStateToOwnedCharacter === 'function' && typeof getLoadedPlayerCharacterId === 'function') {
+      snapshotPlayerStateToOwnedCharacter(getLoadedPlayerCharacterId());
+    }
     updateHUD();
     return;
   }
@@ -614,17 +619,76 @@ function gainXP(amount) {
       break;
     }
   }
+  if (typeof snapshotPlayerStateToOwnedCharacter === 'function' && typeof getLoadedPlayerCharacterId === 'function') {
+    snapshotPlayerStateToOwnedCharacter(getLoadedPlayerCharacterId());
+  }
   if (leveled) autoSave();
   updateHUD();
 }
 
+function gainCharacterXP(characterId, amount) {
+  if (!characterId || !amount || amount <= 0) return false;
+  const loadedCharacterId = typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : (currentCommanderId || null);
+  if (characterId === loadedCharacterId) {
+    gainXP(amount);
+    return true;
+  }
+
+  const entry = typeof getOwnedCharacter === 'function' ? getOwnedCharacter(characterId) : null;
+  if (!entry || entry.dead) return false;
+
+  const tier = entry.currentTier || entry.tier || entry.classRank || 1;
+  const levelCap = getTierLevelCap(tier);
+  if ((entry.level || 1) >= levelCap) {
+    entry.exp = 0;
+    entry.xpNext = 0;
+    entry.expToNext = 0;
+    return true;
+  }
+
+  entry.level = entry.level || 1;
+  entry.exp = (entry.exp || 0) + amount;
+  entry.xpNext = entry.xpNext || entry.expToNext || getXpToNextLevel(entry.level, tier);
+  let leveled = false;
+
+  while (entry.xpNext > 0 && entry.exp >= entry.xpNext && entry.level < levelCap) {
+    entry.exp -= entry.xpNext;
+    entry.level += 1;
+    const growth = getLevelGrowthForRank(entry.classLine || 'infantry', entry.classRank || 1);
+    entry.maxHp = (entry.maxHp || 0) + growth.maxHp;
+    entry.hp = entry.maxHp;
+    entry.maxMp = (entry.maxMp || 0) + growth.maxMp;
+    entry.mp = entry.maxMp;
+    entry.atk = (entry.atk || 0) + growth.atk;
+    entry.def = (entry.def || 0) + growth.def;
+    entry.speed = (entry.speed || 0) + growth.speed;
+    entry.critChance = Math.min(30, (entry.critChance || 0) + growth.critChance);
+    entry.xpNext = getXpToNextLevel(entry.level, tier);
+    entry.expToNext = entry.xpNext;
+    leveled = true;
+
+    if (entry.level >= levelCap) {
+      entry.exp = 0;
+      entry.xpNext = 0;
+      entry.expToNext = 0;
+      break;
+    }
+  }
+
+  if (!leveled) {
+    entry.expToNext = entry.xpNext;
+  }
+  return true;
+}
+
 
 // ─── Kill Enemy Helper ───────────────────────────────────────────────────────
-function killEnemy(e) {
+function killEnemy(e, killerCharacterId = null) {
   e.dead = true;
   AudioSystem.sfx.enemyDeath();
   const rewardMultiplier = getDungeonRewardMultiplier();
-  gainXP(Math.max(1, Math.floor(e.xp * rewardMultiplier)));
+  const rewardCharacterId = killerCharacterId || (typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId);
+  gainCharacterXP(rewardCharacterId, Math.max(1, Math.floor(e.xp * rewardMultiplier)));
   const earnedGold = Math.max(1, Math.floor(e.gold * getVillageGoldMultiplier() * rewardMultiplier));
   player.gold += earnedGold;
   totalGoldEarned += earnedGold;

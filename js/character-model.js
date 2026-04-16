@@ -161,6 +161,17 @@ function getCharacterDisplayName(characterId) {
   return cId !== null ? getCompanionName(cId) : '알 수 없는 캐릭터';
 }
 
+function getCurrentInteractionCharacterId() {
+  return currentCommanderId || HERO_CHARACTER_ID;
+}
+
+function getLoadedPlayerCharacterId() {
+  if (typeof isCombatControlActive === 'function' && isCombatControlActive() && combatControlledCharacterId) {
+    return combatControlledCharacterId;
+  }
+  return getCurrentInteractionCharacterId();
+}
+
 function getCommanderCompanionId() {
   return parseCompanionCharacterId(currentCommanderId);
 }

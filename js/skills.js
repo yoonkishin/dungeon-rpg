@@ -180,6 +180,7 @@ function updateSkillEffects(dt) {
 function useSkill(skillId) {
   const skill = getSkillById(skillId);
   if (!skill) return;
+  const skillOwnerCharacterId = typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId;
   if (player.mp < skill.mpCost) { showToast('MP 부족!'); return; }
   if ((skillCooldowns[skillId] || 0) > 0) return;
   const classId = typeof getCommanderClassIdForCompat === 'function' ? getCommanderClassIdForCompat() : null;
@@ -225,7 +226,7 @@ function useSkill(skillId) {
         addDamageNumber(player.x, player.y, skill.heal, 'heal');
       }
       if (e.hp <= 0) {
-        killEnemy(e);
+        killEnemy(e, skillOwnerCharacterId);
       }
     });
   } else if (skill.type === 'projectile' || skill.type === 'aoe') {
@@ -246,7 +247,7 @@ function useSkill(skillId) {
       addDamageNumber(e.x, e.y, dmg, 'magic');
       triggerShake(6);
       if (e.hp <= 0) {
-        killEnemy(e);
+        killEnemy(e, skillOwnerCharacterId);
       }
     });
   }

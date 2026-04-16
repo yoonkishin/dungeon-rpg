@@ -149,8 +149,9 @@ window.__rpgDebug = {
     if (invOpen && typeof renderInventory === 'function') renderInventory();
     autoSave();
   },
-  grantXp(amount = 1000) {
-    if (typeof gainXP === 'function') gainXP(amount);
+  grantXp(amount = 1000, characterId = null) {
+    const targetCharacterId = characterId || (typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId);
+    if (typeof gainCharacterXP === 'function') gainCharacterXP(targetCharacterId, amount);
   },
   setLine(lineId = 'infantry') {
     player.classLine = lineId;

@@ -154,6 +154,7 @@ function buildQuestRewardText(quest) {
   if (!quest || !quest.reward) return '';
   const chunks = [];
   if (quest.reward.gold) chunks.push('💰 ' + quest.reward.gold + 'G');
+  if (quest.reward.xp || quest.reward.exp) chunks.push('✨ EXP ' + (quest.reward.xp || quest.reward.exp));
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) chunks.push(ITEMS[id].icon + ' ' + ITEMS[id].name);
@@ -167,9 +168,13 @@ function buildQuestRewardText(quest) {
   return chunks.join(', ');
 }
 
-function grantMainQuestReward(quest) {
+function grantMainQuestReward(quest, characterId = null) {
   if (!quest || !quest.reward) return;
+  const rewardCharacterId = characterId || (typeof getCurrentInteractionCharacterId === 'function' ? getCurrentInteractionCharacterId() : currentCommanderId);
   if (quest.reward.gold) player.gold += quest.reward.gold;
+  if (quest.reward.xp || quest.reward.exp) {
+    gainCharacterXP(rewardCharacterId, quest.reward.xp || quest.reward.exp);
+  }
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) inventory.push(createItemInstance(id));
@@ -186,7 +191,7 @@ function tryCompleteMainQuest(npcId) {
   if (quest.targetNpcId !== npcId) return null;
   if (!isMainQuestObjectiveMet(quest, npcId)) return null;
 
-  grantMainQuestReward(quest);
+  grantMainQuestReward(quest, typeof getCurrentInteractionCharacterId === 'function' ? getCurrentInteractionCharacterId() : currentCommanderId);
   completedMainQuests.push(quest.id);
   mainQuestIndex++;
   if (typeof updateHUD === 'function') updateHUD();
@@ -261,9 +266,13 @@ function buildSubquestProgressText(quest) {
   return `${value}/${quest.targetAmount}`;
 }
 
-function grantSubquestReward(quest) {
+function grantSubquestReward(quest, characterId = null) {
   if (!quest || !quest.reward) return;
+  const rewardCharacterId = characterId || (typeof getCurrentInteractionCharacterId === 'function' ? getCurrentInteractionCharacterId() : currentCommanderId);
   if (quest.reward.gold) player.gold += quest.reward.gold;
+  if (quest.reward.xp || quest.reward.exp) {
+    gainCharacterXP(rewardCharacterId, quest.reward.xp || quest.reward.exp);
+  }
   if (Array.isArray(quest.reward.items)) {
     quest.reward.items.forEach(id => {
       if (ITEMS[id]) inventory.push(createItemInstance(id));
@@ -295,7 +304,7 @@ function tryResolveSubquest(npcId) {
     };
   }
 
-  grantSubquestReward(quest);
+  grantSubquestReward(quest, typeof getCurrentInteractionCharacterId === 'function' ? getCurrentInteractionCharacterId() : currentCommanderId);
   acceptedSubquests = acceptedSubquests.filter(id => id !== quest.id);
   completedSubquests.push(quest.id);
   delete subquestProgress[quest.id];

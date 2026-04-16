@@ -177,6 +177,7 @@ function moveCompanionToward(cs, tx, ty, speedMul = 1) {
 function useCompanionSkill(cId, cs, target, behavior) {
   const profile = getCompanionProfile(cId);
   if (!profile) return false;
+  const ownerCharacterId = typeof getCompanionCharacterId === 'function' ? getCompanionCharacterId(cId) : null;
   const modeBehavior = behavior || getCompanionModeBehavior(cId, cs, profile);
   const effectColor = profile.companionColor || '#7dd3fc';
   if (cs.skillTimer > 0) return false;
@@ -193,7 +194,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
         if (stun) e.hitStun = Math.max(e.hitStun || 0, stun);
         addDamageNumber(e.x, e.y, dmg, 'magic');
         addParticles(e.x, e.y, color, 6);
-        if (e.hp <= 0) killEnemy(e);
+        if (e.hp <= 0) killEnemy(e, ownerCharacterId);
         hit = true;
       }
     });
@@ -206,7 +207,7 @@ function useCompanionSkill(cId, cs, target, behavior) {
     if (stun) enemy.hitStun = Math.max(enemy.hitStun || 0, stun);
     addDamageNumber(enemy.x, enemy.y, dmg, type);
     addParticles(enemy.x, enemy.y, effectColor, 10);
-    if (enemy.hp <= 0) killEnemy(enemy);
+    if (enemy.hp <= 0) killEnemy(enemy, ownerCharacterId);
     return true;
   };
   const distanceToTarget = () => target ? dist(target, cs) : Infinity;
@@ -399,7 +400,7 @@ function updateCompanion(dt) {
         }
         addDamageNumber(target.x, target.y, dmg, isCompanionMagicProfile(profile) ? 'magic' : 'normal');
         addParticles(target.x, target.y, profile.companionColor || '#7dd3fc', 5);
-        if (target.hp <= 0) killEnemy(target);
+        if (target.hp <= 0) killEnemy(target, ownerCharacterId);
       }
     } else {
       moveCompanionToward(cs, followPoint.x, followPoint.y, behavior.fallbackSpeed);
