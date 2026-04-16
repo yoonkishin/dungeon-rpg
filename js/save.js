@@ -120,10 +120,30 @@ function readValue(obj, key, fallback) {
   return hasOwn(obj, key) ? obj[key] : fallback;
 }
 
+function readFiniteNumber(value, fallback) {
+  return (typeof value === 'number' && Number.isFinite(value)) ? value : fallback;
+}
+
+function readStringValue(value, fallback) {
+  return typeof value === 'string' && value ? value : fallback;
+}
+
+function readBooleanValue(value, fallback) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function readPlayerScalarValue(key, value, fallback) {
+  const safeFallback = fallback === PLAYER_KEEP ? player[key] : fallback;
+  if (typeof safeFallback === 'number') return readFiniteNumber(value, safeFallback);
+  if (typeof safeFallback === 'string') return readStringValue(value, safeFallback);
+  if (typeof safeFallback === 'boolean') return readBooleanValue(value, safeFallback);
+  return value !== undefined ? value : safeFallback;
+}
+
 function loadPlayerScalars(p) {
   for (const [k, fallback] of Object.entries(PERSISTED_PLAYER_SCALARS)) {
     if (hasOwn(p, k)) {
-      player[k] = p[k];
+      player[k] = readPlayerScalarValue(k, p[k], fallback);
     } else if (fallback !== PLAYER_KEEP) {
       player[k] = fallback;
     }
@@ -198,8 +218,10 @@ function autoSave() {
 function loadPlayerState(p) {
   loadPlayerScalars(p);
   // Special-cased: migrations / computed fallbacks.
-  player.classRank = hasOwn(p, 'classRank') ? p.classRank : (hasOwn(p, 'tier') ? p.tier : getRankForLevel(player.classLine, player.level).rank);
-  player.currentClassKey = readValue(p, 'currentClassKey', `${player.classLine}_rank${player.classRank}`);
+  const derivedRank = getRankForLevel(player.classLine, player.level).rank;
+  const savedTier = hasOwn(p, 'tier') ? readFiniteNumber(p.tier, derivedRank) : derivedRank;
+  player.classRank = hasOwn(p, 'classRank') ? readFiniteNumber(p.classRank, savedTier) : savedTier;
+  player.currentClassKey = readStringValue(readValue(p, 'currentClassKey', `${player.classLine}_rank${player.classRank}`), `${player.classLine}_rank${player.classRank}`);
   player.classHistory = Array.isArray(p.classHistory) && p.classHistory.length ? p.classHistory.slice() : [player.currentClassKey];
   player.emblemIds = Array.isArray(p.emblemIds) ? p.emblemIds.filter(id => !!getEmblemDef(id)) : [];
   player.appliedEmblemBonusIds = Array.isArray(p.appliedEmblemBonusIds) ? p.appliedEmblemBonusIds.filter(id => !!getEmblemDef(id)) : [];
@@ -225,7 +247,9 @@ function loadPlayerState(p) {
   }
 
   player.emblemFusionHistory = Array.isArray(p.emblemFusionHistory) ? p.emblemFusionHistory.slice() : [];
-  player.xpNext = hasOwn(p, 'xpNext') ? p.xpNext : getXpToNextLevel(player.level, player.tier || player.classRank || 1);
+  player.xpNext = hasOwn(p, 'xpNext')
+    ? readFiniteNumber(p.xpNext, getXpToNextLevel(player.level, player.tier || player.classRank || 1))
+    : getXpToNextLevel(player.level, player.tier || player.classRank || 1);
   if (player.appliedEmblemBonusIds.length && typeof removeLegacyAppliedEmblemBonuses === 'function') {
     removeLegacyAppliedEmblemBonuses(player.appliedEmblemBonusIds);
     player.appliedEmblemBonusIds = [];
@@ -405,10 +429,11 @@ function loadMapState(data) {
   }
 
   const savedWorldPosition = data.world && data.world.playerPosition
-    && typeof data.world.playerPosition.x === 'number'
-    && typeof data.world.playerPosition.y === 'number'
+    && Number.isFinite(data.world.playerPosition.x)
+    && Number.isFinite(data.world.playerPosition.y)
     ? data.world.playerPosition
     : null;
+  let forcedSafeSpawn = false;
 
   // Emblem trial resume policy: treat as transient, return to town on reload.
   // Must run BEFORE the generic dungeon resume branch so corrupted saves that
@@ -419,6 +444,7 @@ function loadMapState(data) {
     currentEmblemTrial = null;
     player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
     player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
+    forcedSafeSpawn = true;
   }
 
   // Dungeon resume policy: disallow resume, safely return to field
@@ -434,6 +460,7 @@ function loadMapState(data) {
     }
     clearActiveCompanions({ markDead: true });
     currentDungeonId = -1;
+    forcedSafeSpawn = true;
   }
 
   // Safety net: dungeon map with neither a valid id nor a trial is a
@@ -442,6 +469,7 @@ function loadMapState(data) {
     currentMap = 'town';
     player.x = 20 * TILE + TILE / 2;
     player.y = 15 * TILE + TILE / 2;
+    forcedSafeSpawn = true;
   }
 
   // Normalize: a non-dungeon map must not retain a dungeon id or an active
@@ -450,7 +478,7 @@ function loadMapState(data) {
   if (currentMap !== 'dungeon') {
     currentDungeonId = -1;
     currentEmblemTrial = null;
-    if (savedWorldPosition) {
+    if (savedWorldPosition && !forcedSafeSpawn) {
       player.x = savedWorldPosition.x;
       player.y = savedWorldPosition.y;
     }

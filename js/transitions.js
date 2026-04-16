@@ -94,6 +94,11 @@ function checkPortal() {
   return false;
 }
 
+function restorePlayerOnMapTransition() {
+  player.hp = player.maxHp;
+  player.mp = player.maxMp;
+}
+
 function enterField() {
   if (!requireLivingCommanderForProgression('유령 상태에서는 필드로 나갈 수 없습니다. 신전에서 먼저 부활하세요')) return;
   clearEmblemTrial();
@@ -102,6 +107,7 @@ function enterField() {
   currentMap = 'field';
   player.x = 40 * TILE;
   player.y = (FIELD_H - 3) * TILE + TILE/2;
+  restorePlayerOnMapTransition();
   if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   showAreaLabel('필드');
@@ -118,6 +124,7 @@ function enterTown() {
   currentMap = 'town';
   player.x = 20 * TILE + TILE/2;
   player.y = 15 * TILE + TILE/2;
+  restorePlayerOnMapTransition();
   if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   showAreaLabel('마을');
@@ -136,6 +143,7 @@ function enterDungeon(dungeonId) {
   maps.dungeon = buildDungeon();
   player.x = 10 * TILE + TILE/2;
   player.y = 12 * TILE + TILE/2;
+  restorePlayerOnMapTransition();
   if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
   spawnEnemies();
   const info = DUNGEON_INFO[dungeonId];
@@ -165,6 +173,7 @@ function enterEmblemTrial(emblemId) {
   maps.dungeon = buildDungeon();
   player.x = 10 * TILE + TILE/2;
   player.y = 12 * TILE + TILE/2;
+  restorePlayerOnMapTransition();
   spawnEnemies();
   const emblem = getEmblemDef(emblemId);
   showAreaLabel(emblem ? (emblem.name + ' 시험') : '문장 시험');
@@ -189,6 +198,7 @@ function exitDungeon() {
     currentMap = 'town';
     player.x = EMBLEM_TRIAL_EXIT_SPAWN.x;
     player.y = EMBLEM_TRIAL_EXIT_SPAWN.y;
+    restorePlayerOnMapTransition();
     AudioSystem.sfx.portal();
     AudioSystem.startBgm('town');
     if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;
@@ -210,6 +220,7 @@ function exitDungeon() {
     player.y = (FIELD_H - 3) * TILE + TILE/2;
   }
   currentDungeonId = -1;
+  restorePlayerOnMapTransition();
   AudioSystem.sfx.portal();
   AudioSystem.startBgm('field');
   if (typeof playerProjectiles !== 'undefined') playerProjectiles.length = 0;

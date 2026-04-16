@@ -16,6 +16,7 @@ let firstInteractionBooted = false;
 function bootstrapInteraction() {
   if (firstInteractionBooted) return;
   firstInteractionBooted = true;
+  dismissStartHint();
   AudioSystem.init();
   AudioSystem.ensureCtx();
   AudioSystem.startBgm(currentMap === 'dungeon' ? 'dungeon' : currentMap);
@@ -261,15 +262,13 @@ if (typeof normalizeCommanderState === 'function') normalizeCommanderState();
 spawnEnemies();
 updateHUD();
 renderSkillSlots();
-bootstrapInteraction();
 
-if (currentMap === 'town') { showAreaLabel('마을'); AudioSystem.startBgm('town'); }
-else if (currentMap === 'field') { showAreaLabel('필드'); AudioSystem.startBgm('field'); }
+if (currentMap === 'town') { showAreaLabel('마을'); }
+else if (currentMap === 'field') { showAreaLabel('필드'); }
 else if (currentMap === 'dungeon') {
   const info = currentDungeonId >= 0 ? DUNGEON_INFO[currentDungeonId] : null;
   const emblem = typeof getCurrentEmblemTrialDef === 'function' ? getCurrentEmblemTrialDef() : null;
   showAreaLabel(emblem ? (emblem.name + ' 시험') : (info ? info.name : '던전'));
-  AudioSystem.startBgm('dungeon');
 }
 
 function gameLoop(ts) {

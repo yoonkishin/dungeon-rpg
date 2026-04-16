@@ -251,6 +251,10 @@ combatSwitchSlotEls.forEach(btn => {
 bindTap(document.getElementById('player-status'), () => {
   if (!profileOpen) openProfile();
 });
+bindTap(document.getElementById('player-avatar'), () => {
+  if (typeof bootstrapInteraction === 'function') bootstrapInteraction();
+  if (!menuOpen) openMenu();
+}, { stopPropagation: true });
 
 bindTap(document.getElementById('settings-btn'), () => openSettings());
 bindTap(document.getElementById('developer-btn'), () => openDeveloperPanel());
@@ -277,6 +281,16 @@ function refreshTownActionLabel() {
   }
 }
 
+function syncSettingsPanelState() {
+  document.querySelectorAll('.settings-row').forEach(row => {
+    const toggle = row.querySelector('.s-toggle');
+    if (!toggle) return;
+    const setting = row.getAttribute('data-setting');
+    if (setting === 'sound') toggle.textContent = AudioSystem.isSoundOn() ? 'ON' : 'OFF';
+    if (setting === 'music') toggle.textContent = AudioSystem.isMusicOn() ? 'ON' : 'OFF';
+  });
+}
+
 function openMenu() {
   if (settingsOpen) closeSettings();
   refreshTownActionLabel();
@@ -289,6 +303,7 @@ function closeMenu() {
 }
 function openSettings() {
   if (menuOpen) closeMenu();
+  syncSettingsPanelState();
   settingsOpen = true;
   showPanel(settingsPanel);
 }
@@ -309,8 +324,7 @@ function handleHudAction(action) {
     openInventory();
   } else if (action === 'settings') {
     closeMenuIfOpen();
-    showPanel(settingsPanel);
-    settingsOpen = true;
+    openSettings();
   } else if (action === 'profile') {
     closeMenuIfOpen();
     openProfile();
@@ -475,4 +489,3 @@ function handleRespawn() {
 }
 
 bindTap(respawnBtn, handleRespawn, { stopPropagation: true });
-
