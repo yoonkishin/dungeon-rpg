@@ -432,15 +432,23 @@ function drawEnemy(e) {
   ctx.ellipse(sx, sy + e.h/2 - 2, e.w/2, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Hit flash
+  // Hit flash / chill tint (hit flash takes precedence)
   let color = e.color;
   if (e.flashTimer > 0 && e.flashTimer % 4 < 2) color = '#fff';
+  else if (e.chillTimer > 0) color = '#7dd3fc';
 
   // Elite glow
   if (e.isElite) {
     ctx.strokeStyle = 'rgba(241, 196, 15, 0.9)';
     ctx.lineWidth = 2;
     ctx.strokeRect(sx - e.w/2 - 2, sy - e.h/2 - 2, e.w + 4, e.h + 4);
+  }
+
+  // Chill frost outline
+  if (e.chillTimer > 0) {
+    ctx.strokeStyle = 'rgba(125, 211, 252, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(sx - e.w/2 - 1, sy - e.h/2 - 1, e.w + 2, e.h + 2);
   }
 
   drawEnemyBody(sx, sy, e, color);

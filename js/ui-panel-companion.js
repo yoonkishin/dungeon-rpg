@@ -134,10 +134,13 @@ function buildSynergyChips() {
 
 function handleCompanionAiTap(cId) {
   const info = getCompanionRoster(cId);
+  const prevMode = getCompanionAIMode(cId, companionStates[cId]);
+  const prevMeta = COMPANION_AI_MODES[prevMode];
   const nextMode = cycleCompanionAIMode(cId);
   const nextMeta = COMPANION_AI_MODES[nextMode] || COMPANION_AI_MODES.aggressive;
   syncCharacterAIModesFromLegacy();
-  showToast((info ? info.name : '\uB3D9\uB8CC') + ' AI: ' + nextMeta.label);
+  const transition = (prevMeta && prevMeta.label !== nextMeta.label) ? prevMeta.label + ' → ' + nextMeta.label : nextMeta.label;
+  showToast((info ? info.name : '\uB3D9\uB8CC') + ' AI: ' + transition);
   renderCompanionPanel();
   autoSave();
 }

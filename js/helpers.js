@@ -67,6 +67,7 @@ function addDamageNumber(x, y, amount, type) {
     magic: '#c39bd3',
     heal: '#2ecc71',
     received: '#e74c3c',
+    xp: '#74b9ff',
   };
   const sizes = {
     normal: 14,
@@ -74,12 +75,14 @@ function addDamageNumber(x, y, amount, type) {
     magic: 16,
     heal: 16,
     received: 16,
+    xp: 12,
   };
-  const prefix = type === 'heal' ? '+' : (type === 'received' ? '-' : '');
+  const suffixes = { xp: ' XP' };
+  const prefix = (type === 'heal' || type === 'xp') ? '+' : (type === 'received' ? '-' : '');
   damageNumbers.push({
     x: x + (Math.random() - 0.5) * 20,
     y: y - 20,
-    text: prefix + Math.floor(amount),
+    text: prefix + Math.floor(amount) + (suffixes[type] || ''),
     color: colors[type] || '#fff',
     timer: 60,
     vy: -1.5,

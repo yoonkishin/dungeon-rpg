@@ -688,7 +688,9 @@ function killEnemy(e, killerCharacterId = null) {
   AudioSystem.sfx.enemyDeath();
   const rewardMultiplier = getDungeonRewardMultiplier();
   const rewardCharacterId = killerCharacterId || (typeof getLoadedPlayerCharacterId === 'function' ? getLoadedPlayerCharacterId() : currentCommanderId);
-  gainCharacterXP(rewardCharacterId, Math.max(1, Math.floor(e.xp * rewardMultiplier)));
+  const xpReward = Math.max(1, Math.floor(e.xp * rewardMultiplier));
+  gainCharacterXP(rewardCharacterId, xpReward);
+  if (typeof addDamageNumber === 'function') addDamageNumber(e.x, e.y - e.h / 2 - 10, xpReward, 'xp');
   const earnedGold = Math.max(1, Math.floor(e.gold * getVillageGoldMultiplier() * rewardMultiplier));
   player.gold += earnedGold;
   totalGoldEarned += earnedGold;
