@@ -118,14 +118,25 @@ function grantPlayerEmblem(id) {
 function getEmblemTrialEnemyProfile(id) {
   const emblem = getEmblemDef(id);
   if (!emblem) return null;
-  const reqAtk = emblem.requiredAttack || 400;
-  const reqDef = emblem.requiredDefense || 220;
+  const trialByLine = {
+    infantry: { hp: 500, atk: 24 },
+    flyingKnight: { hp: 470, atk: 23 },
+    cavalry: { hp: 530, atk: 25 },
+    navalUnit: { hp: 520, atk: 22 },
+    lancer: { hp: 560, atk: 26 },
+    archer: { hp: 490, atk: 24 },
+    monk: { hp: 540, atk: 25 },
+    priest: { hp: 560, atk: 26 },
+    mage: { hp: 620, atk: 29 },
+    darkPriest: { hp: 650, atk: 30 },
+  };
   const isHigher = emblem.type === EMBLEM_TYPES.tier8 || emblem.type === EMBLEM_TYPES.tier9 || emblem.type === EMBLEM_TYPES.master;
+  const trial = trialByLine[emblem.targetLine] || { hp: 500, atk: 24 };
   return {
     name: emblem.name.replace(' 문장', '') + ' 수호자',
     color: isHigher ? '#f1c40f' : '#a29bfe',
-    hp: Math.max(220, reqAtk + reqDef - 180),
-    atk: Math.max(18, Math.floor((reqAtk + reqDef) / 28)),
+    hp: trial.hp,
+    atk: trial.atk,
     speed: 0.72,
     xp: 90,
     gold: 40,
