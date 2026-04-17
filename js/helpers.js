@@ -134,7 +134,14 @@ function consumePotionEntry(invEntry, options = {}) {
 
 function useBestPotion(options = {}) {
   const entry = findBestPotionEntry();
-  if (!entry) return false;
+  if (!entry) {
+    if (typeof showToast === 'function') showToast('포션이 없습니다');
+    return false;
+  }
+  if (player.hp >= player.maxHp) {
+    if (typeof showToast === 'function') showToast('이미 체력이 가득합니다');
+    return false;
+  }
   return consumePotionEntry(entry, options);
 }
 

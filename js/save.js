@@ -4,6 +4,8 @@
 const SAVE_KEY = 'rpg_save_data';
 let autoSaveTimer = 0;
 const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
+let lastAutoSaveToastAt = 0;
+const AUTO_SAVE_TOAST_THROTTLE_MS = 20000;
 
 // Persisted player scalar fields — single source of truth for save AND load.
 // Value = fallback used on load when the save lacks the field. PLAYER_KEEP
@@ -203,6 +205,11 @@ function autoSave() {
       subquestProgress: JSON.parse(JSON.stringify(subquestProgress)),
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (typeof showToast === 'function' && now - lastAutoSaveToastAt >= AUTO_SAVE_TOAST_THROTTLE_MS) {
+      lastAutoSaveToastAt = now;
+      showToast('저장됨');
+    }
   } catch(ex) {
     // localStorage may be unavailable
   } finally {

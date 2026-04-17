@@ -350,15 +350,16 @@ function handleHudAction(action) {
     if (currentMap === 'town') {
       openVillagePanel();
     } else {
+      let abandonedCompanions = false;
       if (currentMap === 'dungeon') {
-        const shouldReturn = confirm('지금 마을로 귀환하면 출전 중인 동료가 쓰러진 상태로 처리됩니다. 정말 귀환할까요?');
-        if (!shouldReturn) return;
-
+        abandonedCompanions = Array.isArray(activeCompanions) && activeCompanions.length > 0;
         // Companions die when leaving dungeon early
         clearActiveCompanions({ markDead: true });
       }
       enterTown();
-      showToast('마을로 귀환했습니다');
+      showToast(abandonedCompanions
+        ? '마을로 귀환 · 남은 동료는 쓰러진 상태로 처리됨'
+        : '마을로 귀환했습니다');
       AudioSystem.sfx.portal();
       autoSave();
     }

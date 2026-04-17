@@ -53,7 +53,7 @@ function markCompanionDead(cId, options = {}) {
 
   if (showToastMessage) {
     const cInfo = getCompanionRoster(cId);
-    showToast((cInfo ? cInfo.name : '동료') + ' 쓰러짐!');
+    showToast((cInfo ? cInfo.name : '동료') + ' 쓰러짐! · 마을 신전에서 부활 가능');
   }
 
   return true;
