@@ -69,9 +69,6 @@ function buildSkillCard(skill, opts = {}) {
 
   const slotAttr = opts.slotKey ? ' data-slot-key="' + opts.slotKey + '"' : '';
   const candidateAttr = opts.candidateId ? ' data-skill-candidate="' + opts.candidateId + '"' : '';
-  const editAction = skillEditMode && opts.slotKey
-    ? '<button type="button" class="skill-slot-edit-btn" data-skill-slot="' + opts.slotKey + '">이 슬롯 편집</button>'
-    : '';
 
   return '<div class="' + classes.join(' ') + '"' + slotAttr + candidateAttr + '>' +
     '<div class="skill-icon-circle" style="--skill-icon-bg:' + iconBg + '22;--skill-icon-border:' + iconBg + '55;">' + skill.icon + '</div>' +
@@ -86,17 +83,12 @@ function buildSkillCard(skill, opts = {}) {
       '<span class="mp">💧' + skill.mpCost + '</span>' +
       '<span class="cd">⏱' + (skill.cooldown / 1000).toFixed(1) + 's</span>' +
     '</div>' +
-    editAction +
   '</div>';
 }
 
 function buildEmptySkillCard(opts = {}) {
   const classes = ['skill-card', 'empty-slot-card'];
   if (opts.editing) classes.push('editing');
-
-  const editAction = skillEditMode && opts.slotKey
-    ? '<button type="button" class="skill-slot-edit-btn" data-skill-slot="' + opts.slotKey + '">이 슬롯 편집</button>'
-    : '';
 
   return '<div class="' + classes.join(' ') + '" data-slot-key="' + (opts.slotKey || '') + '">' +
     '<div class="skill-info">' +
@@ -106,7 +98,6 @@ function buildEmptySkillCard(opts = {}) {
     '<div class="skill-meta">' +
       '<span class="skill-slot-info">미배치</span>' +
     '</div>' +
-    editAction +
   '</div>';
 }
 
@@ -230,9 +221,9 @@ function renderSkillPanel() {
   content.innerHTML = html;
 
   if (skillEditMode) {
-    Array.from(content.querySelectorAll('[data-skill-slot]')).forEach(el => {
+    Array.from(content.querySelectorAll('[data-slot-key]')).forEach(el => {
       bindTap(el, () => {
-        const parsed = parseSkillSlotKey(el.getAttribute('data-skill-slot'));
+        const parsed = parseSkillSlotKey(el.getAttribute('data-slot-key'));
         if (!parsed) return;
         editSelectedSlot = parsed;
         renderSkillPanel();
