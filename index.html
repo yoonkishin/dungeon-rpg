@@ -362,6 +362,19 @@
 
 <div id="fullscreen-btn"><div class="tap-icon">⚔️</div><div>탭하면 전체화면</div><div class="sub">안 눌러도 게임은 바로 보입니다</div></div>
 
+<div id="tutorial-overlay" style="display:none;">
+  <div class="tutorial-box">
+    <div class="tutorial-title">조작법</div>
+    <div class="tutorial-row"><span class="tut-icon">🕹</span><span>좌하단 조이스틱으로 이동</span></div>
+    <div class="tutorial-row"><span class="tut-icon">⚔️</span><span>우하단 버튼 · 기본 공격</span></div>
+    <div class="tutorial-row"><span class="tut-icon">⚡</span><span>4개 슬롯 · 스킬 (MP 소모)</span></div>
+    <div class="tutorial-row"><span class="tut-icon">🧪</span><span>포션 · HP 회복</span></div>
+    <div class="tutorial-row"><span class="tut-icon">🎒</span><span>우상단 아이콘 · 장비/동료/퀘스트/스킬/귀환</span></div>
+    <div class="tutorial-row hint" id="tutorial-quest-hint"></div>
+    <button id="tutorial-dismiss" type="button">시작</button>
+  </div>
+</div>
+
 <script>
 // Auto cache-bust: every page load gets fresh files
 var _v='?_='+Date.now();

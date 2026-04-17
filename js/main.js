@@ -275,6 +275,36 @@ else if (currentMap === 'dungeon') {
   showAreaLabel(emblem ? (emblem.name + ' 시험') : (info ? info.name : '던전'));
 }
 
+const TUTORIAL_SEEN_KEY = 'dungeonRpgTutorialSeen';
+function showTutorialIfFirstTime() {
+  try { if (localStorage.getItem(TUTORIAL_SEEN_KEY) === '1') return; } catch(e) {}
+  const overlay = document.getElementById('tutorial-overlay');
+  if (!overlay) return;
+  const hintEl = document.getElementById('tutorial-quest-hint');
+  if (hintEl && typeof getMainQuest === 'function') {
+    const q = getMainQuest();
+    if (q) {
+      const npcId = typeof getQuestOfferNpcId === 'function' ? getQuestOfferNpcId(q) : null;
+      const npcName = npcId && typeof getQuestNpcName === 'function' ? getQuestNpcName(npcId) : null;
+      hintEl.textContent = '📜 지금 목표 — ' + (q.title || '첫 임무') + (npcName ? ' · ' + npcName + '에게 말 걸기' : '');
+    }
+  }
+  overlay.style.display = 'flex';
+}
+function dismissTutorial() {
+  const overlay = document.getElementById('tutorial-overlay');
+  if (overlay) overlay.style.display = 'none';
+  try { localStorage.setItem(TUTORIAL_SEEN_KEY, '1'); } catch(e) {}
+}
+(function bindTutorialDismiss() {
+  const btn = document.getElementById('tutorial-dismiss');
+  if (btn) {
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); dismissTutorial(); }, { passive: false });
+    btn.addEventListener('click', (e) => { e.preventDefault(); dismissTutorial(); });
+  }
+})();
+showTutorialIfFirstTime();
+
 function gameLoop(ts) {
   const dt = Math.min(ts - lastTime, 50);
   lastTime = ts;
