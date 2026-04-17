@@ -71,6 +71,7 @@ for (let i = 0; i < 4; i++) {
   function handleSkill(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
     const page = skillPages[currentSkillPage];
     const skillId = page[i];
     if (!skillId) return;
@@ -84,12 +85,14 @@ for (let i = 0; i < 4; i++) {
 const swapBtn = document.getElementById('skill-swap-btn');
 swapBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
   currentSkillPage = (currentSkillPage + 1) % skillPages.length;
   syncCurrentSkillPageToRuntimeState();
   renderSkillSlots();
 }, { passive: false });
 swapBtn.addEventListener('click', (e) => {
   e.preventDefault();
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
   currentSkillPage = (currentSkillPage + 1) % skillPages.length;
   syncCurrentSkillPageToRuntimeState();
   renderSkillSlots();

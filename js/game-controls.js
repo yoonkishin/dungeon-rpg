@@ -13,6 +13,7 @@ const JOY_DEAD = 0.12;
 
 joyZone.addEventListener('touchstart', (e) => {
   e.preventDefault();
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
   const t = e.changedTouches[0];
   joyId = t.identifier;
   joyActive = true;
@@ -23,6 +24,16 @@ joyZone.addEventListener('touchstart', (e) => {
 }, { passive: false });
 
 document.addEventListener('touchmove', (e) => {
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) {
+    // Release joystick if input becomes blocked while it's active
+    if (joyActive) {
+      joyActive = false;
+      joyId = -1;
+      joyDx = 0; joyDy = 0;
+      joyThumb.style.transform = 'translate(-50%, -50%)';
+    }
+    return;
+  }
   let handled = false;
   for (let t of e.changedTouches) {
     if (t.identifier === joyId) {
@@ -77,6 +88,7 @@ let attackQueued = false;
 
 attackBtn.addEventListener('touchstart', (e) => {
   e.preventDefault();
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
   attackQueued = true;
   attackBtn.classList.add('pressed');
 }, { passive: false });
@@ -98,5 +110,6 @@ potionBtn.addEventListener('click', (e) => {
 });
 
 function usePotion() {
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) return;
   useBestPotion({ saveMode: 'request' });
 }

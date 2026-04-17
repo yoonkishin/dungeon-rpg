@@ -132,6 +132,17 @@ function isAnyPanelOpen() {
   return false;
 }
 
+// ─── World Input Block ───────────────────────────────────────────────────────
+// Returns true when all world-interaction inputs (joystick, attack, skill, potion)
+// should be suppressed. Does NOT block menu/ESC/UI-panel buttons.
+function isInputBlocked() {
+  if (isAnyPanelOpen()) return true;
+  const ds = document.getElementById('death-screen');
+  if (ds && ds.style.display !== 'none' && ds.style.display !== '') return true;
+  if (dialogueOpen) return true;
+  return false;
+}
+
 // ─── Panel show/hide helpers (flicker-free transitions) ─────────────────────
 function showPanel(el) {
   if (el._hideTid) { clearTimeout(el._hideTid); el._hideTid = null; }

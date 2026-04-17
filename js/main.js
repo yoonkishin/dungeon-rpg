@@ -170,6 +170,10 @@ function updateMovement(dt) {
 }
 
 function updateInput() {
+  if (typeof isInputBlocked === 'function' && isInputBlocked()) {
+    attackQueued = false;
+    return;
+  }
   if (attackQueued || keys[' '] || keys['z']) {
     const handled = typeof tryHandlePrimaryContextAction === 'function' && tryHandlePrimaryContextAction();
     if (!handled) {
